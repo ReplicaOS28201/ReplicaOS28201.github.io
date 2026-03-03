@@ -1,6 +1,83 @@
-de: 
- errorloading: Es gab ein Fehler im Laden eines Spieles oder System.
- gamecorrupteddata: Der Spiel hat beschädigte Dateien, melden sie eine Admin.
- gamesuccessloaded: Die Spiel wurde erforgleich geladen! 
- adminblockeduser: Admin hat dein Account blockiert.
- userbanned: Die Benutzer wurde gebannt.
+de:
+  errorloading: "Es gab einen Fehler beim Laden eines Spiels oder des Systems."
+  gamecorrupteddata: "Das Spiel hat beschädigte Dateien. Bitte melden Sie dies einem Administrator."
+  gamesuccessloaded: "Das Spiel wurde erfolgreich geladen!"
+  adminblockeduser: "Ein Administrator hat dein Konto blockiert."
+  userbanned: "Der Benutzer wurde gebannt."
+
+decommon:
+  accept: "Akzeptieren"
+  decline: "Abbrechen"
+  error: "Fehler"
+
+en:
+  errorloading: "There was an error loading a game or the system."
+  gamecorrupteddata: "The game has corrupted files. Please report this to an administrator."
+  gamesuccessloaded: "The game was loaded successfully!"
+  adminblockeduser: "An administrator has blocked your account."
+  userbanned: "The user has been banned."
+
+encommon:
+  accept: "Accept"
+  decline: "Decline"
+  error: "Error"
+
+fr:
+  errorloading: "Une erreur s'est produite lors du chargement d'un jeu ou du système."
+  gamecorrupteddata: "Le jeu contient des fichiers corrompus. Veuillez le signaler à un administrateur."
+  gamesuccessloaded: "Le jeu a été chargé avec succès !"
+  adminblockeduser: "Un administrateur a bloqué votre compte."
+  userbanned: "L'utilisateur a été banni."
+
+frcommon:
+  accept: "Accepter"
+  decline: "Refuser"
+  error: "Erreur"
+
+it:
+  errorloading: "Si è verificato un errore durante il caricamento di un gioco o del sistema."
+  gamecorrupteddata: "Il gioco contiene file corrotti. Segnalarlo a un amministratore."
+  gamesuccessloaded: "Il gioco è stato caricato con successo!"
+  adminblockeduser: "Un amministratore ha bloccato il tuo account."
+  userbanned: "L'utente è stato bannato."
+
+itcommon:
+  accept: "Accetta"
+  decline: "Annulla"
+  error: "Errore"
+
+nl:
+  errorloading: "Er is een fout opgetreden bij het laden van een spel of het systeem."
+  gamecorrupteddata: "Het spel bevat beschadigde bestanden. Meld dit aan een beheerder."
+  gamesuccessloaded: "Het spel is succesvol geladen!"
+  adminblockeduser: "Een beheerder heeft je account geblokkeerd."
+  userbanned: "De gebruiker is verbannen."
+
+nlcommon:
+  accept: "Accepteren"
+  decline: "Annuleren"
+  error: "Fout"
+
+ru:
+  errorloading: "Произошла ошибка при загрузке игры или системы."
+  gamecorrupteddata: "Игра содержит повреждённые файлы. Пожалуйста, сообщите об этом администратору."
+  gamesuccessloaded: "Игра успешно загружена!"
+  adminblockeduser: "Администратор заблокировал ваш аккаунт."
+  userbanned: "Пользователь был забанен."
+
+rucommon:
+  accept: "Принять"
+  decline: "Отмена"
+  error: "Ошибка"
+
+tr:
+  errorloading: "Bir oyun veya sistem yüklenirken hata oluştu."
+  gamecorrupteddata: "Oyunda bozuk dosyalar var. Lütfen bunu bir yöneticiye bildirin."
+  gamesuccessloaded: "Oyun başarıyla yüklendi!"
+  adminblockeduser: "Bir yönetici hesabınızı engelledi."
+  userbanned: "Kullanıcı yasaklandı."
+
+trcommon:
+  accept: "Kabul Et"
+  decline: "İptal"
+  error: "Hata"
