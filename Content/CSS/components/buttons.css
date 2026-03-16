@@ -1,0 +1,18 @@
+.btn {
+  padding:10px 16px;
+  border-radius:10px;
+  border:1px solid var(--glass-border);
+  background: var(--glass-bg);
+  color:white;
+  cursor:pointer;
+  transition: all .25s ease;
+}
+
+.btn:hover {
+  background: var(--glass-hover);
+  transform: scale(1.05);
+}
+
+.btn:active {
+  transform: scale(.95);
+}
