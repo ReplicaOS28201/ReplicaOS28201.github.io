@@ -3,12 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="author" content="">
+    <meta name="author" content="">
     <link rel="stylesheet" href="./content/CSS/main.css">
-    
     <title>19os - Main</title>
 </head>
 <body>
-    
+
+  <!-- Example App Window -->
+  <div class="appwindow glass" id="myWindow" style="top:100px; left:100px; display:none;">
+    <div class="window-titlebar">
+      <span>Mein App</span>
+      <div class="window-controls">
+        <button onclick="closeWindow('myWindow')">×</button>
+      </div>
+    </div>
+    <button class="btn" onclick="notify('System', 'Button geklickt!')">Klick mich</button>
+  </div>
+
+  <!-- Dock -->
+  <div class="dock glass">
+    <div class="dock-icon" onclick="openWindow('myWindow')">App</div>
+  </div>
+
+  <!-- Notifications Container -->
+  <div class="notifications"></div>
+
 </body>
 </html>
