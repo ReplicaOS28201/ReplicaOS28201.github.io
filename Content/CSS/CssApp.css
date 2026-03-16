@@ -1,13 +1,76 @@
+/* Liquid Glass Window */
 .appwindow {
   color: white;
-  background: grey;
+  padding: 20px;
+  border-radius: 18px;
+
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+
+  border: 1px solid rgba(255,255,255,0.25);
+
+  box-shadow:
+    0 10px 40px rgba(0,0,0,0.4),
+    inset 0 1px 1px rgba(255,255,255,0.25);
+
+  transition: all 0.3s ease;
 }
+
+/* Buttons */
 .appwindow button {
-  width:100px;
+  width:120px;
   height:50px;
+
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.2);
+
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(10px);
+
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+
+  transition: all 0.25s ease;
+
+  box-shadow:
+    0 6px 15px rgba(0,0,0,0.3),
+    inset 0 1px 1px rgba(255,255,255,0.2);
 }
+
+/* Hover Liquid effect */
+.appwindow button:hover {
+  background: rgba(255,255,255,0.2);
+  transform: translateY(-3px) scale(1.05);
+}
+
+/* Toolbar buttons */
 .appbtn {
-  width: 10%;
+  width:10%;
   height:100%;
-  color: black;
+
+  border-radius:10px;
+
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(15px);
+
+  border:1px solid rgba(255,255,255,0.3);
+
+  color:black;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  transition: all 0.25s ease;
+}
+
+/* Glow hover */
+.appbtn:hover {
+  background: rgba(255,255,255,0.35);
+  transform: scale(1.08);
+
+  box-shadow:
+    0 0 20px rgba(255,255,255,0.4);
 }
