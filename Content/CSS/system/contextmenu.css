@@ -1,0 +1,20 @@
+.contextmenu {
+  position:absolute;
+  min-width:180px;
+  padding:6px;
+  border-radius:10px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  border:1px solid var(--glass-border);
+}
+
+.contextmenu-item {
+  padding:8px 10px;
+  border-radius:6px;
+  cursor:pointer;
+  transition:.2s;
+}
+
+.contextmenu-item:hover {
+  background: var(--glass-hover);
+}
