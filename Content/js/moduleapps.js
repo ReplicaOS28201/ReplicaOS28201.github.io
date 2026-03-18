@@ -1,29 +1,27 @@
 function openWindow(id) {
   const el = document.getElementById(id);
+  if (!el) return;
 
-  // Check if element exists
-  if (!el) {
-    console.warn("openWindow: Element not found ->", id);
-    return;
-  }
-
-  // Only remove if needed
-  if (el.classList.contains("hidden")) {
-    el.classList.remove("hidden");
-  }
+  el.classList.remove("hidden");
 }
 
 function closeWindow(id) {
   const el = document.getElementById(id);
+  if (!el) return;
 
-  // Check if element exists
-  if (!el) {
-    console.warn("closeWindow: Element not found ->", id);
-    return;
-  }
-
-  // Only add if needed
-  if (!el.classList.contains("hidden")) {
-    el.classList.add("hidden");
-  }
+  el.classList.add("hidden");
 }
+
+// Event Delegation (better than inline onclick)
+document.addEventListener("click", (e) => {
+  const openTarget = e.target.closest("[data-open]");
+  const closeTarget = e.target.closest("[data-close]");
+
+  if (openTarget) {
+    openWindow(openTarget.dataset.open);
+  }
+
+  if (closeTarget) {
+    closeWindow(closeTarget.dataset.close);
+  }
+});
