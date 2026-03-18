@@ -1,7 +1,29 @@
 function openWindow(id) {
-  document.getElementById(id).classList.remove("hidden");
+  const el = document.getElementById(id);
+
+  // Check if element exists
+  if (!el) {
+    console.warn("openWindow: Element not found ->", id);
+    return;
+  }
+
+  // Only remove if needed
+  if (el.classList.contains("hidden")) {
+    el.classList.remove("hidden");
+  }
 }
 
 function closeWindow(id) {
-  document.getElementById(id).classList.add("hidden");
+  const el = document.getElementById(id);
+
+  // Check if element exists
+  if (!el) {
+    console.warn("closeWindow: Element not found ->", id);
+    return;
+  }
+
+  // Only add if needed
+  if (!el.classList.contains("hidden")) {
+    el.classList.add("hidden");
+  }
 }
