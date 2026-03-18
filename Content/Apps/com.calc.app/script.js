@@ -3,8 +3,29 @@ const historyList = document.getElementById("history");
 
 let history = [];
 
+// ✅ Reset safely if display is broken
+function normalizeDisplay() {
+  if (display.value === "Error" || display.value === "Infinity") {
+    display.value = "";
+  }
+}
+
+// ✅ Clean expression (fix glitches)
+function sanitize(expr) {
+  return expr
+    .replace(/[^0-9+\-*/.^()%]/g, "")   // remove junk
+    .replace(/(\.\.)+/g, ".")           // fix double dots
+    .replace(/([+\-*/^]){2,}/g, "$1")   // fix double operators
+    .replace(/^([*/^])/, "");           // no invalid start
+}
+
 function add(value) {
-  display.value += value;
+  normalizeDisplay();
+
+  let newValue = display.value + value;
+  newValue = sanitize(newValue);
+
+  display.value = newValue;
 }
 
 function clearDisplay() {
@@ -12,28 +33,63 @@ function clearDisplay() {
 }
 
 function backspace() {
+  normalizeDisplay();
   display.value = display.value.slice(0, -1);
 }
 
+function safeEval(expr) {
+  if (!expr) return 0;
+
+  expr = sanitize(expr);
+
+  // Replace ^ with **
+  expr = expr.replace(/\^/g, "**");
+
+  try {
+    const result = eval(expr);
+
+    if (!isFinite(result)) throw "Math error";
+
+    return result;
+  } catch {
+    throw "Error";
+  }
+}
+
 function percent() {
-  display.value = parseFloat(display.value) / 100;
+  try {
+    const val = safeEval(display.value);
+    display.value = String(val / 100);
+  } catch {
+    display.value = "Error";
+  }
 }
 
 function square() {
-  display.value = Math.pow(parseFloat(display.value), 2);
+  try {
+    const val = safeEval(display.value);
+    display.value = String(val ** 2);
+  } catch {
+    display.value = "Error";
+  }
 }
 
 function sqrt() {
-  display.value = Math.sqrt(parseFloat(display.value));
+  try {
+    const val = safeEval(display.value);
+    if (val < 0) throw "Invalid";
+    display.value = String(Math.sqrt(val));
+  } catch {
+    display.value = "Error";
+  }
 }
 
 function calculate() {
   try {
     const expression = display.value;
-    const result = Function("return " + expression)();
+    const result = safeEval(expression);
 
     display.value = result;
-
     addHistory(expression + " = " + result);
 
   } catch {
@@ -44,9 +100,7 @@ function calculate() {
 function addHistory(entry) {
   history.unshift(entry);
 
-  if (history.length > 10) {
-    history.pop();
-  }
+  if (history.length > 10) history.pop();
 
   if (historyList) {
     historyList.innerHTML = "";
@@ -54,26 +108,39 @@ function addHistory(entry) {
     history.forEach(item => {
       const li = document.createElement("li");
       li.textContent = item;
+
+      // ✅ Safe reuse
+      li.onclick = () => {
+        display.value = item.split("=")[0].trim();
+      };
+
       historyList.appendChild(li);
     });
   }
 }
 
+// ✅ STRONG keyboard protection
 document.addEventListener("keydown", (e) => {
+  if (e.ctrlKey || e.metaKey) return;
 
-  if (!isNaN(e.key) || "+-*/.".includes(e.key)) {
-    add(e.key);
+  const key = e.key;
+
+  if (/^[0-9]$/.test(key) || "+-*/.^()".includes(key)) {
+    e.preventDefault();
+    add(key);
   }
 
-  if (e.key === "Enter") {
+  if (key === "Enter") {
+    e.preventDefault();
     calculate();
   }
 
-  if (e.key === "Backspace") {
+  if (key === "Backspace") {
+    e.preventDefault();
     backspace();
   }
 
-  if (e.key === "Escape") {
+  if (key === "Escape") {
     clearDisplay();
   }
 });
