@@ -12,26 +12,21 @@
   <h2 class="title">19OS</h2>
 
   <!-- WINDOWS -->
-  <div id="app1" class="appwindow hidden">
-    <div class="titlebar">
-      <span>App 1</span>
-      <button onclick="closeWindow('app1')">X</button>
+  <div id="myApp" class="appwindow hidden">
+  <div class="window-titlebar">
+    <span>My App</span>
+    <div class="window-controls">
+      <button onclick="closeWindow('myApp')">×</button>
     </div>
-    <div class="content">Hello from App 1</div>
   </div>
-
-  <div id="app2" class="appwindow hidden">
-    <div class="titlebar">
-      <span>App 2</span>
-      <button onclick="closeWindow('app2')">X</button>
-    </div>
-    <div class="content">Hello from App 2</div>
+  <div class="window-content">
+    Hello, 19OS!
   </div>
-
+</div>
   <!-- DOCK -->
   <div class="dock glass">
-    <div class="dock-icon" data-open="app1">App1</div>
-    <div class="dock-icon" data-open="app2">App2</div>
+    <div class="dock-icon" data-open="myApp">App1</div>
+    
   </div>
 
 </div>
