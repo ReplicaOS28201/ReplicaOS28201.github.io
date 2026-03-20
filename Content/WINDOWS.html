@@ -40,5 +40,37 @@
 
 <script src="js/moduleapps.js"></script>
   <script src="js/crashlogger.js"></script>
+  <script>
+    function openCrashViewer() {
+  openWindow("crashViewer");
+  renderCrashLogs();
+}
+
+function renderCrashLogs() {
+  const list = document.getElementById("crashList");
+  list.innerHTML = "";
+
+  CrashLogger.logs.forEach(log => {
+    const item = document.createElement("div");
+    item.className = "crash-item";
+
+    item.innerHTML = `
+      <b>${log.source}</b> - ${log.time}<br>
+      ${log.message}
+      <details>
+        <summary>Stack</summary>
+        <pre>${log.stack}</pre>
+      </details>
+    `;
+
+    list.appendChild(item);
+  });
+}
+
+function clearCrashes() {
+  CrashLogger.clear();
+  renderCrashLogs();
+}
+  </script>
 </body>
 </html>
