@@ -2,6 +2,7 @@
 @import "core/reset.css";
 @import "core/core.css";
 @import "components/window.css";
+@import "components/crashUI.css";
 @import "components/buttons.css";
 @import "components/dock.css";
 @import "components/notifications.css";
