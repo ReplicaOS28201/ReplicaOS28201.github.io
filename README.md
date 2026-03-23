@@ -25,13 +25,13 @@ You can check it live here:
 
 - 📄 **Advanced GitHub Pages setup** with minimal backend  
 - 🎨 **Modern and stylish CSS** for smooth visuals  
-- 🤝 **Open to collaboration** — contribute and grow with us  
+- 🤝 **Open to help** — help us by creating more GAMES, chatting platforms and much more
 
 ---
 
 ## 🛠 Credits
 
 **Made with ❤️ by ShadowDev**
-**ShadowDev finished this project (almost)**
+
 
 </div>
