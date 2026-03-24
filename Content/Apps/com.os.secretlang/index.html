@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>0x001 ShadowCipher</title>
+
+<style>
+body {
+  background: gray;
+    background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="28" height="49" viewBox="0 0 28 49"%3E%3Cg fill-rule="evenodd"%3E%3Cg id="hexagons" fill="%239C92AC" fill-opacity="0.4" fill-rule="nonzero"%3E%3Cpath d="M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
+    color: #00ff99;
+    font-family: monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.container {
+    width: 700px;
+  height: 100vh:
+    background: #111;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 0 50px black;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+textarea {
+    width: 100%;
+    height: 120px;
+    background: black;
+    color: #00ff99;
+    border: 1px solid red;
+    padding: 10px;
+    resize: none;
+    margin-bottom: 15px;
+}
+
+button {
+    width: 49%;
+    padding: 10px;
+    background: black;
+    color: #00ff99;
+    border: 1px solid red;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: white;
+    color: black;
+}
+
+.output {
+    margin-top: 15px;
+    word-wrap: break-word;
+    background: black;
+    padding: 10px;
+    border: 1px solid white;
+    min-height: 60px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>0x001 ShadowCipher</h1>
+
+    <textarea id="input" placeholder="Enter text..."></textarea>
+
+    <div style="display:flex; justify-content:space-between;">
+        <button onclick="encode()">Encode</button>
+        <button onclick="decode()">Decode</button>
+    </div>
+
+    <div class="output" id="output"></div>
+</div>
+
+<script>
+// Encode Function
+function encode() {
+    const text = document.getElementById("input").value;
+    let result = [];
+
+    for (let char of text) {
+        let code;
+
+        if (char === " ") {
+            code = "0x001000";
+        }
+
+        else if (char >= "A" && char <= "Z") {
+            let hex = (char.charCodeAt(0) - 64).toString(16).toUpperCase().padStart(2, "0");
+            code = "0x0011" + hex;
+        }
+
+        else if (char >= "a" && char <= "z") {
+            let hex = (char.charCodeAt(0) - 96).toString(16).toUpperCase().padStart(2, "0");
+            code = "0x0012" + hex;
+        }
+
+        else if (char >= "0" && char <= "9") {
+            let hex = (char.charCodeAt(0) - 48).toString(16).toUpperCase().padStart(2, "0");
+            code = "0x0013" + hex;
+        }
+
+        else {
+            const symbols = {
+                ".":"01", ",":"02", "!":"03", "?":"04",
+                "@":"05", "#":"06", "$":"07", "%":"08",
+                "&":"09", "*":"0A", "(":"0B", ")":"0C",
+                "-":"0D", "_":"0E", "+":"0F", "=":"10",
+                ":":"11", ";":"12", "/":"13", "\\":"14"
+            };
+
+            if (symbols[char]) {
+                code = "0x0014" + symbols[char];
+            } else {
+                code = char; // unsupported char
+            }
+        }
+
+        result.push(code);
+    }
+
+    document.getElementById("output").innerText = result.join(" ");
+}
+
+
+// Decode Function
+function decode() {
+    const text = document.getElementById("input").value.trim().split(" ");
+    let result = "";
+
+    text.forEach(code => {
+
+        if (code === "0x001000") {
+            result += " ";
+            return;
+        }
+
+        if (!code.startsWith("0x001")) {
+            return;
+        }
+
+        let category = code.substring(5,6);
+        let value = parseInt(code.substring(6), 16);
+
+        if (category === "1") {
+            result += String.fromCharCode(value + 64);
+        }
+
+        else if (category === "2") {
+            result += String.fromCharCode(value + 96);
+        }
+
+        else if (category === "3") {
+            result += String.fromCharCode(value + 48);
+        }
+
+        else if (category === "4") {
+            const symbols = {
+                1:".", 2:",", 3:"!", 4:"?",
+                5:"@", 6:"#", 7:"$", 8:"%",
+                9:"&", 10:"*", 11:"(", 12:")",
+                13:"-", 14:"_", 15:"+", 16:"=",
+                17:":", 18:";", 19:"/", 20:"\\"
+            };
+            result += symbols[value] || "";
+        }
+
+    });
+
+    document.getElementById("output").innerText = result;
+}
+</script>
+
+</body>
+</html>
