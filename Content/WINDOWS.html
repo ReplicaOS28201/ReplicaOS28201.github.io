@@ -22,14 +22,14 @@
     <div class="window-titlebar">
       <span>Calculator</span>
       <div class="window-controls">
-        <button class="win-btn close" data-action="close" data-window="myApp">×</button>
+        <button onclick="closeWindow('myApp')">×</button>
       </div>
     </div>
 
     <iframe src="Apps/com.calc.app/Index.html" class="window-content"></iframe>
   </div>
 
-  <!-- Secret -->
+  <!-- Secret Lang -->
   <div id="secret" class="appwindow hidden">
     <div class="resize-handle resize-br"></div>
     <div class="resize-handle resize-r"></div>
@@ -38,7 +38,7 @@
     <div class="window-titlebar">
       <span>Secret Lang</span>
       <div class="window-controls">
-        <button class="win-btn close" data-action="close" data-window="secret">×</button>
+        <button onclick="closeWindow('secret')">×</button>
       </div>
     </div>
 
@@ -54,7 +54,7 @@
     <div class="window-titlebar">
       <span>Poki</span>
       <div class="window-controls">
-        <button class="win-btn close" data-action="close" data-window="poki">×</button>
+        <button onclick="closeWindow('poki')">×</button>
       </div>
     </div>
 
@@ -70,7 +70,7 @@
     <div class="window-titlebar">
       <span>Crash Viewer</span>
       <div class="window-controls">
-        <button class="win-btn close" data-action="close" data-window="crashViewer">✖</button>
+        <button onclick="closeWindow('crashViewer')">×</button>
       </div>
     </div>
 
@@ -90,7 +90,7 @@
 
 <script>
 // ===============================
-// OPEN / CLOSE
+// OPEN / CLOSE SYSTEM
 // ===============================
 function openWindow(id) {
   const el = document.getElementById(id);
@@ -111,17 +111,16 @@ function closeWindow(id) {
 }
 
 // ===============================
-// Z-INDEX
+// Z-INDEX MANAGEMENT
 // ===============================
 let zIndexCounter = 100;
-
 function bringToFront(el) {
   zIndexCounter++;
   el.style.zIndex = zIndexCounter;
 }
 
 // ===============================
-// DRAG SYSTEM (FIXED)
+// DRAG SYSTEM (WORKS WITH BUTTONS)
 // ===============================
 function makeDraggable(windowEl) {
   const header = windowEl.querySelector(".window-titlebar");
@@ -131,9 +130,9 @@ function makeDraggable(windowEl) {
   let offsetX = 0;
   let offsetY = 0;
 
-  function startDrag(e) {
-    // 🚫 prevent dragging when clicking buttons
-    if (e.target.closest(".window-controls")) return;
+  header.addEventListener("pointerdown", e => {
+    // ❌ Do NOT drag if user clicked a button
+    if (e.target.closest(".window-controls") || e.target.tagName === "BUTTON") return;
 
     isDragging = true;
     bringToFront(windowEl);
@@ -144,11 +143,10 @@ function makeDraggable(windowEl) {
 
     document.addEventListener("pointermove", drag);
     document.addEventListener("pointerup", stopDrag);
-  }
+  });
 
   function drag(e) {
     if (!isDragging) return;
-
     windowEl.style.left = (e.clientX - offsetX) + "px";
     windowEl.style.top = (e.clientY - offsetY) + "px";
   }
@@ -158,12 +156,10 @@ function makeDraggable(windowEl) {
     document.removeEventListener("pointermove", drag);
     document.removeEventListener("pointerup", stopDrag);
   }
-
-  header.addEventListener("pointerdown", startDrag);
 }
 
 // ===============================
-// RESIZE SYSTEM (POINTER)
+// RESIZE SYSTEM
 // ===============================
 function makeResizable(windowEl) {
   const handles = windowEl.querySelectorAll(".resize-handle");
@@ -172,22 +168,22 @@ function makeResizable(windowEl) {
     let isResizing = false;
     let startX, startY, startW, startH;
 
-    function startResize(e) {
+    handle.addEventListener("pointerdown", e => {
       isResizing = true;
-
       const rect = windowEl.getBoundingClientRect();
       startX = e.clientX;
       startY = e.clientY;
       startW = rect.width;
       startH = rect.height;
 
+      bringToFront(windowEl);
+
       document.addEventListener("pointermove", resize);
       document.addEventListener("pointerup", stopResize);
-    }
+    });
 
     function resize(e) {
       if (!isResizing) return;
-
       let dx = e.clientX - startX;
       let dy = e.clientY - startY;
 
@@ -205,26 +201,6 @@ function makeResizable(windowEl) {
       document.removeEventListener("pointermove", resize);
       document.removeEventListener("pointerup", stopResize);
     }
-
-    handle.addEventListener("pointerdown", startResize);
-  });
-}
-
-// ===============================
-// BUTTON FIX (CRITICAL)
-// ===============================
-function initButtons() {
-  document.querySelectorAll(".win-btn").forEach(btn => {
-    btn.addEventListener("pointerdown", e => e.stopPropagation());
-
-    btn.addEventListener("click", e => {
-      e.stopPropagation();
-
-      const action = btn.dataset.action;
-      const id = btn.dataset.window;
-
-      if (action === "close") closeWindow(id);
-    });
   });
 }
 
@@ -236,17 +212,16 @@ document.addEventListener("DOMContentLoaded", () => {
     makeDraggable(win);
     makeResizable(win);
   });
-
-  initButtons();
 });
-</script>
 
-<script src="js/crashlogger.js"></script>
-
-<script>
+// ===============================
+// CRASH LOGGER FUNCTIONS
+// ===============================
 function renderCrashLogs() {
   const list = document.getElementById("crashList");
   list.innerHTML = "";
+
+  if (!window.CrashLogger) return;
 
   CrashLogger.logs.forEach(log => {
     const item = document.createElement("div");
@@ -256,10 +231,12 @@ function renderCrashLogs() {
 }
 
 function clearCrashes() {
+  if (!window.CrashLogger) return;
   CrashLogger.clear();
   renderCrashLogs();
 }
 </script>
 
+<script src="js/crashlogger.js"></script>
 </body>
 </html>
