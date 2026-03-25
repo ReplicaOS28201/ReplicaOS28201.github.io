@@ -19,7 +19,7 @@
       <div class="window-titlebar">
         <span>Calculator</span>
         <div class="window-controls">
-          <button onclick="closeWindow('myApp')">×</button>
+          <button onclick="closeWindow('myApp'); event.stopPropagation();">×</button>
         </div>
       </div>
       <iframe src="Apps/com.calc.app/Index.html" class="window-content"></iframe>
@@ -32,7 +32,7 @@
       <div class="window-titlebar">
         <span>Secret Lang</span>
         <div class="window-controls">
-          <button onclick="closeWindow('secret')">×</button>
+          <button onclick="closeWindow('secret'); event.stopPropagation();">×</button>
         </div>
       </div>
       <iframe src="Apps/com.os.secretlang/Index.html" class="window-content"></iframe>
@@ -45,7 +45,7 @@
       <div class="window-titlebar">
         <span>Poki</span>
         <div class="window-controls">
-          <button onclick="closeWindow('poki')">×</button>
+          <button onclick="closeWindow('poki'); event.stopPropagation();">×</button>
         </div>
       </div>
       <iframe src="https://poki.com/" class="window-content"></iframe>
@@ -57,7 +57,7 @@
       <div class="resize-handle resize-b"></div>
       <div class="window-titlebar">
         <span>Crash Viewer</span>
-        <button onclick="closeWindow('crashViewer')">✖</button>
+        <button onclick="closeWindow('crashViewer'); event.stopPropagation();">×</button>
       </div>
       <div id="crashList"></div>
       <button onclick="clearCrashes()">Clear Logs</button>
