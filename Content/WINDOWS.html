@@ -5,76 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="robots" content="noindex, nofollow">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
   <title>19OS</title>
   <link rel="stylesheet" href="CSS/main.css">
 </head>
 
 <body>
 <div id="desktop">
-<h2 class="title">19OS</h2>
+  <h2 class="title">19OS</h2>
 
-<div id="myApp" class="appwindow hidden">
-  <div class="resize-handle resize-br"></div>
-  <div class="resize-handle resize-r"></div>
-  <div class="resize-handle resize-b"></div>
-  <div class="window-titlebar">
-    <span>Calculator</span>
-    <div class="window-controls">
-       <button onclick="closeWindow('myApp')">×</button>
+  <!-- Calculator Window -->
+  <div id="myApp" class="appwindow hidden" role="dialog" aria-hidden="true">
+    <div class="resize-handle resize-br"></div>
+    <div class="resize-handle resize-r"></div>
+    <div class="resize-handle resize-b"></div>
+    <div class="window-titlebar">
+      <span>Calculator</span>
+      <div class="window-controls">
+         <button aria-label="Close window" onclick="closeWindow('myApp')">×</button>
+      </div>
     </div>
+    <iframe src="Apps/com.calc.app/Index.html" class="window-content"></iframe>
   </div>
-  <iframe src="Apps/com.calc.app/Index.html" class="window-content"></iframe>
-</div>
 
-<div id="secret" class="appwindow hidden">
-  <div class="resize-handle resize-br"></div>
-  <div class="resize-handle resize-r"></div>
-  <div class="resize-handle resize-b"></div>
-  <div class="window-titlebar">
-    <span>Secret Lang</span>
-    <div class="window-controls">
-      <button onclick="closeWindow('secret')">×</button>
-    </div>
+  <!-- Dock -->
+  <div class="dock glass">
+    <button onclick="openWindow('myApp')">Calculator</button>
   </div>
-  <iframe src="Apps/com.os.secretlang/Index.html" class="window-content"></iframe>
-</div>
-
-<div id="poki" class="appwindow hidden">
-  <div class="resize-handle resize-br"></div>
-  <div class="resize-handle resize-r"></div>
-  <div class="resize-handle resize-b"></div>
-  <div class="window-titlebar">
-    <span>Poki</span>
-    <div class="window-controls">
-       <button onclick="closeWindow('poki')">×</button>
-    </div>
-  </div>
-  <iframe src="https://poki.com/" class="window-content"></iframe>
-</div>
-
-<div id="crashViewer" class="appwindow hidden">
-  <div class="resize-handle resize-br"></div>
-  <div class="resize-handle resize-r"></div>
-  <div class="resize-handle resize-b"></div>
-  <div class="window-titlebar">
-    <span>Crash Viewer</span>
-    <div class="window-controls">
-       <button onclick="closeWindow('crashViewer')">×</button>
-    </div>
-  </div>
-  <div id="crashList"></div>
-  <button onclick="clearCrashes()">Clear Logs</button>
-</div>
-
-<div class="dock glass">
-  <button onclick="openWindow('myApp')">Calculator</button>
-  <button onclick="openWindow('secret')">Secret</button>
-  <button onclick="openWindow('poki')">Poki</button>
-  <button onclick="openWindow('crashViewer')">Crash</button>
-</div>
 </div>
 
 <script>
@@ -82,173 +38,162 @@
 // GLOBALS
 // ===============================
 let zIndexCounter = 100;
-const windows = [];
 
 // ===============================
-// SPRING PHYSICS
+// SPRING SYSTEM
 // ===============================
-function spring(v) {
-  return { value: v, velocity: 0, target: v };
-}
-
-function step(s, k = 0.12, d = 0.75) {
-  const f = (s.target - s.value) * k;
-  s.velocity += f;
-  s.velocity *= d;
-  s.value += s.velocity;
-}
+function spring(v) { return { value: v, velocity:0, target:v }; }
+function step(s,k=0.12,d=0.75){ const f=(s.target-s.value)*k; s.velocity+=f; s.velocity*=d; s.value+=s.velocity; }
 
 // ===============================
-// CORE ENGINE
+// WINDOW STATE
 // ===============================
-function createWindowState(win) {
+function createWindowState(win){
   const rect = win.getBoundingClientRect();
   win._state = {
-    x: spring(rect.left),
-    y: spring(rect.top),
-    w: spring(rect.width),
-    h: spring(rect.height),
-    scaleX: spring(1),
-    scaleY: spring(1),
-    rot: spring(0),
-    isDragging: false,
-    isResizing: false
+    x:spring(rect.left), y:spring(rect.top),
+    w:spring(rect.width), h:spring(rect.height),
+    scaleX:spring(1), scaleY:spring(1),
+    rot:spring(0)
   };
-  windows.push(win);
 }
 
-function render(win) {
+function render(win){
   const s = win._state;
-  win.style.width = s.w.value + "px";
-  win.style.height = s.h.value + "px";
-  win.style.transform = `translate(${s.x.value}px, ${s.y.value}px) rotate(${s.rot.value}deg) scale(${s.scaleX.value}, ${s.scaleY.value})`;
-}
-
-// Main animation loop for all windows
-function update() {
-  windows.forEach(win => {
-    const s = win._state;
-    step(s.x); step(s.y);
-    step(s.w, 0.15, 0.7); step(s.h, 0.15, 0.7);
-    step(s.scaleX, 0.2, 0.6); step(s.scaleY, 0.2, 0.6);
-    
-    // Tilt logic: only tilt when moving horizontally
-    if (s.isDragging) {
-      s.rot.target = Math.max(-6, Math.min(6, s.x.velocity * 0.25));
-    } else {
-      s.rot.target = 0;
-    }
-    step(s.rot, 0.1, 0.8);
-    
-    render(win);
-  });
-  requestAnimationFrame(update);
+  win.style.transform=`translate(${s.x.value}px,${s.y.value}px) rotate(${s.rot.value}deg) scale(${s.scaleX.value},${s.scaleY.value})`;
+  win.style.width = Math.max(0,s.w.value)+"px";
+  win.style.height = Math.max(0,s.h.value)+"px";
 }
 
 // ===============================
-// INTERACTION LOGIC
+// FRONT / DRAG / RESIZE
 // ===============================
-function bringToFront(el) {
-  el.style.zIndex = ++zIndexCounter;
+function bringToFront(el){
+  zIndexCounter++;
+  if(zIndexCounter > 10000){
+    document.querySelectorAll('.appwindow').forEach(w => w.style.zIndex = 100);
+    zIndexCounter = 101;
+  }
+  el.style.zIndex = zIndexCounter;
 }
 
-function makeDraggable(win) {
+function makeDraggable(win){
   const header = win.querySelector(".window-titlebar");
   const s = win._state;
-  let offsetX = 0, offsetY = 0;
+  let dragging=false, offsetX=0, offsetY=0;
 
-  header.addEventListener("pointerdown", e => {
-    if (e.target.closest(".window-controls")) return;
-    s.isDragging = true;
-    bringToFront(win);
+  header.addEventListener("pointerdown", e=>{
+    if(e.target.closest(".window-controls")) return;
+    dragging=true; bringToFront(win);
+    const rect=win.getBoundingClientRect();
+    offsetX=e.clientX-rect.left; offsetY=e.clientY-rect.top;
+    win.setPointerCapture(e.pointerId); requestAnimationFrame(loop);
+  });
+
+  header.addEventListener("pointermove", e=>{
+    if(!dragging) return;
+    // Keep window inside viewport
     const rect = win.getBoundingClientRect();
-    offsetX = e.clientX - rect.left;
-    offsetY = e.clientY - rect.top;
-    win.setPointerCapture(e.pointerId);
+    s.x.target = Math.min(Math.max(0, e.clientX-offsetX), window.innerWidth - rect.width);
+    s.y.target = Math.min(Math.max(0, e.clientY-offsetY), window.innerHeight - rect.height);
   });
 
-  window.addEventListener("pointermove", e => {
-    if (!s.isDragging) return;
-    s.x.target = e.clientX - offsetX;
-    s.y.target = e.clientY - offsetY;
+  header.addEventListener("pointerup", e=>{
+    dragging=false; s.scaleX.target=1; s.scaleY.target=1;
+    win.releasePointerCapture(e.pointerId);
   });
 
-  window.addEventListener("pointerup", e => {
-    s.isDragging = false;
-  });
+  function loop(){
+    step(s.x); step(s.y);
+    s.rot.target = dragging ? Math.max(-6, Math.min(6, s.x.velocity*0.25)) : 0;
+    s.scaleX.target = dragging ? 0.98 : 1;
+    s.scaleY.target = dragging ? 0.98 : 1;
+    render(win);
+    if(dragging || Math.abs(s.x.velocity)>0.1 || Math.abs(s.y.velocity)>0.1) requestAnimationFrame(loop);
+  }
 }
 
-function makeResizable(win) {
+function makeResizable(win){
   const handles = win.querySelectorAll(".resize-handle");
   const s = win._state;
+  const MIN_WIDTH = 200;   // minimum width in px
+  const MIN_HEIGHT = 150;  // minimum height in px
 
-  handles.forEach(handle => {
-    let startX, startY, startW, startH;
+  handles.forEach(handle=>{
+    let resizing=false, startX, startY, startW, startH;
 
-    handle.addEventListener("pointerdown", e => {
-      e.stopPropagation();
-      s.isResizing = true;
+    handle.addEventListener("pointerdown", e=>{
+      e.preventDefault(); 
+      resizing = true;
       const rect = win.getBoundingClientRect();
       startX = e.clientX; startY = e.clientY;
       startW = rect.width; startH = rect.height;
       win.setPointerCapture(e.pointerId);
+      requestAnimationFrame(loop);
     });
 
-    window.addEventListener("pointermove", e => {
-      if (!s.isResizing) return;
+    handle.addEventListener("pointermove", e=>{
+      if(!resizing) return;
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
 
-      if (handle.classList.contains("resize-r") || handle.classList.contains("resize-br")) {
-        s.w.target = Math.max(250, startW + dx);
-        s.scaleX.target = 1 + (dx * 0.001);
+      if(handle.classList.contains("resize-r") || handle.classList.contains("resize-br")){
+        s.w.target = Math.max(MIN_WIDTH, startW + dx);
+        s.scaleX.target = 1 + dx * 0.002;
       }
-      if (handle.classList.contains("resize-b") || handle.classList.contains("resize-br")) {
-        s.h.target = Math.max(150, startH + dy);
-        s.scaleY.target = 1 + (dy * 0.001);
+      if(handle.classList.contains("resize-b") || handle.classList.contains("resize-br")){
+        s.h.target = Math.max(MIN_HEIGHT, startH + dy);
+        s.scaleY.target = 1 + dy * 0.002;
       }
     });
 
-    window.addEventListener("pointerup", () => {
-      s.isResizing = false;
+    handle.addEventListener("pointerup", e=>{
+      resizing = false;
       s.scaleX.target = 1;
       s.scaleY.target = 1;
+      win.releasePointerCapture(e.pointerId);
     });
+
+    function loop(){
+      step(s.w, 0.15, 0.7);
+      step(s.h, 0.15, 0.7);
+      step(s.scaleX, 0.2, 0.6);
+      step(s.scaleY, 0.2, 0.6);
+      render(win);
+      if(resizing || Math.abs(s.w.velocity) > 0.1 || Math.abs(s.h.velocity) > 0.1) requestAnimationFrame(loop);
+    }
   });
 }
 
 // ===============================
-// WINDOW CONTROLS
+// OPEN / CLOSE
 // ===============================
-function openWindow(id) {
+function openWindow(id){
   const el = document.getElementById(id);
-  if (!el) return;
-  el.classList.remove("hidden");
-  el.setAttribute('aria-hidden', 'false');
+  if(!el) return;
+  el.classList.remove("hidden"); 
+  el.setAttribute('aria-hidden','false'); 
   bringToFront(el);
+  const focusable = el.querySelector('iframe, button, input, [tabindex]');
+  if(focusable) setTimeout(() => focusable.focus(), 50);
 }
 
-function closeWindow(id) {
+function closeWindow(id){
   const el = document.getElementById(id);
-  if (!el) return;
-  el.classList.add("hidden");
-  el.setAttribute('aria-hidden', 'true');
+  if(!el) return;
+  el.classList.add("hidden"); 
+  el.setAttribute('aria-hidden','true');
 }
 
 // ===============================
 // INIT
 // ===============================
-document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".appwindow").forEach(win => {
+document.addEventListener("DOMContentLoaded", ()=>{
+  document.querySelectorAll(".appwindow").forEach(win=>{
     createWindowState(win);
     makeDraggable(win);
     makeResizable(win);
-    
-    // Bring to front on click anywhere
-    win.addEventListener('pointerdown', () => bringToFront(win));
   });
-
-  requestAnimationFrame(update);
 });
 </script>
 <script src="js/crashlogger.js"></script>
