@@ -154,6 +154,10 @@ function makeDraggable(win) {
   const header = win.querySelector(".window-titlebar");
   if (!header) return;
 
+  // Make sure window has position absolute and initial transform
+  win.style.position = "absolute";
+  if (!win.style.transform) win.style.transform = "translate3d(0,0,0)";
+
   let isDragging = false;
   let offsetX = 0, offsetY = 0;
   let targetX = 0, targetY = 0, currentX = 0, currentY = 0;
@@ -194,7 +198,6 @@ function makeDraggable(win) {
   }
 
   function updatePosition() {
-    // Boundaries: keep window inside viewport
     const vw = window.innerWidth, vh = window.innerHeight;
     const rect = win.getBoundingClientRect();
 
