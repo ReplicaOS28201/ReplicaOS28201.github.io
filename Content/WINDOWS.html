@@ -84,30 +84,69 @@
 
 <script>
 // ===============================
-// JIGGLE PHYSICS CORE
+// GLOBALS
 // ===============================
-function spring(val) {
-  return { value: val, velocity: 0, target: val };
+let zIndexCounter = 100;
+
+// ===============================
+// SPRING
+// ===============================
+function spring(v) {
+  return { value: v, velocity: 0, target: v };
 }
 
 function step(s, k = 0.12, d = 0.75) {
-  const force = (s.target - s.value) * k;
-  s.velocity += force;
+  const f = (s.target - s.value) * k;
+  s.velocity += f;
   s.velocity *= d;
   s.value += s.velocity;
 }
 
 // ===============================
-// DRAG SYSTEM (JIGGLE + GPU)
+// WINDOW STATE SYSTEM
+// ===============================
+function createWindowState(win) {
+  const rect = win.getBoundingClientRect();
+
+  win._state = {
+    x: spring(rect.left),
+    y: spring(rect.top),
+    w: spring(rect.width),
+    h: spring(rect.height),
+    scaleX: spring(1),
+    scaleY: spring(1),
+    rot: spring(0)
+  };
+}
+
+// unified renderer (VERY IMPORTANT)
+function render(win) {
+  const s = win._state;
+
+  win.style.transform =
+    `translate(${s.x.value}px, ${s.y.value}px) ` +
+    `rotate(${s.rot.value}deg) ` +
+    `scale(${s.scaleX.value}, ${s.scaleY.value})`;
+
+  win.style.width = s.w.value + "px";
+  win.style.height = s.h.value + "px";
+}
+
+// ===============================
+// BRING TO FRONT
+// ===============================
+function bringToFront(el) {
+  el.style.zIndex = ++zIndexCounter;
+}
+
+// ===============================
+// DRAG SYSTEM (JIGGLE)
 // ===============================
 function makeDraggable(win) {
   const header = win.querySelector(".window-titlebar");
   if (!header) return;
 
-  let rect = win.getBoundingClientRect();
-
-  let x = spring(rect.left);
-  let y = spring(rect.top);
+  const s = win._state;
 
   let dragging = false;
   let offsetX = 0, offsetY = 0;
@@ -118,12 +157,9 @@ function makeDraggable(win) {
     dragging = true;
     bringToFront(win);
 
-    const r = win.getBoundingClientRect();
-    offsetX = e.clientX - r.left;
-    offsetY = e.clientY - r.top;
-
-    x.target = r.left;
-    y.target = r.top;
+    const rect = win.getBoundingClientRect();
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
 
     win.setPointerCapture(e.pointerId);
     requestAnimationFrame(loop);
@@ -132,8 +168,8 @@ function makeDraggable(win) {
   header.addEventListener("pointermove", e => {
     if (!dragging) return;
 
-    x.target = e.clientX - offsetX;
-    y.target = e.clientY - offsetY;
+    s.x.target = e.clientX - offsetX;
+    s.y.target = e.clientY - offsetY;
   });
 
   header.addEventListener("pointerup", e => {
@@ -142,24 +178,22 @@ function makeDraggable(win) {
   });
 
   function loop() {
-    step(x);
-    step(y);
+    step(s.x);
+    step(s.y);
 
-    // subtle tilt
-    const tilt = Math.max(-6, Math.min(6, x.velocity * 0.25));
+    // tilt effect
+    s.rot.target = Math.max(-6, Math.min(6, s.x.velocity * 0.25));
 
-    win.style.transform =
-      `translate(${x.value}px, ${y.value}px) rotate(${tilt}deg)`;
+    render(win);
 
     if (
       dragging ||
-      Math.abs(x.velocity) > 0.1 ||
-      Math.abs(y.velocity) > 0.1
+      Math.abs(s.x.velocity) > 0.1 ||
+      Math.abs(s.y.velocity) > 0.1
     ) {
       requestAnimationFrame(loop);
     } else {
-      win.style.transform =
-        `translate(${x.value}px, ${y.value}px) rotate(0deg)`;
+      s.rot.target = 0;
     }
   }
 }
@@ -169,13 +203,10 @@ function makeDraggable(win) {
 // ===============================
 function makeResizable(win) {
   const handles = win.querySelectorAll(".resize-handle");
+  const s = win._state;
 
   handles.forEach(handle => {
     let resizing = false;
-
-    let w = spring(win.offsetWidth);
-    let h = spring(win.offsetHeight);
-
     let startX, startY, startW, startH;
 
     handle.addEventListener("pointerdown", e => {
@@ -183,14 +214,10 @@ function makeResizable(win) {
       resizing = true;
 
       const rect = win.getBoundingClientRect();
-
       startX = e.clientX;
       startY = e.clientY;
       startW = rect.width;
       startH = rect.height;
-
-      w.target = startW;
-      h.target = startH;
 
       win.setPointerCapture(e.pointerId);
       requestAnimationFrame(loop);
@@ -203,56 +230,77 @@ function makeResizable(win) {
       const dy = e.clientY - startY;
 
       if (handle.classList.contains("resize-r") || handle.classList.contains("resize-br")) {
-        w.target = Math.max(200, startW + dx);
+        s.w.target = Math.max(200, startW + dx);
+        s.scaleX.target = 1 + dx * 0.002;
       }
 
       if (handle.classList.contains("resize-b") || handle.classList.contains("resize-br")) {
-        h.target = Math.max(150, startH + dy);
+        s.h.target = Math.max(150, startH + dy);
+        s.scaleY.target = 1 + dy * 0.002;
       }
     });
 
     handle.addEventListener("pointerup", e => {
       resizing = false;
+      s.scaleX.target = 1;
+      s.scaleY.target = 1;
       win.releasePointerCapture(e.pointerId);
     });
 
     function loop() {
-      step(w, 0.15, 0.7);
-      step(h, 0.15, 0.7);
+      step(s.w, 0.15, 0.7);
+      step(s.h, 0.15, 0.7);
+      step(s.scaleX, 0.2, 0.6);
+      step(s.scaleY, 0.2, 0.6);
 
-      // stretch effect
-      const stretchX = 1 + (w.velocity * 0.03);
-      const stretchY = 1 + (h.velocity * 0.03);
-
-      win.style.width = w.value + "px";
-      win.style.height = h.value + "px";
-
-      win.style.transform += ` scale(${stretchX}, ${stretchY})`;
+      render(win);
 
       if (
         resizing ||
-        Math.abs(w.velocity) > 0.1 ||
-        Math.abs(h.velocity) > 0.1
+        Math.abs(s.w.velocity) > 0.1 ||
+        Math.abs(s.h.velocity) > 0.1
       ) {
         requestAnimationFrame(loop);
-      } else {
-        win.style.transform = win.style.transform.replace(/scale\(.*?\)/, "");
       }
     }
   });
 }
 
 // ===============================
-// INIT (KEEP THIS)
+// OPEN / CLOSE
+// ===============================
+function openWindow(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  el.classList.remove("hidden");
+  bringToFront(el);
+}
+
+function closeWindow(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  el.classList.add("hidden");
+}
+
+// ===============================
+// INIT
 // ===============================
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".appwindow").forEach(win => {
+    createWindowState(win);
     makeDraggable(win);
     makeResizable(win);
 
-    // GPU boost
     win.style.willChange = "transform, width, height";
     win.style.transform = "translateZ(0)";
+  });
+
+  document.querySelectorAll(".closewin").forEach(btn => {
+    btn.addEventListener("click", () => {
+      closeWindow(btn.dataset.target);
+    });
   });
 });
 </script>
