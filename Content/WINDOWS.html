@@ -16,7 +16,6 @@
 <div id="desktop">
 <h2 class="title">19OS</h2>
 
-<!-- Calculator -->
 <div id="myApp" class="appwindow hidden">
   <div class="resize-handle resize-br"></div>
   <div class="resize-handle resize-r"></div>
@@ -30,7 +29,6 @@
   <iframe src="Apps/com.calc.app/Index.html" class="window-content"></iframe>
 </div>
 
-<!-- Secret Lang -->
 <div id="secret" class="appwindow hidden">
   <div class="resize-handle resize-br"></div>
   <div class="resize-handle resize-r"></div>
@@ -44,7 +42,6 @@
   <iframe src="Apps/com.os.secretlang/Index.html" class="window-content"></iframe>
 </div>
 
-<!-- Poki -->
 <div id="poki" class="appwindow hidden">
   <div class="resize-handle resize-br"></div>
   <div class="resize-handle resize-r"></div>
@@ -58,7 +55,6 @@
   <iframe src="https://poki.com/" class="window-content"></iframe>
 </div>
 
-<!-- Crash Viewer -->
 <div id="crashViewer" class="appwindow hidden">
   <div class="resize-handle resize-br"></div>
   <div class="resize-handle resize-r"></div>
@@ -73,7 +69,6 @@
   <button onclick="clearCrashes()">Clear Logs</button>
 </div>
 
-<!-- Dock -->
 <div class="dock glass">
   <button onclick="openWindow('myApp')">Calculator</button>
   <button onclick="openWindow('secret')">Secret</button>
@@ -87,9 +82,10 @@
 // GLOBALS
 // ===============================
 let zIndexCounter = 100;
+const windows = [];
 
 // ===============================
-// SPRING
+// SPRING PHYSICS
 // ===============================
 function spring(v) {
   return { value: v, velocity: 0, target: v };
@@ -103,11 +99,10 @@ function step(s, k = 0.12, d = 0.75) {
 }
 
 // ===============================
-// WINDOW STATE SYSTEM
+// CORE ENGINE
 // ===============================
 function createWindowState(win) {
   const rect = win.getBoundingClientRect();
-
   win._state = {
     x: spring(rect.left),
     y: spring(rect.top),
@@ -115,176 +110,127 @@ function createWindowState(win) {
     h: spring(rect.height),
     scaleX: spring(1),
     scaleY: spring(1),
-    rot: spring(0)
+    rot: spring(0),
+    isDragging: false,
+    isResizing: false
   };
+  windows.push(win);
 }
 
-// unified renderer (VERY IMPORTANT)
 function render(win) {
   const s = win._state;
-
-  win.style.transform =
-    `translate(${s.x.value}px, ${s.y.value}px) ` +
-    `rotate(${s.rot.value}deg) ` +
-    `scale(${s.scaleX.value}, ${s.scaleY.value})`;
-
   win.style.width = s.w.value + "px";
   win.style.height = s.h.value + "px";
+  win.style.transform = `translate(${s.x.value}px, ${s.y.value}px) rotate(${s.rot.value}deg) scale(${s.scaleX.value}, ${s.scaleY.value})`;
+}
+
+// Main animation loop for all windows
+function update() {
+  windows.forEach(win => {
+    const s = win._state;
+    step(s.x); step(s.y);
+    step(s.w, 0.15, 0.7); step(s.h, 0.15, 0.7);
+    step(s.scaleX, 0.2, 0.6); step(s.scaleY, 0.2, 0.6);
+    
+    // Tilt logic: only tilt when moving horizontally
+    if (s.isDragging) {
+      s.rot.target = Math.max(-6, Math.min(6, s.x.velocity * 0.25));
+    } else {
+      s.rot.target = 0;
+    }
+    step(s.rot, 0.1, 0.8);
+    
+    render(win);
+  });
+  requestAnimationFrame(update);
 }
 
 // ===============================
-// BRING TO FRONT
+// INTERACTION LOGIC
 // ===============================
 function bringToFront(el) {
   el.style.zIndex = ++zIndexCounter;
 }
 
-// ===============================
-// DRAG SYSTEM (JIGGLE)
-// ===============================
 function makeDraggable(win) {
   const header = win.querySelector(".window-titlebar");
-  if (!header) return;
-
   const s = win._state;
-
-  let dragging = false;
   let offsetX = 0, offsetY = 0;
 
   header.addEventListener("pointerdown", e => {
     if (e.target.closest(".window-controls")) return;
-
-    dragging = true;
+    s.isDragging = true;
     bringToFront(win);
-
     const rect = win.getBoundingClientRect();
     offsetX = e.clientX - rect.left;
     offsetY = e.clientY - rect.top;
-
     win.setPointerCapture(e.pointerId);
-    requestAnimationFrame(loop);
   });
 
-  header.addEventListener("pointermove", e => {
-    if (!dragging) return;
-
+  window.addEventListener("pointermove", e => {
+    if (!s.isDragging) return;
     s.x.target = e.clientX - offsetX;
     s.y.target = e.clientY - offsetY;
   });
 
-  header.addEventListener("pointerup", e => {
-    dragging = false;
-    win.releasePointerCapture(e.pointerId);
+  window.addEventListener("pointerup", e => {
+    s.isDragging = false;
   });
-
-  function loop() {
-    step(s.x);
-    step(s.y);
-
-    // tilt effect
-    s.rot.target = Math.max(-6, Math.min(6, s.x.velocity * 0.25));
-
-    render(win);
-
-    if (
-      dragging ||
-      Math.abs(s.x.velocity) > 0.1 ||
-      Math.abs(s.y.velocity) > 0.1
-    ) {
-      requestAnimationFrame(loop);
-    } else {
-      s.rot.target = 0;
-    }
-  }
 }
 
-// ===============================
-// RESIZE SYSTEM (JELLY)
-// ===============================
 function makeResizable(win) {
   const handles = win.querySelectorAll(".resize-handle");
   const s = win._state;
 
   handles.forEach(handle => {
-    let resizing = false;
     let startX, startY, startW, startH;
 
     handle.addEventListener("pointerdown", e => {
-      e.preventDefault();
-      resizing = true;
-
+      e.stopPropagation();
+      s.isResizing = true;
       const rect = win.getBoundingClientRect();
-      startX = e.clientX;
-      startY = e.clientY;
-      startW = rect.width;
-      startH = rect.height;
-
+      startX = e.clientX; startY = e.clientY;
+      startW = rect.width; startH = rect.height;
       win.setPointerCapture(e.pointerId);
-      requestAnimationFrame(loop);
     });
 
-    handle.addEventListener("pointermove", e => {
-      if (!resizing) return;
-
+    window.addEventListener("pointermove", e => {
+      if (!s.isResizing) return;
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
 
       if (handle.classList.contains("resize-r") || handle.classList.contains("resize-br")) {
-        s.w.target = Math.max(200, startW + dx);
-        s.scaleX.target = 1 + dx * 0.002;
+        s.w.target = Math.max(250, startW + dx);
+        s.scaleX.target = 1 + (dx * 0.001);
       }
-
       if (handle.classList.contains("resize-b") || handle.classList.contains("resize-br")) {
         s.h.target = Math.max(150, startH + dy);
-        s.scaleY.target = 1 + dy * 0.002;
+        s.scaleY.target = 1 + (dy * 0.001);
       }
     });
 
-    handle.addEventListener("pointerup", e => {
-      resizing = false;
+    window.addEventListener("pointerup", () => {
+      s.isResizing = false;
       s.scaleX.target = 1;
       s.scaleY.target = 1;
-      win.releasePointerCapture(e.pointerId);
     });
-
-    function loop() {
-      step(s.w, 0.15, 0.7);
-      step(s.h, 0.15, 0.7);
-      step(s.scaleX, 0.2, 0.6);
-      step(s.scaleY, 0.2, 0.6);
-
-      render(win);
-
-      if (
-        resizing ||
-        Math.abs(s.w.velocity) > 0.1 ||
-        Math.abs(s.h.velocity) > 0.1
-      ) {
-        requestAnimationFrame(loop);
-      }
-    }
   });
 }
 
 // ===============================
-// OPEN / CLOSE
+// WINDOW CONTROLS
 // ===============================
 function openWindow(id) {
   const el = document.getElementById(id);
   if (!el) return;
-
   el.classList.remove("hidden");
-  
-  // Ensure the window is accessible to screen readers when opened
   el.setAttribute('aria-hidden', 'false');
-  
   bringToFront(el);
 }
 
 function closeWindow(id) {
   const el = document.getElementById(id);
   if (!el) return;
-
   el.classList.add("hidden");
   el.setAttribute('aria-hidden', 'true');
 }
@@ -297,16 +243,12 @@ document.addEventListener("DOMContentLoaded", () => {
     createWindowState(win);
     makeDraggable(win);
     makeResizable(win);
-
-    win.style.willChange = "transform, width, height";
-    win.style.transform = "translateZ(0)";
+    
+    // Bring to front on click anywhere
+    win.addEventListener('pointerdown', () => bringToFront(win));
   });
 
-  document.querySelectorAll(".closewin").forEach(btn => {
-    btn.addEventListener("click", () => {
-      closeWindow(btn.dataset.target);
-    });
-  });
+  requestAnimationFrame(update);
 });
 </script>
 <script src="js/crashlogger.js"></script>
