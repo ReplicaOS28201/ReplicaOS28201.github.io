@@ -24,7 +24,7 @@
   <div class="window-titlebar">
     <span>Calculator</span>
     <div class="window-controls">
-      <button class="closewin" data-target="myApp">×</button>
+       <button onclick="closeWindow('myApp')">×</button>
     </div>
   </div>
   <iframe src="Apps/com.calc.app/Index.html" class="window-content"></iframe>
@@ -38,7 +38,7 @@
   <div class="window-titlebar">
     <span>Secret Lang</span>
     <div class="window-controls">
-      <button class="closewin" data-target="secret">×</button>
+      <button onclick="closeWindow('secret')">×</button>
     </div>
   </div>
   <iframe src="Apps/com.os.secretlang/Index.html" class="window-content"></iframe>
@@ -52,7 +52,7 @@
   <div class="window-titlebar">
     <span>Poki</span>
     <div class="window-controls">
-      <button class="closewin" data-target="poki">×</button>
+       <button onclick="closeWindow('poki')">×</button>
     </div>
   </div>
   <iframe src="https://poki.com/" class="window-content"></iframe>
@@ -66,7 +66,7 @@
   <div class="window-titlebar">
     <span>Crash Viewer</span>
     <div class="window-controls">
-      <button class="closewin" data-target="crashViewer">×</button>
+       <button onclick="closeWindow('crashViewer')">×</button>
     </div>
   </div>
   <div id="crashList"></div>
@@ -274,6 +274,10 @@ function openWindow(id) {
   if (!el) return;
 
   el.classList.remove("hidden");
+  
+  // Ensure the window is accessible to screen readers when opened
+  el.setAttribute('aria-hidden', 'false');
+  
   bringToFront(el);
 }
 
@@ -282,6 +286,7 @@ function closeWindow(id) {
   if (!el) return;
 
   el.classList.add("hidden");
+  el.setAttribute('aria-hidden', 'true');
 }
 
 // ===============================
