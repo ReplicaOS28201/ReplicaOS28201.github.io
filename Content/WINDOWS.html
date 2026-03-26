@@ -297,7 +297,7 @@ video {
 </div>
   
 <!-- DOCK -->
-<div class="dock glass">
+<div class="dock glass" style="z-index:99999999999;">
   <button class="dock-icon" onclick="openWindow('myApp')">Calc</button>
   <button class="dock-icon" onclick="openWindow('secret')">Secret</button>
   <button class="dock-icon" onclick="openWindow('poki')">Poki</button>
@@ -312,6 +312,7 @@ video {
 <!-- ==============================
        19OS WINDOW SYSTEM
        ============================== -->
+  <script src="js/Mode.js">
 <script>
 let video = document.getElementById("cameraVideo");
 let canvas = document.getElementById("cameraCanvas");
