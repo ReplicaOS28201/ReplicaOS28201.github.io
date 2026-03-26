@@ -5,10 +5,132 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>19OS</title>
   <link rel="stylesheet" href="CSS/main.css">
+<style>
+  /* ===============================
+   🍎 CONTROL CENTER
+=============================== */
 
+.cc {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+
+  pointer-events: none;
+}
+
+.cc-panel {
+  width: 320px;
+  margin: 20px;
+
+  padding: 16px;
+  border-radius: 20px;
+
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(25px);
+
+  transform: translateY(-20px) scale(0.95);
+  opacity: 0;
+
+  transition: all 0.3s ease;
+
+  pointer-events: auto;
+}
+
+.cc.show .cc-panel {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+.cc-header {
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.cc-group {
+  margin-bottom: 12px;
+}
+
+.cc-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.cc-buttons button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 12px;
+  border: none;
+
+  background: rgba(255,255,255,0.1);
+  color: white;
+  cursor: pointer;
+}
+
+/* Toggle button */
+#ccToggle {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+
+  z-index: 9999;
+
+  background: rgba(0,0,0,0.6);
+  color: white;
+
+  border: none;
+  border-radius: 10px;
+  padding: 8px;
+
+  backdrop-filter: blur(10px);
+}
+
+/* Hidden */
+.hidden {
+  display: none;
+}
+</style>
 </head>
 
 <body>
+  <!-- 🍎 CONTROL CENTER -->
+<div id="controlCenter" class="cc hidden">
+  <div class="cc-panel glass">
+
+    <div class="cc-header">Control Center</div>
+
+    <!-- Focus Modes -->
+    <div class="cc-group">
+      <span>Focus</span>
+      <div class="cc-buttons">
+        <button onclick="setFocusMode('gaming')">🎮</button>
+        <button onclick="setFocusMode('coding')">💻</button>
+        <button onclick="setFocusMode('chill')">🌙</button>
+        <button onclick="setFocusMode('default')">🔓</button>
+      </div>
+    </div>
+
+    <!-- Quick Toggles -->
+    <div class="cc-group">
+      <span>System</span>
+      <div class="cc-buttons">
+        <button onclick="toggleWifi()">📶</button>
+        <button onclick="toggleSound()">🔊</button>
+        <button onclick="toggleTheme()">🎨</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Button to open -->
+<button id="ccToggle" onclick="toggleControlCenter()">⚙️</button>
     <h2 class="title">19OS</h2>
 
     <!-- WINDOWS -->
@@ -76,6 +198,56 @@
        19OS WINDOW SYSTEM
        ============================== -->
   <script>
+    // --- CC -- 
+    // ===============================
+// 🍎 CONTROL CENTER LOGIC
+// ===============================
+function toggleControlCenter() {
+  const cc = document.getElementById("controlCenter");
+
+  if (cc.classList.contains("show")) {
+    cc.classList.remove("show");
+    setTimeout(() => cc.classList.add("hidden"), 200);
+  } else {
+    cc.classList.remove("hidden");
+    setTimeout(() => cc.classList.add("show"), 10);
+  }
+}
+
+// Close when clicking outside
+document.addEventListener("click", (e) => {
+  const cc = document.getElementById("controlCenter");
+  const panel = cc.querySelector(".cc-panel");
+
+  if (!panel.contains(e.target) && e.target.id !== "ccToggle") {
+    cc.classList.remove("show");
+    setTimeout(() => cc.classList.add("hidden"), 200);
+  }
+});
+
+// ===============================
+// 🔘 FAKE SYSTEM TOGGLES
+// ===============================
+let wifi = true;
+function toggleWifi() {
+  wifi = !wifi;
+  FocusModes.notify("WiFi " + (wifi ? "On 📶" : "Off ❌"));
+}
+
+let sound = true;
+function toggleSound() {
+  sound = !sound;
+  FocusModes.notify("Sound " + (sound ? "On 🔊" : "Muted 🔇"));
+}
+
+function toggleTheme() {
+  const current = document.body.getAttribute("data-theme");
+
+  const next = current === "dark" ? "light" : "dark";
+  document.body.setAttribute("data-theme", next);
+
+  FocusModes.notify("Theme: " + next);
+}
     // ---------- Open / Close ----------
     let zIndexCounter = 100;
     function bringToFront(win){ zIndexCounter++; win.style.zIndex = zIndexCounter; }
