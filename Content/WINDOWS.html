@@ -228,7 +228,74 @@ video {
   </div>
 </div>
 
-<!-- ADD OTHER WINDOWS (Calculator, Secret, Browser, etc.) AS BEFORE -->
+<div id="myApp" class="appwindow hidden">
+      <div class="resize-handle resize-br"></div>
+      <div class="resize-handle resize-r"></div>
+      <div class="resize-handle resize-b"></div>
+      <div class="window-titlebar">
+        <span>Calculator</span>
+        <div class="window-controls">
+          <button onclick="closeWindow('myApp'); event.stopPropagation();">×</button>
+        </div>
+      </div>
+      <iframe src="Apps/com.calc.app/Index.html" class="window-content" sandbox="allow-scripts allow-same-origin"></iframe>
+    </div>
+
+    <div id="secret" class="appwindow hidden">
+      <div class="resize-handle resize-br"></div>
+      <div class="resize-handle resize-r"></div>
+      <div class="resize-handle resize-b"></div>
+      <div class="window-titlebar">
+        <span>Secret Lang</span>
+        <div class="window-controls">
+          <button onclick="closeWindow('secret'); event.stopPropagation();">×</button>
+        </div>
+      </div>
+      <iframe src="Apps/com.os.secretlang/Index.html" class="window-content" sandbox="allow-scripts allow-same-origin"></iframe>
+    </div>
+
+    <div id="poki" class="appwindow hidden">
+      <div class="resize-handle resize-br"></div>
+      <div class="resize-handle resize-r"></div>
+      <div class="resize-handle resize-b"></div>
+      <div class="window-titlebar">
+        <span>Poki</span>
+        <div class="window-controls">
+          <button onclick="closeWindow('poki'); event.stopPropagation();">×</button>
+        </div>
+      </div>
+      <iframe src="https://poki.com/" class="window-content" sandbox="allow-scripts allow-same-origin"></iframe>
+    </div>
+
+    <div id="crashViewer" class="appwindow hidden">
+      <div class="resize-handle resize-br"></div>
+      <div class="resize-handle resize-r"></div>
+      <div class="resize-handle resize-b"></div>
+      <div class="window-titlebar">
+        <span>Crash Viewer</span>
+        <button onclick="closeWindow('crashViewer'); event.stopPropagation();">×</button>
+      </div>
+      <div id="crashList"></div>
+      <button onclick="clearCrashes()">Clear Logs</button>
+    </div>
+  <div id="browser" class="appwindow hidden">
+  <div class="resize-handle resize-br"></div>
+  <div class="resize-handle resize-r"></div>
+  <div class="resize-handle resize-b"></div>
+
+  <div class="window-titlebar">
+    <span>Browser</span>
+    <div class="window-controls">
+      <button onclick="closeWindow('browser'); event.stopPropagation();">×</button>
+    </div>
+  </div>
+
+  <iframe src="Apps/com.browser.app/Index.html"
+          class="window-content"
+          sandbox="allow-scripts allow-same-origin allow-popups">
+  </iframe>
+</div>
+  
 <!-- DOCK -->
 <div class="dock glass">
   <button class="dock-icon" onclick="openWindow('myApp')">Calc</button>
