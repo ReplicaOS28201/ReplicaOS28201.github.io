@@ -23,20 +23,23 @@
 
   overflow: hidden;
 
-  /* FIXED: remove static scale to prevent JS conflict */
+  /* 🚀 GPU MOVEMENT */
   transform: translate3d(0,0,0);
+  will-change: transform;
+
   opacity: 0.9;
 
+  /* ✅ FIXED: NO transform animation */
   transition:
-    transform 0.2s ease,
     opacity 0.2s ease,
-    box-shadow 0.2s ease;
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
 }
 
 /* 🧠 ACTIVE WINDOW */
 .appwindow.active {
-  /* Scale effect preserved during drag via JS */
   opacity: 1;
+
   box-shadow:
     0 25px 80px rgba(0,0,0,0.5),
     inset 0 1px 0 rgba(255,255,255,0.2);
@@ -47,7 +50,7 @@
 /* DIM BACKGROUND WINDOWS */
 .appwindow:not(.active) {
   filter: brightness(0.75);
-   z-index:499;
+  z-index: 499;
 }
 
 /* =========================
@@ -67,9 +70,10 @@
   border-bottom: 1px solid rgba(255,255,255,0.08);
 
   cursor: grab;
-  user-select: none;
 
-  /* MOBILE FIX: allow full drag in all directions */
+  /* ✅ IMPORTANT FIXES */
+  user-select: none;
+  -webkit-user-select: none;
   touch-action: none;
 }
 
@@ -85,7 +89,6 @@
   gap: 10px;
 }
 
-/* BUTTON BASE */
 .window-controls button {
   width: 32px;
   height: 32px;
@@ -117,7 +120,6 @@
   z-index: 5;
 }
 
-/* BIGGER INVISIBLE TAP AREA */
 .window-controls button::before {
   content: "";
   position: absolute;
@@ -128,35 +130,24 @@
 .window-controls .close {
   background: radial-gradient(circle at 30% 30%, #ff7b72, #ff3b30);
 }
-
 .window-controls .minimize {
   background: radial-gradient(circle at 30% 30%, #ffd86b, #ffb300);
 }
-
 .window-controls .maximize {
   background: radial-gradient(circle at 30% 30%, #4cd964, #28c840);
 }
 
-/* HOVER (desktop only) */
+/* HOVER */
 @media (hover: hover) {
   .window-controls button:hover {
     transform: scale(1.1);
     filter: brightness(1.1);
-
-    box-shadow:
-      inset 0 1px 3px rgba(255,255,255,0.3),
-      0 6px 16px rgba(0,0,0,0.35);
-  }
-
-  .window-controls button:hover::after {
-    opacity: 1;
   }
 }
 
-/* PRESS (works on mobile) */
+/* PRESS */
 .window-controls button:active {
   transform: scale(0.9);
-  box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
 }
 
 /* ICONS */
@@ -167,17 +158,9 @@
   color: rgba(0,0,0,0.7);
 }
 
-.window-controls .close::after {
-  content: "✕";
-}
-
-.window-controls .minimize::after {
-  content: "—";
-}
-
-.window-controls .maximize::after {
-  content: "▢";
-}
+.window-controls .close::after { content: "✕"; }
+.window-controls .minimize::after { content: "—"; }
+.window-controls .maximize::after { content: "▢"; }
 
 /* =========================
    📦 CONTENT
@@ -196,7 +179,6 @@
   z-index: 10;
 }
 
-/* RIGHT */
 .resize-r {
   width: 10px;
   height: 100%;
@@ -205,7 +187,6 @@
   cursor: ew-resize;
 }
 
-/* BOTTOM */
 .resize-b {
   width: 100%;
   height: 10px;
@@ -214,7 +195,6 @@
   cursor: ns-resize;
 }
 
-/* CORNER */
 .resize-br {
   width: 22px;
   height: 22px;
@@ -223,7 +203,6 @@
   cursor: nwse-resize;
 }
 
-/* VISUAL CORNER */
 .resize-br::after {
   content: "";
   position: absolute;
@@ -261,9 +240,6 @@
   .appwindow {
     width: 92vw;
     height: 75vh;
-
-    left: 4vw !important;
-    top: 10vh !important;
   }
 
   .window-controls button {
