@@ -10,4 +10,10 @@
 
   --text-light: #ffffff;
   --text-dark: #111;
+   --z-bg: 0;
+  --z-window: 100;
+  --z-active: 500;
+  --z-dock: 900;
+  --z-overlay: 1000;
+  --z-system: 999999;
 }
