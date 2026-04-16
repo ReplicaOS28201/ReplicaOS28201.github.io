@@ -15,8 +15,7 @@ html, body {
 
 /* 3. Better Header Layout */
 header {
-  width: 100%; /* Better than 100vw to avoid scrollbar overlaps */
-  display: flex; /* Added display: flex so align/justify actually work */
+ position: fixed; top: 0; width: 100%;
 
   padding: 1rem; /* Visual breathing room */
 }
