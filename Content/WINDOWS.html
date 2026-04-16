@@ -87,12 +87,28 @@ function openWindow(id) {
   bringToFront(el);
 }
 
+/**
+ * Safely closes a window element by ID.
+ * @param {string} id - The DOM ID of the element to close.
+ */
 function closeWindow(id) {
   const el = document.getElementById(id);
-  if (!el) return console.warn("Window not found:", id);
+  
+  if (!el) {
+    console.warn(`Window with ID "${id}" was not found.`);
+    return;
+  }
 
+  // 1. Handle Visual State
+  // Use a class for transitions/animations if needed
   el.classList.add("hidden");
-  el.style.display = "none";
+
+  // 2. Handle Accessibility (Aria)
+  // This tells screen readers the element is no longer active
+  el.setAttribute("aria-hidden", "true");
+
+  const media = el.querySelectorAll('video, audio');
+  media.forEach(m => m.pause());
 }
 
 // ---------- Z-Index System ----------
