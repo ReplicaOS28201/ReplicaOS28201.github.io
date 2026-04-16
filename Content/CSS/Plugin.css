@@ -1,17 +1,32 @@
-/* 1. Use a more-intuitive box-sizing model */
-* {
+/* 1. Improved Box Sizing & Reset */
+*, *::before, *::after {
   box-sizing: border-box;
-	margin:0;
+}
 
+/* 2. Prevent horizontal overflow and handle height */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  overflow-x: hidden; /* Prevents unwanted horizontal scrolling */
+	line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
+
+/* 3. Better Header Layout */
 header {
-	width:100vw;
-	align-items: center;
+  width: 100%; /* Better than 100vw to avoid scrollbar overlaps */
+  display: flex; /* Added display: flex so align/justify actually work */
+  align-items: center;
   justify-content: center;
+  padding: 1rem; /* Visual breathing room */
 }
-	
+
+/* 4. Robust Main Container */
 .main {
-	display: flex;
-  justify-content: center; /* Horizontal */
-  align-items: center;     /* Vertikal */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh; /* Gives the flexbox room to actually center vertically */
+  width: 100%;
 }
