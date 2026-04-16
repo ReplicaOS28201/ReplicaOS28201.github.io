@@ -92,23 +92,20 @@ function openWindow(id) {
  * @param {string} id - The DOM ID of the element to close.
  */
 function closeWindow(id) {
+  console.log("closeWindow called:", id);
+
   const el = document.getElementById(id);
-  
+
   if (!el) {
-    console.warn(`Window with ID "${id}" was not found.`);
+    console.warn("NOT FOUND:", id);
     return;
   }
 
-  // 1. Handle Visual State
-  // Use a class for transitions/animations if needed
-  el.classList.add("hidden");
+  el.style.display = "none";
+  el.style.pointerEvents = "none";
+  el.style.zIndex = "-1";
 
-  // 2. Handle Accessibility (Aria)
-  // This tells screen readers the element is no longer active
-  el.setAttribute("aria-hidden", "true");
-
-  const media = el.querySelectorAll('video, audio');
-  media.forEach(m => m.pause());
+  console.log("Closed:", el);
 }
 
 // ---------- Z-Index System ----------
