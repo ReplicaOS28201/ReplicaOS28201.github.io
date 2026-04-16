@@ -152,45 +152,6 @@
   border-radius: 10px;
   margin-bottom: 5px;
 }
-   #systemUpdateLock {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: black;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999999;
-}
-
-.update-box {
-  text-align: center;
-  width: 300px;
-}
-
-.bar {
-  width: 100%;
-  height: 8px;
-  background: #333;
-  border-radius: 10px;
-  overflow: hidden;
-  margin: 20px 0;
-}
-
-#barFill {
-  width: 0%;
-  height: 100%;
-  background: lime;
-  transition: width 0.2s linear;
-}
-
-#percent {
-  font-size: 14px;
-  opacity: 0.7;
-}
 </style>
 </head>
 
@@ -220,18 +181,7 @@
 <h2>19OS</h2>
 
 <!-- WINDOWS -->
-<div id="updateScreen" class="update-ui">
-  <h2>System Update</h2>
-  
-  <p id="updateStatus">Idle</p>
 
-  <div class="progress-bar">
-    <div id="updateProgress"></div>
-  </div>
-
-  
-</div>
-   
 <div id="cameraApp" class="appwindow hidden">
   <div class="resize-handle resize-br"></div>
   <div class="resize-handle resize-r"></div>
@@ -278,8 +228,7 @@
 <div id="notifications"></div>
 
 <script src="js/Mode.js"></script>
-   <script src="js/UpdatingPage.js"></script>
-<script src="js/Plugin.js"></script>
+
 <script>
 // CAMERA FIX
 let currentStream=null;
@@ -324,109 +273,61 @@ function closeWindow(id){
 }
 
 // DRAG
-document.querySelectorAll(".appwindow").forEach(win => {
-  const handles = win.querySelectorAll(".resize-handle");
+document.querySelectorAll(".appwindow").forEach(win=>{
+  let bar=win.querySelector(".window-titlebar");
 
-  handles.forEach(handle => {
-    handle.onmousedown = function(e) {
-      e.preventDefault();
-      bringToFront(win);
+  bar.onmousedown=e=>{
+    bringToFront(win);
 
-      const startWidth = win.offsetWidth;
-      const startHeight = win.offsetHeight;
-      const startX = e.clientX;
-      const startY = e.clientY;
+    let shiftX=e.clientX - win.getBoundingClientRect().left;
+    let shiftY=e.clientY - win.getBoundingClientRect().top;
 
-      function doResize(e) {
-        if (handle.classList.contains('resize-r') || handle.classList.contains('resize-br')) {
-          win.style.width = startWidth + (e.clientX - startX) + 'px';
-        }
-        if (handle.classList.contains('resize-b') || handle.classList.contains('resize-br')) {
-          win.style.height = startHeight + (e.clientY - startY) + 'px';
-        }
-      }
+    function move(e){
+      win.style.left=e.clientX-shiftX+"px";
+      win.style.top=e.clientY-shiftY+"px";
+    }
 
-      function stopResize() {
-        document.removeEventListener('mousemove', doResize);
-        document.removeEventListener('mouseup', stopResize);
-      }
-
-      document.addEventListener('mousemove', doResize);
-      document.addEventListener('mouseup', stopResize);
+    document.addEventListener("mousemove",move);
+    document.onmouseup=()=>{
+      document.removeEventListener("mousemove",move);
     };
-  });
+  };
 });
-// CONTROL CENTER FIX
-function toggleControlCenter() {
-  const cc = document.getElementById("controlCenter");
 
-  if (cc.classList.contains("show")) {
+// CONTROL CENTER FIX
+function toggleControlCenter(){
+  let cc=document.getElementById("controlCenter");
+
+  if(cc.classList.contains("show")){
     cc.classList.remove("show");
-    
-    // Wait for the transition to actually finish
-    cc.addEventListener('transitionend', () => {
-      cc.classList.add("hidden");
-    }, { once: true }); // { once: true } auto-removes the listener
-    
-  } else {
+    setTimeout(()=>cc.classList.add("hidden"),200);
+  }else{
     cc.classList.remove("hidden");
-    // RequestAnimationFrame is a cleaner "tick" than setTimeout(10)
-    requestAnimationFrame(() => {
-      cc.classList.add("show");
-    });
+    setTimeout(()=>cc.classList.add("show"),10);
   }
 }
 
 // SAFE CLICK CLOSE
-document.addEventListener("click", e => {
-  const cc = document.getElementById("controlCenter");
-  const toggleBtn = document.getElementById("ccToggle");
-  
-  // 1. Safety check: if CC doesn't exist or isn't currently shown, do nothing
-  if (!cc || !cc.classList.contains("show")) return;
+document.addEventListener("click",e=>{
+  let cc=document.getElementById("controlCenter");
+  if(!cc) return;
 
-  // 2. Check if the click happened OUTSIDE the panel AND OUTSIDE the toggle button
-  // .closest() handles cases where you click an icon inside the button
-  const clickedInsidePanel = cc.contains(e.target);
-  const clickedToggle = toggleBtn && toggleBtn.contains(e.target);
+  let panel=cc.querySelector(".cc-panel");
+  if(!panel) return;
 
-  if (!clickedInsidePanel && !clickedToggle) {
-    // Start the close animation
+  if(!panel.contains(e.target) && e.target.id!=="ccToggle"){
     cc.classList.remove("show");
-
-    // Wait for the CSS transition (e.g., 200ms) before applying display: none
-    setTimeout(() => {
-      // Re-verify it hasn't been reopened during the timeout
-      if (!cc.classList.contains("show")) {
-        cc.classList.add("hidden");
-      }
-    }, 200);
+    setTimeout(()=>cc.classList.add("hidden"),200);
   }
 });
 
 // SYSTEM
-function notify(msg) {
-  // 1. Ensure the container exists
-  const container = document.getElementById("notifications") || document.body;
-
-  // 2. Create the element
-  const n = document.createElement("div");
-  n.className = "notification";
-  n.innerText = msg;
-
-  // 3. Append to the container
-  container.appendChild(n);
-
-  // 4. Clean up with a fade-out (optional but recommended)
-  setTimeout(() => {
-    n.classList.add("fade-out"); // Add a CSS class for a smooth exit
-    n.addEventListener("transitionend", () => n.remove());
-    
-    // Fallback if no CSS transition is defined
-    if (getComputedStyle(n).transitionDuration === "0s") {
-      n.remove();
-    }
-  }, 3000);
+function notify(msg){
+  let n=document.createElement("div");
+  n.className="notification";
+  n.innerText=msg;
+  notifications.appendChild(n);
+  setTimeout(()=>n.remove(),3000);
 }
 
 function toggleWifi(){ notify("WiFi toggled"); }
