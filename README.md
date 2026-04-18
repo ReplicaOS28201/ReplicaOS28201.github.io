@@ -17,7 +17,7 @@ We are building something amazing and are **looking for collaborators** to join 
 💻 Open source projects  
 
 You can check it live here:  
-[https://19os.github.io/](https://19os.github.io/)
+[https://19os.github.io/Content/WINDOWS.html](main)
 
 ---
 
