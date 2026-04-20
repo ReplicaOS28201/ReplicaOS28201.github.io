@@ -128,7 +128,8 @@ function makeDraggable(windowEl) {
 }
 
   function startDrag(e) {
-    e.preventDefault();
+ if (e.target.closest("button, input, label, a")) return;
+    if (e.type === "touchstart") e.preventDefault();
     isDragging = true;
 
     bringToFront(windowEl);
@@ -147,7 +148,7 @@ function makeDraggable(windowEl) {
 
   function drag(e) {
     if (!isDragging) return;
-    e.preventDefault();
+    if (e.type === "touchmove") e.preventDefault();
 
     const pos = getPos(e);
 
