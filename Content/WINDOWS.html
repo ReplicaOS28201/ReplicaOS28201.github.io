@@ -107,8 +107,9 @@ function makeDraggable(windowEl) {
   let rafId = null;
 
   function getPos(e) {
-    return e.touches ? e.touches[0] : e;
-  }
+  const p = e.touches ? e.touches[0] : e;
+  return { x: p.clientX, y: p.clientY };
+}
 
   function startDrag(e) {
     e.preventDefault();
