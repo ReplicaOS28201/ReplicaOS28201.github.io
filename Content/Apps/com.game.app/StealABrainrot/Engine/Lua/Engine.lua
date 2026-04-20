@@ -1,6 +1,23 @@
 local brainrots = {}
 local func = {}
 local LP ={}
+local server = {}
+
+function server.validateEvent(server,localplayer, caller)
+  if server then 
+    if localplayer then
+      local udo = localplayer
+      local sr = server
+      local rex = udo + sr
+      rex:Call(sr,caller)
+    else
+      -- no lp
+    end
+  else
+    -- no server
+  end
+end
+
 function func.BuyBrainrot(uuid, user)
   if user then 
     if uuid then
