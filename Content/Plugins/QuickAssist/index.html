@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quick Assist</title>
+<style>
+body { font-family: Arial; background:#111; color:#fff; text-align:center; }
+button, input { padding:10px; margin:5px; border-radius:8px; border:none; }
+video { width:80%; margin-top:20px; border-radius:12px; }
+</style>
+</head>
+<body>
+
+<h1>Quick Assist</h1>
+
+<button onclick="createSession()">Share Screen</button><br>
+
+<input id="codeInput" placeholder="Enter Code">
+<button onclick="joinSession()">Connect</button>
+
+<video id="video" autoplay playsinline></video>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
