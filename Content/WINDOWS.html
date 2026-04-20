@@ -77,16 +77,32 @@
 // 19OS WINDOW SYSTEM
 // ===============================
 
-function openWindow(id) {
-  const el = document.getElementById(id);
-  if (!el) return console.warn("Window not found:", id);
+let topZ = 500;
 
-  el.classList.remove("hidden");
-  el.style.display = "block";
-  el.style.pointerEvents = "auto";
-
-  bringToFront(el);
+function bringToFront(el) {
+  if (!el) return;
+  topZ += 1;
+ el.style.zIndex = String(topZ);
++  document.querySelectorAll(".appwindow").forEach(win => {
+    win.classList.toggle("active", win === el);
+});
 }
+
+function clearCrashes() {
+  const crashList = document.getElementById("crashList");
+  if (crashList) crashList.innerHTML = "";
+}
+
+ function openWindow(id) {
+   const el = document.getElementById(id);
+   if (!el) return console.warn("Window not found:", id);
+ 
+   el.classList.remove("hidden");
+   el.style.display = "block";
+   el.style.pointerEvents = "auto";
+ 
+   bringToFront(el);
+
 
 function closeWindow(id) {
   const el = document.getElementById(id);
