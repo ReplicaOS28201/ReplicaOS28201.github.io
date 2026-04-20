@@ -86,6 +86,18 @@ function openWindow(id) {
 
   bringToFront(el);
 }
+  async function getBatteryInfo() {
+  if ('getBattery' in navigator) {
+    const battery = await navigator.getBattery();
+    
+    return {
+      level: Math.round(battery.level * 100),
+      charging: battery.charging
+    };
+  }
+
+  return null;
+}
 
 /**
  * Safely closes a window element by ID.
