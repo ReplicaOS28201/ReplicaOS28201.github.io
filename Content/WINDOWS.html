@@ -1,156 +1,113 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>19OS</title>
+<meta charset="UTF-8">
+<title>19OS Windows</title>
   <link rel="stylesheet" href="CSS/main.css">
 </head>
 
 <body>
-<div id="desktop">
 
-  <h2 class="title">19OS</h2>
-
-  <!-- WINDOWS -->
-  <div id="myApp" class="appwindow hidden">
-    <div class="resize-handle resize-br"></div> <!-- bottom right -->
-<div class="resize-handle resize-r"></div>  <!-- right -->
-<div class="resize-handle resize-b"></div>  <!-- bottom -->
-  <div class="window-titlebar">
-    <span>My App</span>
-    <div class="window-controls">
-      <button onclick="closeWindow('myApp')">×</button>
-    </div>
-  </div>
-  <iframe src="Apps/com.calc.app/Index.html" class="window-content" style="width: 100%; height:100%;"></iframe>
-</div>
-  <div id="secret" class="appwindow hidden">
-    <div class="resize-handle resize-br"></div> <!-- bottom right -->
-<div class="resize-handle resize-r"></div>  <!-- right -->
-<div class="resize-handle resize-b"></div>  <!-- bottom -->
-  <div class="window-titlebar">
-    <span>My App</span>
-    <div class="window-controls">
-      <button onclick="closeWindow('secret')">×</button>
-    </div>
-  </div>
-  <iframe src="Apps/com.os.secretlang/Index.html" class="window-content" style="width: 100%; height:100%;"></iframe>
-</div>
+  <!-- POKI WINDOW -->
   <div id="poki" class="appwindow hidden">
-    <div class="resize-handle resize-br"></div> <!-- bottom right -->
-<div class="resize-handle resize-r"></div>  <!-- right -->
-<div class="resize-handle resize-b"></div>  <!-- bottom -->
-  <div class="window-titlebar">
-    <span>My App</span>
-    <div class="window-controls">
-      <button onclick="closeWindow('poki')">×</button>
+    <div class="resize-handle resize-br"></div>
+    <div class="resize-handle resize-r"></div>
+    <div class="resize-handle resize-b"></div>
+
+    <div class="window-titlebar">
+      <span>My App</span>
+      <div class="window-controls">
+        <button onclick="closeWindow('poki')">×</button>
+      </div>
+    </div>
+
+    <iframe src="https://poki.com/" class="window-content" style="width:100%; height:100%;"></iframe>
+  </div>
+
+  <!-- CRASH VIEWER -->
+  <div id="crashViewer" class="appwindow hidden">
+    <div class="resize-handle resize-br"></div>
+    <div class="resize-handle resize-r"></div>
+    <div class="resize-handle resize-b"></div>
+
+    <div class="window-titlebar">
+      <span>Crash Viewer</span>
+      <button onclick="closeWindow('crashViewer')">✖</button>
+    </div>
+
+    <div id="crashList"></div>
+    <button onclick="clearCrashes()">Clear Logs</button>
+  </div>
+
+  <!-- FILE EXPLORER -->
+  <div id="fileExplorer" class="appwindow hidden">
+    <div class="resize-handle resize-br"></div>
+    <div class="resize-handle resize-r"></div>
+    <div class="resize-handle resize-b"></div>
+
+    <div class="window-titlebar">
+      <span>File Explorer</span>
+      <div class="window-controls">
+        <button onclick="closeWindow('fileExplorer')">×</button>
+      </div>
+    </div>
+
+    <div class="window-content">
+      <div id="fileDropZone" style="border:1px dashed rgba(255,255,255,0.3); border-radius:10px; padding:12px; margin-bottom:12px;">
+        Drag files here or
+        <label for="filePicker" style="text-decoration:underline; cursor:pointer;">browse</label>
+        <input id="filePicker" type="file" multiple style="display:none;">
+      </div>
+
+      <ul id="fileList" style="list-style:none; margin:0; padding:0; display:grid; gap:8px;"></ul>
     </div>
   </div>
-  <iframe src="https://poki.com/" class="window-content" style="width: 100%; height:100%;"></iframe>
-</div>
-  <div id="crashViewer" class="appwindow hidden">
-    <div class="resize-handle resize-br"></div> <!-- bottom right -->
-<div class="resize-handle resize-r"></div>  <!-- right -->
-<div class="resize-handle resize-b"></div>  <!-- bottom -->
-  <div class="window-titlebar">
-    <span>Crash Viewer</span>
-    <button onclick="closeWindow('crashViewer')">✖</button>
-  </div>
 
-  <div id="crashList"></div>
-
-  <button onclick="clearCrashes()">Clear Logs</button>
-</div>
   <!-- DOCK -->
   <div class="dock glass">
     <button class="dock-icon" onclick="openWindow('myApp')">Calculator</button>
-     <button class="dock-icon" onclick="openWindow('secret')">Secret Lang</button>
+    <button class="dock-icon" onclick="openWindow('secret')">Secret Lang</button>
     <button class="dock-icon" onclick="openWindow('poki')">Poki</button>
+    <button class="dock-icon" onclick="openWindow('fileExplorer')">Files</button>
     <button class="dock-icon" onclick="openWindow('crashViewer')">Crashviewer</button>
   </div>
 
-</div>
-
 <script>
-  // ===============================
-// 19OS WINDOW SYSTEM (FULL)
+// ===============================
+// 19OS WINDOW SYSTEM
 // ===============================
 
-// ---------- Open / Close ----------
 function openWindow(id) {
   const el = document.getElementById(id);
   if (!el) return console.warn("Window not found:", id);
 
   el.classList.remove("hidden");
   el.style.display = "block";
+  el.style.pointerEvents = "auto";
 
   bringToFront(el);
 }
-  async function getBatteryInfo() {
-  if ('getBattery' in navigator) {
-    const battery = await navigator.getBattery();
-    
-    return {
-      level: Math.round(battery.level * 100),
-      charging: battery.charging
-    };
-  }
 
-  return null;
-}
-
-/**
- * Safely closes a window element by ID.
- * @param {string} id - The DOM ID of the element to close.
- */
 function closeWindow(id) {
-  console.log("closeWindow called:", id);
-
   const el = document.getElementById(id);
+  if (!el) return;
 
-  if (!el) {
-    console.warn("NOT FOUND:", id);
-    return;
-  }
-
+  el.classList.add("hidden");
   el.style.display = "none";
-  el.style.pointerEvents = "none";
-  el.style.zIndex = "-1";
-
-  console.log("Closed:", el);
 }
 
-// ---------- Z-Index System ----------
-let zIndexCounter = 100;
-
-function bringToFront(windowEl) {
-  zIndexCounter++;
-  windowEl.style.zIndex = zIndexCounter;
-}
-
-// ===============================
-// DRAG SYSTEM (ULTRA SMOOTH)
-// ===============================
+// ---------- Drag System ----------
 function makeDraggable(windowEl) {
   const header = windowEl.querySelector(".window-titlebar");
-  if (!header) return;
 
   let isDragging = false;
-  let offsetX = 0;
-  let offsetY = 0;
-
-  let targetX = 0;
-  let targetY = 0;
-
-  let currentX = 0;
-  let currentY = 0;
-
+  let offsetX = 0, offsetY = 0;
+  let targetX = 0, targetY = 0;
+  let currentX = 0, currentY = 0;
   let rafId = null;
 
   function getPos(e) {
-    return e.touches
-      ? { x: e.touches[0].clientX, y: e.touches[0].clientY }
-      : { x: e.clientX, y: e.clientY };
+    return e.touches ? e.touches[0] : e;
   }
 
   function startDrag(e) {
@@ -167,7 +124,7 @@ function makeDraggable(windowEl) {
 
     document.addEventListener("mousemove", drag);
     document.addEventListener("mouseup", stopDrag);
-    document.addEventListener("touchmove", drag, { passive: false });
+    document.addEventListener("touchmove", drag, { passive:false });
     document.addEventListener("touchend", stopDrag);
   }
 
@@ -177,24 +134,24 @@ function makeDraggable(windowEl) {
 
     const pos = getPos(e);
 
-    targetX = pos.x - offsetX;
-    targetY = pos.y - offsetY;
+    const maxX = window.innerWidth - windowEl.offsetWidth;
+    const maxY = window.innerHeight - windowEl.offsetHeight;
 
-    if (!rafId) rafId = requestAnimationFrame(updatePosition);
+    targetX = Math.min(Math.max(0, pos.x - offsetX), Math.max(0, maxX));
+    targetY = Math.min(Math.max(0, pos.y - offsetY), Math.max(0, maxY));
+
+    if (!rafId) rafId = requestAnimationFrame(update);
   }
 
-  function updatePosition() {
+  function update() {
     currentX = targetX;
     currentY = targetY;
-
     windowEl.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
-
     rafId = null;
   }
 
   function stopDrag() {
     isDragging = false;
-
     document.removeEventListener("mousemove", drag);
     document.removeEventListener("mouseup", stopDrag);
     document.removeEventListener("touchmove", drag);
@@ -202,142 +159,57 @@ function makeDraggable(windowEl) {
   }
 
   header.addEventListener("mousedown", startDrag);
-  header.addEventListener("touchstart", startDrag, { passive: false });
+  header.addEventListener("touchstart", startDrag, { passive:false });
 }
 
-// ===============================
-// RESIZE SYSTEM (SMOOTH)
-// ===============================
-function makeResizable(windowEl) {
-  const handles = windowEl.querySelectorAll(".resize-handle");
+// ---------- File Explorer ----------
+function addFilesToExplorer(fileList) {
+  const list = document.getElementById("fileList");
+  if (!list) return;
 
-  handles.forEach(handle => {
-    let isResizing = false;
+  [...fileList].forEach(file => {
+    const item = document.createElement("li");
+    item.style.padding = "10px";
+    item.style.borderRadius = "8px";
+    item.style.background = "rgba(255,255,255,0.06)";
+    item.style.fontSize = "13px";
 
-    let startX, startY;
-    let startWidth, startHeight;
-
-    let targetWidth, targetHeight;
-    let rafId = null;
-
-    function getPos(e) {
-      return e.touches
-        ? { x: e.touches[0].clientX, y: e.touches[0].clientY }
-        : { x: e.clientX, y: e.clientY };
-    }
-
-    function startResize(e) {
-      e.preventDefault();
-      isResizing = true;
-
-      bringToFront(windowEl);
-
-      const rect = windowEl.getBoundingClientRect();
-      const pos = getPos(e);
-
-      startX = pos.x;
-      startY = pos.y;
-
-      startWidth = rect.width;
-      startHeight = rect.height;
-
-      document.addEventListener("mousemove", resize);
-      document.addEventListener("mouseup", stopResize);
-      document.addEventListener("touchmove", resize, { passive: false });
-      document.addEventListener("touchend", stopResize);
-    }
-
-    function resize(e) {
-      if (!isResizing) return;
-      e.preventDefault();
-
-      const pos = getPos(e);
-
-      const dx = pos.x - startX;
-      const dy = pos.y - startY;
-
-      if (handle.classList.contains("resize-r") || handle.classList.contains("resize-br")) {
-        targetWidth = startWidth + dx;
-      }
-
-      if (handle.classList.contains("resize-b") || handle.classList.contains("resize-br")) {
-        targetHeight = startHeight + dy;
-      }
-
-      if (!rafId) rafId = requestAnimationFrame(applyResize);
-    }
-
-    function applyResize() {
-      const minWidth = 200;
-      const minHeight = 150;
-
-      if (targetWidth !== undefined) {
-        windowEl.style.width = Math.max(minWidth, targetWidth) + "px";
-      }
-
-      if (targetHeight !== undefined) {
-        windowEl.style.height = Math.max(minHeight, targetHeight) + "px";
-      }
-
-      rafId = null;
-    }
-
-    function stopResize() {
-      isResizing = false;
-
-      document.removeEventListener("mousemove", resize);
-      document.removeEventListener("mouseup", stopResize);
-      document.removeEventListener("touchmove", resize);
-      document.removeEventListener("touchend", stopResize);
-    }
-
-    handle.addEventListener("mousedown", startResize);
-    handle.addEventListener("touchstart", startResize, { passive: false });
-  });
-}
-
-// ===============================
-// INIT SYSTEM
-// ===============================
-document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".appwindow").forEach(win => {
-    makeDraggable(win);
-    makeResizable(win);
-  });
-});
-</script>
-  <script src="js/crashlogger.js"></script>
-  <script>
-    function openCrashViewer() {
-  openWindow("crashViewer");
-  renderCrashLogs();
-}
-
-function renderCrashLogs() {
-  const list = document.getElementById("crashList");
-  list.innerHTML = "";
-
-  CrashLogger.logs.forEach(log => {
-    const item = document.createElement("div");
-    item.className = "crash-item";
-
-    item.innerHTML = `
-      <b>${log.source}</b> - ${log.time}<br>
-      ${log.message}
-      <details>
-        <summary>Stack</summary>
-        <pre>${log.stack}</pre>
-      </details>
-    `;
-
+    item.textContent = `${file.name} (${Math.max(1, Math.round(file.size / 1024))} KB)`;
     list.appendChild(item);
   });
 }
 
-function clearCrashes() {
-  CrashLogger.clear();
-  renderCrashLogs();
+function initFileExplorer() {
+  const dropZone = document.getElementById("fileDropZone");
+  const picker = document.getElementById("filePicker");
+  if (!dropZone || !picker) return;
+
+  picker.addEventListener("change", e => {
+    addFilesToExplorer(e.target.files || []);
+    picker.value = "";
+  });
+
+  ["dragenter","dragover"].forEach(type => {
+    dropZone.addEventListener(type, e => {
+      e.preventDefault();
+      dropZone.style.background = "rgba(255,255,255,0.15)";
+    });
+  });
+
+  ["dragleave","drop"].forEach(type => {
+    dropZone.addEventListener(type, e => {
+      e.preventDefault();
+      dropZone.style.background = "transparent";
+    });
+  });
+
+  dropZone.addEventListener("drop", e => {
+    addFilesToExplorer(e.dataTransfer.files || []);
+  });
 }
-  </script>
+
+initFileExplorer();
+</script>
+
 </body>
 </html>
