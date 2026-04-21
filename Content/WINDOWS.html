@@ -101,21 +101,65 @@
 // ===============================
 
 // ---------- Open / Close ----------
-// ---------- Open / Close (FIXED) ----------
+ // ===============================
+// WINDOW MEMORY SYSTEM
+// ===============================
+function saveWindowState(windowEl) {
+  const id = windowEl.id;
+  if (!id) return;
+
+  const rect = windowEl.getBoundingClientRect();
+
+  // Extract transform position
+  const style = window.getComputedStyle(windowEl);
+  const matrix = new DOMMatrixReadOnly(style.transform);
+
+  const state = {
+    x: matrix.m41,
+    y: matrix.m42,
+    width: rect.width,
+    height: rect.height
+  };
+
+  localStorage.setItem("win_" + id, JSON.stringify(state));
+}
+
+function loadWindowState(windowEl) {
+  const id = windowEl.id;
+  if (!id) return;
+
+  const saved = localStorage.getItem("win_" + id);
+  if (!saved) return;
+
+  try {
+    const state = JSON.parse(saved);
+
+    // Restore size
+    if (state.width) windowEl.style.width = state.width + "px";
+    if (state.height) windowEl.style.height = state.height + "px";
+
+    // Restore position (transform-based system)
+    windowEl.style.transform = `translate3d(${state.x}px, ${state.y}px, 0)`;
+
+  } catch (e) {
+    console.warn("Failed to load window state:", id);
+  }
+}
 function openWindow(id) {
   const el = document.getElementById(id);
   if (!el) return console.warn("Window not found:", id);
 
-  // Reset all bad states from close
   el.classList.remove("hidden");
   el.style.display = "block";
   el.style.pointerEvents = "auto";
   el.style.visibility = "visible";
 
-  // Important: reset zIndex if it was broken
   if (el.style.zIndex === "-1") {
-    el.style.zIndex = "";
+    el.style.zIndex = "10";
   }
+
+  // 🔥 LOAD SAVED STATE
+  loadWindowState(el);
 
   bringToFront(el);
 }
@@ -208,13 +252,16 @@ function makeDraggable(windowEl) {
   }
 
   function stopDrag() {
-    isDragging = false;
+  isDragging = false;
 
-    document.removeEventListener("mousemove", drag);
-    document.removeEventListener("mouseup", stopDrag);
-    document.removeEventListener("touchmove", drag);
-    document.removeEventListener("touchend", stopDrag);
-  }
+  // 🔥 SAVE POSITION
+  saveWindowState(windowEl);
+
+  document.removeEventListener("mousemove", drag);
+  document.removeEventListener("mouseup", stopDrag);
+  document.removeEventListener("touchmove", drag);
+  document.removeEventListener("touchend", stopDrag);
+}
 
   header.addEventListener("mousedown", startDrag);
   header.addEventListener("touchstart", startDrag, { passive: false });
@@ -298,13 +345,16 @@ function makeResizable(windowEl) {
     }
 
     function stopResize() {
-      isResizing = false;
+  isResizing = false;
 
-      document.removeEventListener("mousemove", resize);
-      document.removeEventListener("mouseup", stopResize);
-      document.removeEventListener("touchmove", resize);
-      document.removeEventListener("touchend", stopResize);
-    }
+  // 🔥 SAVE SIZE
+  saveWindowState(windowEl);
+
+  document.removeEventListener("mousemove", resize);
+  document.removeEventListener("mouseup", stopResize);
+  document.removeEventListener("touchmove", resize);
+  document.removeEventListener("touchend", stopResize);
+}
 
     handle.addEventListener("mousedown", startResize);
     handle.addEventListener("touchstart", startResize, { passive: false });
