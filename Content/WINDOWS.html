@@ -99,52 +99,22 @@
   // ===============================
 // 19OS WINDOW SYSTEM (FULL)
 // ===============================
+// ---------- Z-Index System ----------
+let zIndexCounter = 100;
+
+function bringToFront(windowEl) {
+  zIndexCounter++;
+  windowEl.style.zIndex = zIndexCounter;
+
+  // ensure it's clickable
+  windowEl.style.pointerEvents = "auto";
+}
 
 // ---------- Open / Close ----------
  // ===============================
 // WINDOW MEMORY SYSTEM
 // ===============================
-function saveWindowState(windowEl) {
-  const id = windowEl.id;
-  if (!id) return;
-
-  const rect = windowEl.getBoundingClientRect();
-
-  // Extract transform position
-  const style = window.getComputedStyle(windowEl);
-  const matrix = new DOMMatrixReadOnly(style.transform);
-
-  const state = {
-    x: matrix.m41,
-    y: matrix.m42,
-    width: rect.width,
-    height: rect.height
-  };
-
-  localStorage.setItem("win_" + id, JSON.stringify(state));
-}
-
-function loadWindowState(windowEl) {
-  const id = windowEl.id;
-  if (!id) return;
-
-  const saved = localStorage.getItem("win_" + id);
-  if (!saved) return;
-
-  try {
-    const state = JSON.parse(saved);
-
-    // Restore size
-    if (state.width) windowEl.style.width = state.width + "px";
-    if (state.height) windowEl.style.height = state.height + "px";
-
-    // Restore position (transform-based system)
-    windowEl.style.transform = `translate3d(${state.x}px, ${state.y}px, 0)`;
-
-  } catch (e) {
-    console.warn("Failed to load window state:", id);
-  }
-}function openWindow(id) {
+function openWindow(id) {
   const el = document.getElementById(id);
   if (!el) return console.warn("Window not found:", id);
 
@@ -174,16 +144,6 @@ function closeWindow(id) {
   
   // 3. Reset Z-index so it doesn't stay "on top" while invisible
   el.style.zIndex = "-1";
-}
-// ---------- Z-Index System ----------
-let zIndexCounter = 100;
-
-function bringToFront(windowEl) {
-  zIndexCounter++;
-  windowEl.style.zIndex = zIndexCounter;
-
-  // ensure it's clickable
-  windowEl.style.pointerEvents = "auto";
 }
 
 // ===============================
