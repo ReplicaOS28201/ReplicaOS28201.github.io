@@ -150,22 +150,7 @@ function renderGames() {
   selectedIndex = -1;
 }
 
-/* ===== OPEN GAME ===== */
-function openGame(id) {
-  const win = document.getElementById(id);
-  if (!win) return;
 
-  win.style.display = "flex";
-  win.style.zIndex = Date.now();
-
-  localStorage.setItem("lastGame", id);
-}
-
-/* ===== CLOSE ===== */
-function closeWindow(id) {
-  const win = document.getElementById(id);
-  if (win) win.style.display = "none";
-}
 
 /* ===== KEYBOARD NAV ===== */
 input.addEventListener("keydown", (e) => {
