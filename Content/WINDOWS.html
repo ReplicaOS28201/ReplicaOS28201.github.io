@@ -144,22 +144,17 @@ function loadWindowState(windowEl) {
   } catch (e) {
     console.warn("Failed to load window state:", id);
   }
-}
-function openWindow(id) {
+}function openWindow(id) {
   const el = document.getElementById(id);
   if (!el) return console.warn("Window not found:", id);
 
-  // 1. Reset visibility states
+  // 1. Remove hidden class first
   el.classList.remove("hidden");
-  el.style.display = "block"; 
+  
+  // 2. Force a clean display state
+  el.style.display = "flex"; // Changed to flex to help inner layout
   el.style.pointerEvents = "auto";
   el.style.visibility = "visible";
-
-  // 2. Handle Z-Index 
-  // If it was hidden via -1, bring it into the positive stack
-  if (getComputedStyle(el).zIndex === "-1") {
-    el.style.zIndex = "10";
-  }
 
   // 3. Logic & Persistence
   loadWindowState(el);
@@ -170,14 +165,14 @@ function closeWindow(id) {
   const el = document.getElementById(id);
   if (!el) return console.warn("Window not found:", id);
 
-  // 1. Standard Hide
+  // 1. Add hidden class
   el.classList.add("hidden");
-  el.style.display = "none";
   
-  // 2. Disable interactions
+  // 2. Cleanup styles so they don't block the screen
+  el.style.display = "none";
   el.style.pointerEvents = "none";
   
-  // 3. Move to back of stack to ensure it doesn't block clicks
+  // 3. Reset Z-index so it doesn't stay "on top" while invisible
   el.style.zIndex = "-1";
 }
 // ---------- Z-Index System ----------
