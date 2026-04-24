@@ -1,4 +1,17 @@
 // Content/Plugins/QuickAssist/firebase.js
+const _0xdata = [
+  "aW5pdGlhbGl6ZUFwcA==",
+  "Z2V0RmlyZXN0b3Jl",
+  "QUl6YVN5Q2xzT3ZYRnVuU3laWE9LTklFR0ZUTThldEx3NmxRZ0g0",
+  "b3M2N3o5enAuZmlyZWJhc2VhcHAuY29t",
+  "aHR0cHM6Ly9vczY3ejl6cC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20=",
+  "b3M2N3o5enA=",
+  "b3M2N3o5enAuZmlyZWJhc2VzdG9yYWdlLmFwcA==",
+  "ODY0MDMxNzUyNTY3",
+  "MTo4NjQwMzE3NTI1Njc6d2ViOjRiZTE0ZDVjYWI3ZDE2MmM1Y2UxNzI=",
+  "Ry1HUllQRFNGSFRZ"
+];
+
 (function (_0x9f3c7a, _0x2d91b3) {
   const _0x5a2d = function (_0x3f0c9e) {
     while (--_0x3f0c9e) {
@@ -28,19 +41,6 @@ const _0xdec = function (_0xidx) {
   }
   return _0xdec["b64"](_0xval);
 };
-
-const _0xdata = [
-  "aW5pdGlhbGl6ZUFwcA==",
-  "Z2V0RmlyZXN0b3Jl",
-  "QUl6YVN5Q2xzT3ZYRnVuU3laWE9LTklFR0ZUTThldEx3NmxRZ0g0",
-  "b3M2N3o5enAuZmlyZWJhc2VhcHAuY29t",
-  "aHR0cHM6Ly9vczY3ejl6cC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20=",
-  "b3M2N3o5enA=",
-  "b3M2N3o5enAuZmlyZWJhc2VzdG9yYWdlLmFwcA==",
-  "ODY0MDMxNzUyNTY3",
-  "MTo4NjQwMzE3NTI1Njc6d2ViOjRiZTE0ZDVjYWI3ZDE2MmM1Y2UxNzI=",
-  "Ry1HUllQRFNGSFRZ"
-];
 
 
 const _0ximports = await import(
