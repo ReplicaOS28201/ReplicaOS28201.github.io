@@ -4,6 +4,9 @@
  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>ReplicaOS28201</title>
   <link rel="stylesheet" href="CSS/main.css">
+ <style>
+  .hidden { display: none;}
+ </style>
 </head>
 
 <body>
@@ -124,8 +127,7 @@ function openWindow(id) {
   // 2. Force a clean display state
   el.style.display = "flex"; // Changed to flex to help inner layout
   el.style.pointerEvents = "auto";
-  el.style.visibility = "visible";
-
+  
   // 3. Logic & Persistence
  
   bringToFront(el);
@@ -142,8 +144,7 @@ function closeWindow(id) {
   el.style.display = "none";
   el.style.pointerEvents = "none";
   
-  // 3. Reset Z-index so it doesn't stay "on top" while invisible
-  el.style.zIndex = "-1";
+  
 }
 
 // ===============================
