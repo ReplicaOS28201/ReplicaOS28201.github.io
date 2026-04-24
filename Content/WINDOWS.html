@@ -116,35 +116,14 @@ function bringToFront(windowEl) {
 // ---------- Open / Close ----------
  // ===============================
 // WINDOW MEMORY SYSTEM
-// ===============================
-function openWindow(id) {
+// ===============================function openWindow(id) {
   const el = document.getElementById(id);
-  if (!el) return console.warn("Window not found:", id);
-
-  // 1. Remove hidden class first
   el.classList.remove("hidden");
-  
-  // 2. Force a clean display state
-  el.style.display = "flex"; // Changed to flex to help inner layout
-  el.style.pointerEvents = "auto";
-  
-  // 3. Logic & Persistence
- 
   bringToFront(el);
 }
 
 function closeWindow(id) {
-  const el = document.getElementById(id);
-  if (!el) return console.warn("Window not found:", id);
-
-  // 1. Add hidden class
-  el.classList.add("hidden");
-  
-  // 2. Cleanup styles so they don't block the screen
-  el.style.display = "none";
-  el.style.pointerEvents = "none";
-  
-  
+  document.getElementById(id).classList.add("hidden");
 }
 
 // ===============================
