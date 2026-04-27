@@ -133,11 +133,27 @@ Write notes...
 
 /* ================= WINDOW SYSTEM ================= */
 function openWindow(id) {
-  document.getElementById(id).classList.remove("hidden");
+  const element = document.getElementById(id);
+  if (element) {
+    element.classList.remove("hidden");
+    element.setAttribute("aria-hidden", "false"); // For accessibility
+  }
 }
 
 function closeWindow(id) {
-  document.getElementById(id).classList.add("hidden");
+  const element = document.getElementById(id);
+  if (element) {
+    element.classList.add("hidden");
+    element.setAttribute("aria-hidden", "true");
+  }
+}
+
+// Pro Tip: A toggle function is often more useful
+function toggleWindow(id) {
+  const element = document.getElementById(id);
+  if (element) {
+    element.classList.toggle("hidden");
+  }
 }
 
 /* ================= FIXED DRAG SYSTEM ================= */
