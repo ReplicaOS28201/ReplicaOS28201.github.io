@@ -1,575 +1,240 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ReplicaOS28201</title>
-  <link rel="stylesheet" href="CSS/main.css">
- <style>
-  .hidden { display: none;}
-  #world3d {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  display: none; /* 👈 IMPORTANT */
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ReplicaOS28201</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background: #1a1a1a; font-family: sans-serif; color: white; }
+        .hidden { display: none !important; }
+        
+        #world3d {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            display: none;
+        }
 
-body.mode3d #world3d {
-  display: block;
-}
+        body.mode3d #world3d { display: block; }
+        body.mode3d .appwindow:not(.hidden) { opacity: 0.9; }
 
-/* Optional: dim background in 3D mode */
-body.mode3d {
-  background: black;
-}
- </style>
+        .appwindow {
+            position: absolute;
+            width: 400px; height: 300px;
+            background: rgba(30, 30, 30, 0.9);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .window-titlebar {
+            padding: 10px; background: rgba(255,255,255,0.1);
+            display: flex; justify-content: space-between; cursor: move;
+            user-select: none;
+        }
+
+        .window-content { flex: 1; border: none; background: white; }
+
+        .dock {
+            position: fixed; bottom: 20px; left: 50%;
+            transform: translateX(-50%);
+            display: flex; gap: 10px; padding: 10px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(15px); border-radius: 15px;
+            z-index: 9999;
+        }
+
+        .dock-icon {
+            padding: 10px 15px; border: none; border-radius: 8px;
+            background: rgba(255,255,255,0.2); color: white; cursor: pointer;
+        }
+
+        /* Resize Handles */
+        .resize-handle { position: absolute; z-index: 10; }
+        .resize-br { width: 15px; height: 15px; right: 0; bottom: 0; cursor: nwse-resize; }
+        .resize-r { width: 5px; height: 100%; right: 0; top: 0; cursor: e-resize; }
+        .resize-b { height: 5px; width: 100%; bottom: 0; left: 0; cursor: s-resize; }
+    </style>
 </head>
 
 <body>
-<div id="myApp" class="appwindow hidden">
-    <div class="resize-handle resize-br"></div> <!-- bottom right -->
-<div class="resize-handle resize-r"></div>  <!-- right -->
-<div class="resize-handle resize-b"></div>  <!-- bottom -->
-  <div class="window-titlebar">
-    <span>My App</span>
-    <div class="window-controls">
-      <button onclick="closeWindow('myApp')">×</button>
-    </div>
-  </div>
-  <iframe src="Apps/com.calc.app/Index.html" class="window-content" style="width: 100%; height:100%;"></iframe>
+
+<canvas id="world3d"></canvas>
+
+<div id="myApp" class="appwindow hidden" style="left: 50px; top: 50px;">
+    <div class="window-titlebar"><span>Calculator</span><button onclick="closeWindow('myApp')">×</button></div>
+    <iframe src="about:blank" class="window-content"></iframe>
+    <div class="resize-handle resize-br"></div>
+    <div class="resize-handle resize-r"></div>
+    <div class="resize-handle resize-b"></div>
 </div>
-  <div id="secret" class="appwindow hidden">
-    <div class="resize-handle resize-br"></div> <!-- bottom right -->
-<div class="resize-handle resize-r"></div>  <!-- right -->
-<div class="resize-handle resize-b"></div>  <!-- bottom -->
-  <div class="window-titlebar">
-    <span>My App</span>
-    <div class="window-controls">
-      <button onclick="closeWindow('secret')">×</button>
+
+<div id="fileExplorer" class="appwindow hidden" style="left: 100px; top: 100px;">
+    <div class="window-titlebar"><span>File Explorer</span><button onclick="closeWindow('fileExplorer')">×</button></div>
+    <div class="window-content" style="background: #222; padding: 20px;">
+        <div id="fileDropZone" style="border: 2px dashed #444; padding: 20px; text-align: center;">
+            Drag files here
+        </div>
+        <ul id="fileList"></ul>
     </div>
-  </div>
-  <iframe src="Apps/com.os.secretlang/Index.html" class="window-content" style="width: 100%; height:100%;"></iframe>
+    <div class="resize-handle resize-br"></div>
 </div>
-  <!-- POKI WINDOW -->
-  <div id="poki" class="appwindow hidden">
-    <div class="resize-handle resize-br"></div>
-    <div class="resize-handle resize-r"></div>
-    <div class="resize-handle resize-b"></div>
 
-    <div class="window-titlebar">
-      <span>My App</span>
-      <div class="window-controls">
-        <button onclick="closeWindow('poki')">×</button>
-      </div>
-    </div>
-
-    <iframe src="https://poki.com/" class="window-content" style="width:100%; height:100%;"></iframe>
-  </div>
-
-  <!-- CRASH VIEWER -->
-  <div id="crashViewer" class="appwindow hidden">
-    <div class="resize-handle resize-br"></div>
-    <div class="resize-handle resize-r"></div>
-    <div class="resize-handle resize-b"></div>
-
-    <div class="window-titlebar">
-      <span>Crash Viewer</span>
-      <button onclick="closeWindow('crashViewer')">✖</button>
-    </div>
-
-    <div id="crashList"></div>
-    <button onclick="clearCrashes()">Clear Logs</button>
-  </div>
-
-  <!-- FILE EXPLORER -->
-  <div id="fileExplorer" class="appwindow hidden">
-    <div class="resize-handle resize-br"></div>
-    <div class="resize-handle resize-r"></div>
-    <div class="resize-handle resize-b"></div>
-
-    <div class="window-titlebar">
-      <span>File Explorer</span>
-      <div class="window-controls">
-        <button onclick="closeWindow('fileExplorer')">×</button>
-      </div>
-    </div>
-
-    <div class="window-content">
-      <div id="fileDropZone" style="border:1px dashed rgba(255,255,255,0.3); border-radius:10px; padding:12px; margin-bottom:12px;">
-        Drag files here or
-        <label for="filePicker" style="text-decoration:underline; cursor:pointer;">browse</label>
-        <input id="filePicker" type="file" multiple style="display:none;">
-      </div>
-
-      <ul id="fileList" style="list-style:none; margin:0; padding:0; display:grid; gap:8px;"></ul>
-    </div>
-  </div>
-
-  <!-- DOCK -->
-  <div class="dock glass">
-    <button class="dock-icon" onclick="openWindow('myApp')">Calculator</button>
-    <button class="dock-icon" onclick="openWindow('secret')">Secret Lang</button>
-    <button class="dock-icon" onclick="openWindow('poki')">Poki</button>
+<div class="dock">
+    <button class="dock-icon" onclick="openWindow('myApp')">Calc</button>
     <button class="dock-icon" onclick="openWindow('fileExplorer')">Files</button>
-    <button class="dock-icon" onclick="openWindow('crashViewer')">Crashviewer</button>
-   <button class="dock-icon" onclick="toggle3D()">3D Mode</button>
-  </div>
+    <button class="dock-icon" onclick="toggle3D()">Toggle 3D</button>
+</div>
 
 <script>
- function create3DWindow(appId, url, x, y) {
-  // Create iframe (hidden)
-  const iframe = document.createElement("iframe");
-  iframe.src = url;
-  iframe.style.position = "absolute";
-  iframe.style.left = "-9999px";
-  iframe.style.width = "800px";
-  iframe.style.height = "600px";
-  document.body.appendChild(iframe);
-
-  // Render iframe into canvas
-  const canvas = document.createElement("canvas");
-  canvas.width = 800;
-  canvas.height = 600;
-  const ctx = canvas.getContext("2d");
-
-  const texture = new THREE.CanvasTexture(canvas);
-
-  const geo = new THREE.PlaneGeometry(4, 3);
-  const mat = new THREE.MeshBasicMaterial({ map: texture });
-
-  const panel = new THREE.Mesh(geo, mat);
-  panel.position.set(x, y, 0);
-  panel.userData.app = appId;
-
-  scene.add(panel);
-
-  // Update texture loop
-  function updateTexture() {
-    try {
-      ctx.drawImage(iframe, 0, 0, canvas.width, canvas.height);
-      texture.needsUpdate = true;
-    } catch (e) {}
-    requestAnimationFrame(updateTexture);
-  }
-
-  updateTexture();
-
-  return panel;
-}
- const apps3D = [];
-
-apps3D.push(create3DWindow("myApp", "Apps/com.calc.app/Index.html", -3, 1));
-apps3D.push(create3DWindow("secret", "Apps/com.os.secretlang/Index.html", 3, 1));
-
- 
-  // ===============================
-// 19OS WINDOW SYSTEM (FULL)
-// ===============================
-// ---------- Z-Index System ----------
-let zIndexCounter = 100;
-
-let highestZ = 1;
+// --- STATE MANAGEMENT ---
+let highestZ = 100;
 const windowState = {};
 
+function saveWindowState(el) {
+    windowState[el.id] = {
+        width: el.style.width,
+        height: el.style.height,
+        transform: el.style.transform
+    };
+    localStorage.setItem('os_windows', JSON.stringify(windowState));
+}
+
 function openWindow(id) {
-  const el = document.getElementById(id);
-  if (!el) return;
-
-  el.classList.remove("hidden");
-
-  // Restore position if saved
-  if (windowState[id]) {
-    el.style.left = windowState[id].left;
-    el.style.top = windowState[id].top;
-  }
-
-  bringToFront(el);
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove("hidden");
+    bringToFront(el);
 }
 
 function closeWindow(id) {
-  const el = document.getElementById(id);
-  if (!el) return;
-
-  // Save position before closing
-  windowState[id] = {
-    left: el.style.left,
-    top: el.style.top
-  };
-
-  el.classList.add("hidden");
+    document.getElementById(id).classList.add("hidden");
 }
 
 function bringToFront(el) {
-  highestZ++;
-  el.style.zIndex = highestZ;
+    el.style.zIndex = ++highestZ;
 }
 
-// ===============================
-// DRAG SYSTEM (ULTRA SMOOTH)
-// ===============================
-function makeDraggable(windowEl) {
-  const header = windowEl.querySelector(".window-titlebar");
-  if (!header) return;
+// --- DRAG & RESIZE ---
+function makeDraggable(win) {
+    const header = win.querySelector(".window-titlebar");
+    let x = 0, y = 0, tX = 0, tY = 0;
 
-  let isDragging = false;
-  let offsetX = 0;
-  let offsetY = 0;
+    header.onmousedown = (e) => {
+        bringToFront(win);
+        x = e.clientX; y = e.clientY;
+        const style = window.getComputedStyle(win);
+        const matrix = new WebKitCSSMatrix(style.transform);
+        tX = matrix.m41; tY = matrix.m42;
 
-  let targetX = 0;
-  let targetY = 0;
-
-  let currentX = 0;
-  let currentY = 0;
-
-  let rafId = null;
-
-  function getPos(e) {
-    return e.touches
-      ? { x: e.touches[0].clientX, y: e.touches[0].clientY }
-      : { x: e.clientX, y: e.clientY };
-  }
-
-  function startDrag(e) {
-    e.preventDefault();
-    isDragging = true;
-
-    bringToFront(windowEl);
-
-    const rect = windowEl.getBoundingClientRect();
-    const pos = getPos(e);
-
-    offsetX = pos.x - rect.left;
-    offsetY = pos.y - rect.top;
-
-    document.addEventListener("mousemove", drag);
-    document.addEventListener("mouseup", stopDrag);
-    document.addEventListener("touchmove", drag, { passive: false });
-    document.addEventListener("touchend", stopDrag);
-  }
-
-  function drag(e) {
-    if (!isDragging) return;
-    e.preventDefault();
-
-    const pos = getPos(e);
-
-    targetX = pos.x - offsetX;
-    targetY = pos.y - offsetY;
-
-    if (!rafId) rafId = requestAnimationFrame(updatePosition);
-  }
-
-  function updatePosition() {
-    currentX = targetX;
-    currentY = targetY;
-
-    windowEl.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
-
-    rafId = null;
-  }
-
-  function stopDrag() {
-  isDragging = false;
-
-  // 🔥 SAVE POSITION
-  saveWindowState(windowEl);
-
-  document.removeEventListener("mousemove", drag);
-  document.removeEventListener("mouseup", stopDrag);
-  document.removeEventListener("touchmove", drag);
-  document.removeEventListener("touchend", stopDrag);
+        document.onmousemove = (e) => {
+            const dx = e.clientX - x;
+            const dy = e.clientY - y;
+            win.style.transform = `translate3d(${tX + dx}px, ${tY + dy}px, 0)`;
+        };
+        document.onmouseup = () => {
+            document.onmousemove = null;
+            saveWindowState(win);
+        };
+    };
 }
 
-  header.addEventListener("mousedown", startDrag);
-  header.addEventListener("touchstart", startDrag, { passive: false });
-}
+function makeResizable(win) {
+    const handles = win.querySelectorAll(".resize-handle");
+    handles.forEach(h => {
+        h.onmousedown = (e) => {
+            e.preventDefault();
+            const startW = win.offsetWidth;
+            const startH = win.offsetHeight;
+            const startX = e.clientX;
+            const startY = e.clientY;
 
-// ===============================
-// RESIZE SYSTEM (SMOOTH)
-// ===============================
-function makeResizable(windowEl) {
-  const handles = windowEl.querySelectorAll(".resize-handle");
-
-  handles.forEach(handle => {
-    let isResizing = false;
-
-    let startX, startY;
-    let startWidth, startHeight;
-
-    let targetWidth, targetHeight;
-    let rafId = null;
-
-    function getPos(e) {
-      return e.touches
-        ? { x: e.touches[0].clientX, y: e.touches[0].clientY }
-        : { x: e.clientX, y: e.clientY };
-    }
-
-    function startResize(e) {
-      e.preventDefault();
-      isResizing = true;
-
-      bringToFront(windowEl);
-
-      const rect = windowEl.getBoundingClientRect();
-      const pos = getPos(e);
-
-      startX = pos.x;
-      startY = pos.y;
-
-      startWidth = rect.width;
-      startHeight = rect.height;
-
-      document.addEventListener("mousemove", resize);
-      document.addEventListener("mouseup", stopResize);
-      document.addEventListener("touchmove", resize, { passive: false });
-      document.addEventListener("touchend", stopResize);
-    }
-
-    function resize(e) {
-      if (!isResizing) return;
-      e.preventDefault();
-
-      const pos = getPos(e);
-
-      const dx = pos.x - startX;
-      const dy = pos.y - startY;
-
-      if (handle.classList.contains("resize-r") || handle.classList.contains("resize-br")) {
-        targetWidth = startWidth + dx;
-      }
-
-      if (handle.classList.contains("resize-b") || handle.classList.contains("resize-br")) {
-        targetHeight = startHeight + dy;
-      }
-
-      if (!rafId) rafId = requestAnimationFrame(applyResize);
-    }
-
-    function applyResize() {
-      const minWidth = 200;
-      const minHeight = 150;
-
-      if (targetWidth !== undefined) {
-        windowEl.style.width = Math.max(minWidth, targetWidth) + "px";
-      }
-
-      if (targetHeight !== undefined) {
-        windowEl.style.height = Math.max(minHeight, targetHeight) + "px";
-      }
-
-      rafId = null;
-    }
-
-    function stopResize() {
-  isResizing = false;
-
-  // 🔥 SAVE SIZE
-  saveWindowState(windowEl);
-
-  document.removeEventListener("mousemove", resize);
-  document.removeEventListener("mouseup", stopResize);
-  document.removeEventListener("touchmove", resize);
-  document.removeEventListener("touchend", stopResize);
-}
-
-    handle.addEventListener("mousedown", startResize);
-    handle.addEventListener("touchstart", startResize, { passive: false });
-  });
-}
-
-
-
-// ---------- File Explorer ----------
-function addFilesToExplorer(fileList) {
-  const list = document.getElementById("fileList");
-  if (!list) return;
-
-  [...fileList].forEach(file => {
-    const item = document.createElement("li");
-    item.style.padding = "10px";
-    item.style.borderRadius = "8px";
-    item.style.background = "rgba(255,255,255,0.06)";
-    item.style.fontSize = "13px";
-
-    item.textContent = `${file.name} (${Math.max(1, Math.round(file.size / 1024))} KB)`;
-    list.appendChild(item);
-  });
-}
-
-function initFileExplorer() {
-  const dropZone = document.getElementById("fileDropZone");
-  const picker = document.getElementById("filePicker");
-  if (!dropZone || !picker) return;
-
-  picker.addEventListener("change", e => {
-    addFilesToExplorer(e.target.files || []);
-    picker.value = "";
-  });
-
-  ["dragenter","dragover"].forEach(type => {
-    dropZone.addEventListener(type, e => {
-      e.preventDefault();
-      dropZone.style.background = "rgba(255,255,255,0.15)";
+            document.onmousemove = (e) => {
+                if (h.classList.contains('resize-r') || h.classList.contains('resize-br'))
+                    win.style.width = (startW + (e.clientX - startX)) + "px";
+                if (h.classList.contains('resize-b') || h.classList.contains('resize-br'))
+                    win.style.height = (startH + (e.clientY - startY)) + "px";
+            };
+            document.onmouseup = () => {
+                document.onmousemove = null;
+                saveWindowState(win);
+            };
+        };
     });
-  });
-
-  ["dragleave","drop"].forEach(type => {
-    dropZone.addEventListener(type, e => {
-      e.preventDefault();
-      dropZone.style.background = "transparent";
-    });
-  });
-
-  dropZone.addEventListener("drop", e => {
-    addFilesToExplorer(e.dataTransfer.files || []);
-  });
 }
 
-initFileExplorer();
-  // ===============================
-// INIT SYSTEM
-// ===============================
-document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".appwindow").forEach(win => {
-    makeDraggable(win);
-    makeResizable(win);
-  });
-});
- // ===============================
-// 🌍 3D MODE SYSTEM (OPTIONAL)
-// ===============================
-let scene, camera, renderer;
-let is3DActive = false;
+// --- 3D SYSTEM ---
+let scene, camera, renderer, is3DActive = false;
 let cubes = [];
 
 function init3D() {
-  if (scene) return; // already initialized
+    if (scene) return;
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+    renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("world3d"), alpha: true, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.position.z = 5;
 
-  scene = new THREE.Scene();
+    const light = new THREE.PointLight(0xffffff, 1);
+    light.position.set(5, 5, 5);
+    scene.add(light);
+    scene.add(new THREE.AmbientLight(0x404040));
 
-  camera = new THREE.PerspectiveCamera(
-    75,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    1000
-  );
+    cubes.push(createAppCube(0x00ffcc, "myApp", -2));
+    cubes.push(createAppCube(0xffff00, "fileExplorer", 2));
 
-  renderer = new THREE.WebGLRenderer({
-    canvas: document.getElementById("world3d"),
-    alpha: true
-  });
-
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  camera.position.z = 5;
-
-  // Light
-  const light = new THREE.PointLight(0xffffff, 1);
-  light.position.set(5, 5, 5);
-  scene.add(light);
-
-  // Create cubes
-  cubes.push(createAppCube(0x00ffcc, "myApp", -3));
-  cubes.push(createAppCube(0xff0066, "secret", -1));
-  cubes.push(createAppCube(0x0066ff, "poki", 1));
-  cubes.push(createAppCube(0xffff00, "fileExplorer", 3));
-
-  animate3D();
+    animate();
 }
 
 function createAppCube(color, appId, x) {
-  const geo = new THREE.BoxGeometry();
-  const mat = new THREE.MeshStandardMaterial({ color });
-
-  const cube = new THREE.Mesh(geo, mat);
-  cube.position.x = x;
-  cube.userData.app = appId;
-
-  scene.add(cube);
-  return cube;
+    const mesh = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 1, 1),
+        new THREE.MeshStandardMaterial({ color })
+    );
+    mesh.position.x = x;
+    mesh.userData.app = appId;
+    scene.add(mesh);
+    return mesh;
 }
 
-// ===============================
-// 🖱️ CLICK IN 3D
-// ===============================
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-
-window.addEventListener("click", (event) => {
-  if (!is3DActive) return;
-
-  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-  raycaster.setFromCamera(mouse, camera);
-
-  const intersects = raycaster.intersectObjects(cubes);
-
-  if (intersects.length > 0) {
-    const obj = intersects[0].object;
-
-    if (obj.userData.app) {
-      openWindow(obj.userData.app);
-    }
-  }
-});
-
-// ===============================
-// 🔁 ANIMATION
-// ===============================
-function animate3D() {
-  requestAnimationFrame(animate3D);
-
-  if (!is3DActive) return;
-
-  cubes.forEach(cube => {
-    cube.rotation.x += 0.005;
-    cube.rotation.y += 0.005;
-  });
-
-  renderer.render(scene, camera);
+function animate() {
+    requestAnimationFrame(animate);
+    if (!is3DActive) return;
+    cubes.forEach(c => { c.rotation.y += 0.01; c.rotation.x += 0.005; });
+    renderer.render(scene, camera);
 }
 
-// ===============================
-// 🔘 TOGGLE FUNCTION
-// ===============================
 function toggle3D() {
-  is3DActive = !is3DActive;
-
-  document.body.classList.toggle("mode3d", is3DActive);
-
-  if (is3DActive) {
-    init3D();
-  }
-
-  // Save state
-  localStorage.setItem("3dMode", is3DActive);
+    is3DActive = !is3DActive;
+    document.body.classList.toggle("mode3d", is3DActive);
+    if (is3DActive) init3D();
 }
 
-// ===============================
-// 💾 RESTORE MODE
-// ===============================
-window.addEventListener("DOMContentLoaded", () => {
-  const saved = localStorage.getItem("3dMode") === "true";
-
-  if (saved) {
-    toggle3D();
-  }
+// Interaction
+window.addEventListener("click", (e) => {
+    if (!is3DActive) return;
+    const mouse = new THREE.Vector2(
+        (e.clientX / window.innerWidth) * 2 - 1,
+        -(e.clientY / window.innerHeight) * 2 + 1
+    );
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(mouse, camera);
+    const hits = raycaster.intersectObjects(cubes);
+    if (hits.length > 0) openWindow(hits[0].object.userData.app);
 });
 
-// ===============================
-// 📱 RESIZE
-// ===============================
-window.addEventListener("resize", () => {
-  if (!camera || !renderer) return;
-
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+// Init
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".appwindow").forEach(win => {
+        makeDraggable(win);
+        makeResizable(win);
+    });
 });
 </script>
-
 </body>
 </html>
