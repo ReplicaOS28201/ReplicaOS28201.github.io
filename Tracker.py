@@ -4,7 +4,7 @@ import uuid
 from collections import deque
 
 # =========================
-# In-memory event system
+# Made With love <3
 # =========================
 
 EVENTS = deque()
