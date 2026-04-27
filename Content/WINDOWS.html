@@ -105,28 +105,40 @@
 // ---------- Z-Index System ----------
 let zIndexCounter = 100;
 
-function bringToFront(windowEl) {
-  zIndexCounter++;
-  windowEl.style.zIndex = zIndexCounter;
+let highestZ = 1;
+const windowState = {};
 
-  // ensure it's clickable
-  windowEl.style.pointerEvents = "auto";
-}
-
-// ---------- Open / Close ----------
- // ===============================
-// WINDOW MEMORY SYSTEM
-// ===============================
- function openWindow(id) {
+function openWindow(id) {
   const el = document.getElementById(id);
+  if (!el) return;
+
   el.classList.remove("hidden");
+
+  // Restore position if saved
+  if (windowState[id]) {
+    el.style.left = windowState[id].left;
+    el.style.top = windowState[id].top;
+  }
+
   bringToFront(el);
 }
 
 function closeWindow(id) {
   const el = document.getElementById(id);
+  if (!el) return;
+
+  // Save position before closing
+  windowState[id] = {
+    left: el.style.left,
+    top: el.style.top
+  };
+
   el.classList.add("hidden");
- 
+}
+
+function bringToFront(el) {
+  highestZ++;
+  el.style.zIndex = highestZ;
 }
 
 // ===============================
