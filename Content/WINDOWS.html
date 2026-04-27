@@ -118,6 +118,52 @@ body.mode3d {
   </div>
 
 <script>
+ function create3DWindow(appId, url, x, y) {
+  // Create iframe (hidden)
+  const iframe = document.createElement("iframe");
+  iframe.src = url;
+  iframe.style.position = "absolute";
+  iframe.style.left = "-9999px";
+  iframe.style.width = "800px";
+  iframe.style.height = "600px";
+  document.body.appendChild(iframe);
+
+  // Render iframe into canvas
+  const canvas = document.createElement("canvas");
+  canvas.width = 800;
+  canvas.height = 600;
+  const ctx = canvas.getContext("2d");
+
+  const texture = new THREE.CanvasTexture(canvas);
+
+  const geo = new THREE.PlaneGeometry(4, 3);
+  const mat = new THREE.MeshBasicMaterial({ map: texture });
+
+  const panel = new THREE.Mesh(geo, mat);
+  panel.position.set(x, y, 0);
+  panel.userData.app = appId;
+
+  scene.add(panel);
+
+  // Update texture loop
+  function updateTexture() {
+    try {
+      ctx.drawImage(iframe, 0, 0, canvas.width, canvas.height);
+      texture.needsUpdate = true;
+    } catch (e) {}
+    requestAnimationFrame(updateTexture);
+  }
+
+  updateTexture();
+
+  return panel;
+}
+ const apps3D = [];
+
+apps3D.push(create3DWindow("myApp", "Apps/com.calc.app/Index.html", -3, 1));
+apps3D.push(create3DWindow("secret", "Apps/com.os.secretlang/Index.html", 3, 1));
+
+ 
   // ===============================
 // 19OS WINDOW SYSTEM (FULL)
 // ===============================
