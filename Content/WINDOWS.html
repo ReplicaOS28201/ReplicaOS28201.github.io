@@ -195,11 +195,15 @@ document.querySelectorAll('.appwindow').forEach((win) => {
     dragging = true;
     bringToTop(win);
 
+    bringToTop(win);
     const rect = win.getBoundingClientRect();
-    const pos = getPos(e);
 
-    offsetX = pos.x - rect.left;
-    offsetY = pos.y - rect.top;
+    activeDrag = {
+      win,
+      pointerId: e.pointerId,
+      offsetX: e.clientX - rect.left,
+      offsetY: e.clientY - rect.top,
+    };
 
     document.addEventListener('mousemove', move);
     document.addEventListener('mouseup', stop);
@@ -207,8 +211,8 @@ document.querySelectorAll('.appwindow').forEach((win) => {
     document.addEventListener('touchend', stop);
   }
 
-  function move(e) {
-    if (!dragging) return;
+  bar.addEventListener('pointermove', (e) => {
+    if (!activeDrag || activeDrag.pointerId !== e.pointerId || activeDrag.win !== win) return;
     e.preventDefault();
 
     const pos = getPos(e);
@@ -225,12 +229,32 @@ document.querySelectorAll('.appwindow').forEach((win) => {
     document.removeEventListener('touchmove', move);
     document.removeEventListener('touchend', stop);
   }
+}
 
-  function getPos(e) {
-    return e.touches
-      ? { x: e.touches[0].clientX, y: e.touches[0].clientY }
-      : { x: e.clientX, y: e.clientY };
-  }
+function apply3DTilt(win, pos) {
+  const rect = win.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+  const deltaX = (pos.x - centerX) / rect.width;
+  const deltaY = (pos.y - centerY) / rect.height;
+  const rotateY = Math.max(-10, Math.min(10, deltaX * 14));
+  const rotateX = Math.max(-10, Math.min(10, -deltaY * 14));
+  win.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(28px)`;
+}
+
+/* ================= GAMEPAD SUPPORT (PlayStation/Xbox) ================= */
+const appOrder = ['calc', 'notes', 'browser'];
+let selectedAppIndex = 0;
+let gamepadLastAction = 0;
+
+window.addEventListener('gamepadconnected', (event) => {
+  if (!window.System) return;
+  System.send('gamepad', {
+    type: 'connected',
+    id: event.gamepad.id,
+    index: event.gamepad.index,
+  });
+  renderSystemLogs();
 });
 
 function apply3DTilt(win, pos) {
@@ -269,6 +293,7 @@ scene.add(new THREE.Points(geo, mat));
 
 function animate() {
   requestAnimationFrame(animate);
+  handleGamepadInput();
   renderer.render(scene, camera);
 }
 animate();
