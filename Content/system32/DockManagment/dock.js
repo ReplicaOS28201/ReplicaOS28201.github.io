@@ -1,6 +1,5 @@
 (function (global) {
   let mainCallback = null;
-  let initialized = false;
 
   const Dock = {
     connectMain(fn) {
@@ -8,9 +7,8 @@
     },
 
     init() {
-      if (initialized) return true;
       const dockRoot = document.getElementById('dock-root');
-      if (!dockRoot) return false;
+      if (!dockRoot) return;
 
       dockRoot.addEventListener('click', (event) => {
         const button = event.target.closest('[data-app]');
@@ -21,9 +19,6 @@
           app: button.dataset.app,
         });
       });
-
-      initialized = true;
-      return true;
     },
 
     send(app, data) {
