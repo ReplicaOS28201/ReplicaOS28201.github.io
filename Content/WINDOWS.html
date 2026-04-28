@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
-<title>ReplicaOS 3D FIXED</title>
+<title>ReplicaOS 3D</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
@@ -16,35 +16,10 @@ body {
   touch-action: none;
 }
 
-/* ================= UI ================= */
 #ui {
   position: fixed;
   inset: 0;
   pointer-events: none;
-}
-
-/* ================= DOCK ================= */
-.dock {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 10px;
-  padding: 10px;
-  background: rgba(255,255,255,0.08);
-  backdrop-filter: blur(10px);
-  border-radius: 40px;
-  pointer-events: auto;
-}
-
-.dock button {
-  padding: 10px 14px;
-  border: none;
-  border-radius: 20px;
-  background: rgba(255,255,255,0.1);
-  color: white;
-  cursor: pointer;
 }
 
 /* ================= WINDOWS ================= */
@@ -58,7 +33,6 @@ body {
   overflow: hidden;
   pointer-events: auto;
 
-  /* IMPORTANT FIX */
   left: 100px;
   top: 100px;
 }
@@ -88,13 +62,6 @@ body {
 <body>
 
 <div id="ui">
-
-  <!-- DOCK -->
-  <div class="dock">
-    <button onclick="openWindow('calc')">Calc</button>
-    <button onclick="openWindow('notes')">Notes</button>
-    <button onclick="openWindow('browser')">Web</button>
-  </div>
 
   <!-- CALC -->
   <div id="calc" class="appwindow hidden">
@@ -133,46 +100,29 @@ Write notes...
 
 /* ================= WINDOW SYSTEM ================= */
 function openWindow(id) {
-  const element = document.getElementById(id);
-  if (element) {
-    element.classList.remove("hidden");
-    element.setAttribute("aria-hidden", "false"); // For accessibility
-  }
+  const el = document.getElementById(id);
+  if (el) el.classList.remove("hidden");
 }
 
 function closeWindow(id) {
-  const element = document.getElementById(id);
-  if (element) {
-    element.classList.add("hidden");
-    element.setAttribute("aria-hidden", "true");
-  }
+  const el = document.getElementById(id);
+  if (el) el.classList.add("hidden");
 }
 
-// Pro Tip: A toggle function is often more useful
-function toggleWindow(id) {
-  const element = document.getElementById(id);
-  if (element) {
-    element.classList.toggle("hidden");
-  }
-}
-
-/* ================= FIXED DRAG SYSTEM ================= */
+/* ================= DRAG SYSTEM ================= */
 document.querySelectorAll(".appwindow").forEach(win => {
   const bar = win.querySelector(".window-titlebar");
 
-  let dragging = false;
-  let offsetX = 0;
-  let offsetY = 0;
+  let dragging = false, offsetX = 0, offsetY = 0;
 
-  bar.addEventListener("mousedown", startDrag);
-  bar.addEventListener("touchstart", startDrag, { passive: false });
+  bar.addEventListener("mousedown", start);
+  bar.addEventListener("touchstart", start, { passive: false });
 
-  function startDrag(e) {
+  function start(e) {
     e.preventDefault();
     dragging = true;
 
     const rect = win.getBoundingClientRect();
-
     const pos = getPos(e);
 
     offsetX = pos.x - rect.left;
@@ -189,7 +139,6 @@ document.querySelectorAll(".appwindow").forEach(win => {
     e.preventDefault();
 
     const pos = getPos(e);
-
     win.style.left = (pos.x - offsetX) + "px";
     win.style.top = (pos.y - offsetY) + "px";
   }
@@ -210,7 +159,7 @@ document.querySelectorAll(".appwindow").forEach(win => {
   }
 });
 
-/* ================= THREE JS BACKGROUND ================= */
+/* ================= THREE BACKGROUND ================= */
 let scene = new THREE.Scene();
 let camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
 camera.position.z = 5;
@@ -239,7 +188,6 @@ function animate() {
 }
 animate();
 
-/* ================= RESIZE ================= */
 window.addEventListener("resize", () => {
   camera.aspect = innerWidth/innerHeight;
   camera.updateProjectionMatrix();
