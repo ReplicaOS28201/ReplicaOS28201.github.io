@@ -1,1 +1,37 @@
+<!-- ================= DOCK ================= -->
+<div class="dock">
+  <button onclick="openWindow('calc')">Calc</button>
+  <button onclick="openWindow('notes')">Notes</button>
+  <button onclick="openWindow('browser')">Web</button>
+</div>
 
+<style>
+.dock {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(12px);
+  border-radius: 40px;
+  z-index: 9999;
+}
+
+.dock button {
+  padding: 10px 14px;
+  border: none;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.12);
+  color: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.dock button:hover {
+  background: rgba(255,255,255,0.25);
+  transform: scale(1.1);
+}
+</style>
