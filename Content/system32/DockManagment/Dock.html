@@ -4,7 +4,53 @@
   <button onclick="openWindow('notes')">Notes</button>
   <button onclick="openWindow('browser')">Web</button>
 </div>
+<script>
+  // ================= DOCK COMMUNICATOR =================
+window.Dock = (() => {
 
+  let mainChannel = null;
+
+  function connectMain(callback) {
+    mainChannel = callback;
+  }
+
+  function init() {
+    const dock = document.querySelector(".dock");
+
+    dock.querySelectorAll("button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const app = btn.dataset.app;
+
+        // 1. Notify MAIN (UI control)
+        if (mainChannel) {
+          mainChannel({
+            type: "open-app",
+            app
+          });
+        }
+
+        // 2. Talk to SYSTEM
+        if (window.System) {
+          System.open(app);
+        }
+      });
+    });
+  }
+
+  // Send data from apps → system via dock
+  function send(app, data) {
+    if (!window.System) return null;
+    return System.send(app, data);
+  }
+
+  return {
+    init,
+    connectMain,
+    send
+  };
+
+})();
+</script>
 <style>
 .dock {
   position: fixed;
