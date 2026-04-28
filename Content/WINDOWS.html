@@ -22,6 +22,10 @@ body {
   pointer-events: none;
 }
 
+#dock-container {
+  pointer-events: auto;
+}
+
 /* ================= WINDOWS ================= */
 .appwindow {
   position: absolute;
@@ -56,6 +60,49 @@ body {
   color: white;
   border: none;
 }
+
+.system-log {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  width: 320px;
+  max-height: 35vh;
+  overflow: auto;
+  color: #dce7ff;
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  backdrop-filter: blur(8px);
+  pointer-events: auto;
+  z-index: 1200;
+}
+
+.system-log h3 {
+  margin: 0;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 13px;
+}
+
+#system-log-list {
+  padding: 10px;
+}
+
+#system-log-list div {
+  margin-bottom: 8px;
+}
+
+.quick-send {
+  margin-top: 8px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+  padding: 6px;
+  cursor: pointer;
+}
 </style>
 </head>
 
@@ -69,7 +116,10 @@ body {
       Calculator
       <button onclick="closeWindow('calc')">×</button>
     </div>
-    <iframe class="window-content" src="Apps/com.calc.app/Index.html"></iframe>
+    <div class="window-content">
+      <iframe class="window-content" src="Apps/com.calc.app/Index.html"></iframe>
+      <button class="quick-send" onclick="Dock.send('calc', { source: 'calc', message: 'calc ping', time: Date.now() })">Send data to System</button>
+    </div>
   </div>
 
   <!-- NOTES -->
@@ -79,9 +129,8 @@ body {
       <button onclick="closeWindow('notes')">×</button>
     </div>
     <div class="window-content">
-      <textarea style="width:100%; height:100%; background:transparent; color:white; border:none;">
-Write notes...
-      </textarea>
+      <textarea style="width:100%; height:70%; background:transparent; color:white; border:none;">Write notes...</textarea>
+      <button class="quick-send" onclick="Dock.send('notes', { source: 'notes', message: 'notes ping', time: Date.now() })">Send data to System</button>
     </div>
   </div>
 
@@ -91,9 +140,18 @@ Write notes...
       Browser
       <button onclick="closeWindow('browser')">×</button>
     </div>
-    <iframe class="window-content" src="https://example.com"></iframe>
+    <div class="window-content">
+      <iframe class="window-content" src="https://example.com"></iframe>
+      <button class="quick-send" onclick="Dock.send('browser', { source: 'browser', message: 'browser ping', time: Date.now() })">Send data to System</button>
+    </div>
   </div>
+
   <div id="dock-container"></div>
+
+  <aside class="system-log" aria-live="polite">
+    <h3>System Log</h3>
+    <div id="system-log-list"></div>
+  </aside>
 </div>
 
 <script>
@@ -101,22 +159,24 @@ Write notes...
 /* ================= WINDOW SYSTEM ================= */
 function openWindow(id) {
   const el = document.getElementById(id);
-  if (el) el.classList.remove("hidden");
+  if (el) el.classList.remove('hidden');
 }
 
 function closeWindow(id) {
   const el = document.getElementById(id);
-  if (el) el.classList.add("hidden");
+  if (el) el.classList.add('hidden');
 }
 
 /* ================= DRAG SYSTEM ================= */
-document.querySelectorAll(".appwindow").forEach(win => {
-  const bar = win.querySelector(".window-titlebar");
+document.querySelectorAll('.appwindow').forEach((win) => {
+  const bar = win.querySelector('.window-titlebar');
 
-  let dragging = false, offsetX = 0, offsetY = 0;
+  let dragging = false;
+  let offsetX = 0;
+  let offsetY = 0;
 
-  bar.addEventListener("mousedown", start);
-  bar.addEventListener("touchstart", start, { passive: false });
+  bar.addEventListener('mousedown', start);
+  bar.addEventListener('touchstart', start, { passive: false });
 
   function start(e) {
     e.preventDefault();
@@ -128,10 +188,10 @@ document.querySelectorAll(".appwindow").forEach(win => {
     offsetX = pos.x - rect.left;
     offsetY = pos.y - rect.top;
 
-    document.addEventListener("mousemove", move);
-    document.addEventListener("mouseup", stop);
-    document.addEventListener("touchmove", move, { passive: false });
-    document.addEventListener("touchend", stop);
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', stop);
+    document.addEventListener('touchmove', move, { passive: false });
+    document.addEventListener('touchend', stop);
   }
 
   function move(e) {
@@ -139,17 +199,17 @@ document.querySelectorAll(".appwindow").forEach(win => {
     e.preventDefault();
 
     const pos = getPos(e);
-    win.style.left = (pos.x - offsetX) + "px";
-    win.style.top = (pos.y - offsetY) + "px";
+    win.style.left = `${pos.x - offsetX}px`;
+    win.style.top = `${pos.y - offsetY}px`;
   }
 
   function stop() {
     dragging = false;
 
-    document.removeEventListener("mousemove", move);
-    document.removeEventListener("mouseup", stop);
-    document.removeEventListener("touchmove", move);
-    document.removeEventListener("touchend", stop);
+    document.removeEventListener('mousemove', move);
+    document.removeEventListener('mouseup', stop);
+    document.removeEventListener('touchmove', move);
+    document.removeEventListener('touchend', stop);
   }
 
   function getPos(e) {
@@ -177,7 +237,7 @@ for (let i=0;i<3000;i++) {
   arr.push((Math.random()-0.5)*20);
 }
 
-geo.setAttribute("position", new THREE.Float32BufferAttribute(arr,3));
+geo.setAttribute('position', new THREE.Float32BufferAttribute(arr,3));
 
 const mat = new THREE.PointsMaterial({ color:0xffffff, size:0.02 });
 scene.add(new THREE.Points(geo, mat));
@@ -188,7 +248,7 @@ function animate() {
 }
 animate();
 
-window.addEventListener("resize", () => {
+window.addEventListener('resize', () => {
   camera.aspect = innerWidth/innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
@@ -196,37 +256,87 @@ window.addEventListener("resize", () => {
 
 </script>
 
-  
 <script src="./system32/DockManagment/server.js"></script>
-<script src="dock.js"></script>
+<script src="./system32/DockManagment/dock.js"></script>
 
 <script>
+function renderSystemLogs() {
+  const target = document.getElementById('system-log-list');
+  if (!window.System || !target) return;
 
-// MAIN COMMUNICATOR (Dock → Main)
-function handleDockEvent(event) {
-
-  if (event.type === "open-app") {
-    console.log("Main received:", event.app);
-
-    // example: open window in OS
-    openWindow(event.app);
-  }
-
+  target.innerHTML = System.getLogs()
+    .map((entry) => `<div>[${entry.time}] ${entry.type} :: ${entry.app} ${entry.data ? JSON.stringify(entry.data) : ''}</div>`)
+    .join('');
 }
 
-// LOAD DOCK UI
-fetch("dock.html")
-  .then(res => res.text())
-  .then(html => {
-    document.getElementById("dock-container").innerHTML = html;
+function handleDockEvent(event) {
+  if (!event || !window.System) return;
 
-    // CONNECT MAIN ↔ DOCK
+  if (event.type === 'open-app') {
+    openWindow(event.app);
+    System.open(event.app);
+    renderSystemLogs();
+    return;
+  }
+
+  if (event.type === 'send-data') {
+    System.send(event.app, event.data);
+    renderSystemLogs();
+  }
+}
+
+fetch('./system32/DockManagment/dock.html')
+  .then((res) => res.text())
+  .then((html) => {
+    document.getElementById('dock-container').innerHTML = html;
     Dock.connectMain(handleDockEvent);
-
-    // INIT DOCK LOGIC
     Dock.init();
+    renderSystemLogs();
+  })
+  .catch(() => {
+    document.getElementById('dock-container').innerHTML = `
+      <div class="dock" id="dock-root" aria-label="ReplicaOS Dock">
+        <button class="dock-btn" data-app="calc" type="button">Calc</button>
+        <button class="dock-btn" data-app="notes" type="button">Notes</button>
+        <button class="dock-btn" data-app="browser" type="button">Browser</button>
+      </div>
+      <style>
+        .dock {
+          position: fixed;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          gap: 10px;
+          padding: 12px;
+          border-radius: 40px;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.24);
+          backdrop-filter: blur(14px);
+          -webkit-backdrop-filter: blur(14px);
+          box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+          z-index: 9999;
+          pointer-events: auto;
+        }
+        .dock-btn {
+          padding: 10px 14px;
+          border: none;
+          border-radius: 20px;
+          background: rgba(255, 255, 255, 0.14);
+          color: #ffffff;
+          cursor: pointer;
+          transition: transform 180ms ease, background 180ms ease;
+        }
+        .dock-btn:hover {
+          background: rgba(255, 255, 255, 0.26);
+          transform: scale(1.08);
+        }
+      </style>
+    `;
+    Dock.connectMain(handleDockEvent);
+    Dock.init();
+    renderSystemLogs();
   });
-
 </script>
 </body>
 </html>
