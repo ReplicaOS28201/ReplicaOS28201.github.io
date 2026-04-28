@@ -93,7 +93,7 @@ Write notes...
     </div>
     <iframe class="window-content" src="https://example.com"></iframe>
   </div>
-
+  <div id="dock-container"></div>
 </div>
 
 <script>
@@ -195,6 +195,16 @@ window.addEventListener("resize", () => {
 });
 
 </script>
+<script src="server.js"></script>
+<script src="dock.js"></script>
 
+<script>
+fetch("./system32/DockManagment/Dock.html")
+  .then(res => res.text())
+  .then(html => {
+    document.getElementById("dock-container").innerHTML = html;
+    Dock.init();
+  });
+</script>
 </body>
 </html>
