@@ -157,14 +157,43 @@ body {
 <script>
 
 /* ================= WINDOW SYSTEM ================= */
-function openWindow(id) {
-  const el = document.getElementById(id);
-  if (el) el.classList.remove('hidden');
+/**
+ * Internal helper to manage visibility, ARIA states, and native dialog behavior.
+ * Supports both ID strings and direct HTMLElement references for flexibility.
+ */
+function setWindowState(target, isOpen) {
+  const el = typeof target === 'string' ? document.getElementById(target) : target;
+
+  if (!el) return;
+
+  // Handle native <dialog> elements correctly for focus/backdrop support
+  if (el.tagName === 'DIALOG') {
+    if (isOpen) {
+      if (!el.open) el.showModal();
+    } else {
+      if (el.open) el.close();
+    }
+  } else {
+    // Handle standard elements with class toggling and ARIA attributes
+    el.classList.toggle('hidden', !isOpen);
+    el.setAttribute('aria-hidden', String(!isOpen));
+  }
 }
 
+/**
+ * Opens a window by ID or element reference.
+ * @param {string|HTMLElement} id 
+ */
+function openWindow(id) {
+  setWindowState(id, true);
+}
+
+/**
+ * Closes a window by ID or element reference.
+ * @param {string|HTMLElement} id 
+ */
 function closeWindow(id) {
-  const el = document.getElementById(id);
-  if (el) el.classList.add('hidden');
+  setWindowState(id, false);
 }
 
 /* ================= DRAG SYSTEM ================= */
