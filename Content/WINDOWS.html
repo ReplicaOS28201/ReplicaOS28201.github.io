@@ -195,16 +195,38 @@ window.addEventListener("resize", () => {
 });
 
 </script>
-<script src="server.js"></script>
+
+  
+<script src="./system32/DockManagment/server.js"></script>
 <script src="dock.js"></script>
 
 <script>
-fetch("./system32/DockManagment/Dock.html")
+
+// MAIN COMMUNICATOR (Dock → Main)
+function handleDockEvent(event) {
+
+  if (event.type === "open-app") {
+    console.log("Main received:", event.app);
+
+    // example: open window in OS
+    openWindow(event.app);
+  }
+
+}
+
+// LOAD DOCK UI
+fetch("dock.html")
   .then(res => res.text())
   .then(html => {
     document.getElementById("dock-container").innerHTML = html;
+
+    // CONNECT MAIN ↔ DOCK
+    Dock.connectMain(handleDockEvent);
+
+    // INIT DOCK LOGIC
     Dock.init();
   });
+
 </script>
 </body>
 </html>
