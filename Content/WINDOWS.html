@@ -170,9 +170,7 @@ body {
 /* ================= WINDOW SYSTEM ================= */
 function openWindow(id) {
   const el = document.getElementById(id);
-  if (!el) return;
-  el.classList.remove('hidden');
-  bringToTop(el);
+  if (el) el.classList.remove('hidden');
 }
 
 function closeWindow(id) {
@@ -180,30 +178,22 @@ function closeWindow(id) {
   if (el) el.classList.add('hidden');
 }
 
-let topZIndex = 2000;
-
-function bringToTop(target) {
-  const el = typeof target === 'string' ? document.getElementById(target) : target;
-  if (!el) return;
-  document.querySelectorAll('.appwindow').forEach((win) => win.classList.remove('active-3d'));
-  el.classList.add('active-3d');
-  topZIndex += 1;
-  el.style.zIndex = String(topZIndex);
-}
-
 /* ================= DRAG SYSTEM ================= */
-let activeDrag = null;
-
 document.querySelectorAll('.appwindow').forEach((win) => {
   const bar = win.querySelector('.window-titlebar');
-  const closeBtn = bar.querySelector('button');
 
-  win.addEventListener('pointerdown', () => bringToTop(win));
-  closeBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+  let dragging = false;
+  let offsetX = 0;
+  let offsetY = 0;
 
-  bar.addEventListener('pointerdown', (e) => {
+  bar.addEventListener('mousedown', start);
+  bar.addEventListener('touchstart', start, { passive: false });
+
+  function start(e) {
     if (e.target.closest('button')) return;
     e.preventDefault();
+    dragging = true;
+    bringToTop(win);
 
     bringToTop(win);
     const rect = win.getBoundingClientRect();
@@ -215,30 +205,29 @@ document.querySelectorAll('.appwindow').forEach((win) => {
       offsetY: e.clientY - rect.top,
     };
 
-    bar.setPointerCapture(e.pointerId);
-  });
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', stop);
+    document.addEventListener('touchmove', move, { passive: false });
+    document.addEventListener('touchend', stop);
+  }
 
   bar.addEventListener('pointermove', (e) => {
     if (!activeDrag || activeDrag.pointerId !== e.pointerId || activeDrag.win !== win) return;
     e.preventDefault();
 
-    const nextLeft = e.clientX - activeDrag.offsetX;
-    const nextTop = e.clientY - activeDrag.offsetY;
-    win.style.left = `${nextLeft}px`;
-    win.style.top = `${nextTop}px`;
-    apply3DTilt(win, { x: e.clientX, y: e.clientY });
-  });
+    const pos = getPos(e);
+    win.style.left = `${pos.x - offsetX}px`;
+    win.style.top = `${pos.y - offsetY}px`;
+  }
 
-  bar.addEventListener('pointerup', (e) => stopDrag(e, bar));
-  bar.addEventListener('pointercancel', (e) => stopDrag(e, bar));
-});
+  function stop() {
+    dragging = false;
+    win.style.transform = 'rotateX(2deg) rotateY(0deg) translateZ(24px)';
 
-function stopDrag(e, bar) {
-  if (!activeDrag || activeDrag.pointerId !== e.pointerId) return;
-  activeDrag.win.style.transform = 'rotateX(2deg) rotateY(0deg) translateZ(24px)';
-  activeDrag = null;
-  if (bar.hasPointerCapture(e.pointerId)) {
-    bar.releasePointerCapture(e.pointerId);
+    document.removeEventListener('mousemove', move);
+    document.removeEventListener('mouseup', stop);
+    document.removeEventListener('touchmove', move);
+    document.removeEventListener('touchend', stop);
   }
 }
 
@@ -268,54 +257,15 @@ window.addEventListener('gamepadconnected', (event) => {
   renderSystemLogs();
 });
 
-window.addEventListener('gamepaddisconnected', (event) => {
-  if (!window.System) return;
-  System.send('gamepad', {
-    type: 'disconnected',
-    id: event.gamepad.id,
-    index: event.gamepad.index,
-  });
-  renderSystemLogs();
-});
-
-function handleGamepadInput() {
-  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
-  const pad = pads && pads[0];
-  const now = performance.now();
-  if (!pad || now - gamepadLastAction < 160) return;
-  if (!window.System || !window.Dock) return;
-
-  const dpadRight = pad.buttons[15]?.pressed;
-  const dpadLeft = pad.buttons[14]?.pressed;
-  const openBtn = pad.buttons[0]?.pressed; // A / Cross
-  const closeBtn = pad.buttons[1]?.pressed; // B / Circle
-  const sendBtn = pad.buttons[2]?.pressed; // X / Square
-  const axisX = pad.axes[0] || 0;
-
-  if (dpadRight || axisX > 0.65) {
-    selectedAppIndex = (selectedAppIndex + 1) % appOrder.length;
-    gamepadLastAction = now;
-  } else if (dpadLeft || axisX < -0.65) {
-    selectedAppIndex = (selectedAppIndex - 1 + appOrder.length) % appOrder.length;
-    gamepadLastAction = now;
-  } else if (openBtn) {
-    openWindow(appOrder[selectedAppIndex]);
-    System.open(appOrder[selectedAppIndex]);
-    renderSystemLogs();
-    gamepadLastAction = now;
-  } else if (closeBtn) {
-    closeWindow(appOrder[selectedAppIndex]);
-    System.send(appOrder[selectedAppIndex], { source: 'gamepad', action: 'close' });
-    renderSystemLogs();
-    gamepadLastAction = now;
-  } else if (sendBtn) {
-    Dock.send(appOrder[selectedAppIndex], {
-      source: 'gamepad',
-      message: 'gamepad test payload',
-      time: Date.now(),
-    });
-    gamepadLastAction = now;
-  }
+function apply3DTilt(win, pos) {
+  const rect = win.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+  const deltaX = (pos.x - centerX) / rect.width;
+  const deltaY = (pos.y - centerY) / rect.height;
+  const rotateY = Math.max(-10, Math.min(10, deltaX * 14));
+  const rotateX = Math.max(-10, Math.min(10, -deltaY * 14));
+  win.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(28px)`;
 }
 
 /* ================= THREE BACKGROUND ================= */
@@ -389,50 +339,6 @@ fetch('./system32/DockManagment/dock.html')
   .then((res) => res.text())
   .then((html) => {
     document.getElementById('dock-container').innerHTML = html;
-    Dock.connectMain(handleDockEvent);
-    Dock.init();
-    renderSystemLogs();
-  })
-  .catch(() => {
-    document.getElementById('dock-container').innerHTML = `
-      <div class="dock" id="dock-root" aria-label="ReplicaOS Dock">
-        <button class="dock-btn" data-app="calc" type="button">Calc</button>
-        <button class="dock-btn" data-app="notes" type="button">Notes</button>
-        <button class="dock-btn" data-app="browser" type="button">Browser</button>
-      </div>
-      <style>
-        .dock {
-          position: fixed;
-          bottom: 20px;
-          left: 50%;
-          transform: translateX(-50%);
-          display: flex;
-          gap: 10px;
-          padding: 12px;
-          border-radius: 40px;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.24);
-          backdrop-filter: blur(14px);
-          -webkit-backdrop-filter: blur(14px);
-          box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
-          z-index: 9999;
-          pointer-events: auto;
-        }
-        .dock-btn {
-          padding: 10px 14px;
-          border: none;
-          border-radius: 20px;
-          background: rgba(255, 255, 255, 0.14);
-          color: #ffffff;
-          cursor: pointer;
-          transition: transform 180ms ease, background 180ms ease;
-        }
-        .dock-btn:hover {
-          background: rgba(255, 255, 255, 0.26);
-          transform: scale(1.08);
-        }
-      </style>
-    `;
     Dock.connectMain(handleDockEvent);
     Dock.init();
     renderSystemLogs();
