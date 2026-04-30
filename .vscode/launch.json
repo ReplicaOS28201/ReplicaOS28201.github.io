@@ -1,16 +1,104 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         
         {
-            "type": "chrome",
+            "name": "Launch Chrome (Localhost)",
+            "type": "pwa-chrome",
             "request": "launch",
-            "name": "Launch Chrome against localhost",
+            "url": "http://localhost:8080",
+            "webRoot": "${workspaceFolder}",
+            "runtimeArgs": [
+                "--auto-open-devtools-for-tabs",
+                "--disable-web-security"
+            ],
+            "sourceMaps": true,
+            "trace": true
+        },
+
+        {
+            "name": "Launch Chrome (Custom Port)",
+            "type": "pwa-chrome",
+            "request": "launch",
+            "url": "http://localhost:3000",
+            "webRoot": "${workspaceFolder}",
+            "userDataDir": "${workspaceFolder}/.vscode/chrome",
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        },
+
+        {
+            "name": "Attach to Chrome",
+            "type": "pwa-chrome",
+            "request": "attach",
+            "port": 9222,
+            "webRoot": "${workspaceFolder}",
+            "timeout": 30000
+        },
+
+        {
+            "name": "Launch Edge",
+            "type": "pwa-msedge",
+            "request": "launch",
             "url": "http://localhost:8080",
             "webRoot": "${workspaceFolder}"
+        },
+
+        {
+            "name": "Launch Firefox",
+            "type": "firefox",
+            "request": "launch",
+            "url": "http://localhost:8080",
+            "webRoot": "${workspaceFolder}",
+            "reAttach": true
+        },
+
+        {
+            "name": "Node.js Backend",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceFolder}/server.js",
+            "env": {
+                "NODE_ENV": "development"
+            },
+            "console": "integratedTerminal",
+            "restart": true,
+            "runtimeExecutable": "node"
+        },
+
+        {
+            "name": "Fullstack (Chrome + Node)",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceFolder}/server.js",
+            "cwd": "${workspaceFolder}",
+            "runtimeExecutable": "node",
+            "console": "integratedTerminal",
+            "serverReadyAction": {
+                "pattern": "listening on.*:(\\d+)",
+                "uriFormat": "http://localhost:%s",
+                "action": "debugWithChrome"
+            }
+        }
+
+    ],
+
+    "compounds": [
+        {
+            "name": "Launch Full App",
+            "configurations": [
+                "Node.js Backend",
+                "Launch Chrome (Localhost)"
+            ]
+        },
+
+        {
+            "name": "Debug Everything",
+            "configurations": [
+                "Fullstack (Chrome + Node)",
+                "Launch Edge"
+            ]
         }
     ]
 }
