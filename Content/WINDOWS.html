@@ -12,7 +12,15 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, updateDoc, onSnapshot, collection, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+const auth = getAuth();
 
+async function login(email, pass) {
+  return await signInWithEmailAndPassword(auth, email, pass);
+}
+
+async function register(email, pass) {
+  return await createUserWithEmailAndPassword(auth, email, pass);
+}
 window.FB = {
   initializeApp, getFirestore, doc, setDoc, updateDoc,
   onSnapshot, collection, query, where,
@@ -341,7 +349,21 @@ const Call = {
     document.getElementById("callStatus").innerText = msg;
   }
 };
+async function callUser(targetUID) {
+  const user = auth.currentUser;
+  if (!user) return alert("Not logged in");
 
+  const callId = crypto.randomUUID();
+
+  await setDoc(doc(db, "calls", callId), {
+    from: user.uid,
+    to: targetUID,
+    status: "ringing",
+    created: Date.now()
+  });
+
+  startPeerCall(targetUID);
+}
 Call.init();
 /* ================= WINDOW SYSTEM ================= */
 /**
