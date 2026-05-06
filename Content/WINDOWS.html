@@ -6,7 +6,19 @@
 <title>ReplicaOS 3D</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, updateDoc, onSnapshot, collection, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+window.FB = {
+  initializeApp, getFirestore, doc, setDoc, updateDoc,
+  onSnapshot, collection, query, where,
+  getAuth, signInAnonymously, onAuthStateChanged
+};
+</script>
 <style>
 body {
   margin: 0;
@@ -145,6 +157,27 @@ body {
       <button class="quick-send" onclick="Dock.send('browser', { source: 'browser', message: 'browser ping', time: Date.now() })">Send data to System</button>
     </div>
   </div>
+  <div id="call" class="appwindow hidden">
+  <div class="window-titlebar">
+    Call
+    <button onclick="Call.end()">×</button>
+  </div>
+
+  <div class="window-content" style="display:flex; flex-direction:column; gap:6px;">
+    <video id="localVideo" autoplay muted style="height:35%; background:black;"></video>
+    <video id="remoteVideo" autoplay style="height:35%; background:black;"></video>
+
+    <input id="callTarget" placeholder="User UID">
+
+    <div style="display:flex; gap:6px;">
+      <button onclick="Call.start()">Call</button>
+      <button onclick="Call.accept()">Accept</button>
+      <button onclick="Call.reject()">Reject</button>
+    </div>
+
+    <div id="callStatus">Idle</div>
+  </div>
+</div>
 
   <div id="dock-container"></div>
 
@@ -155,7 +188,161 @@ body {
 </div>
 
 <script>
+/* ================= FIREBASE + CALL SYSTEM ================= */
 
+const Call = {
+  db: null,
+  auth: null,
+  user: null,
+  peer: null,
+  currentCall: null,
+  localStream: null,
+  incomingCallId: null,
+
+  async init() {
+    const {
+      initializeApp, getFirestore, doc, setDoc, updateDoc,
+      onSnapshot, collection, query, where,
+      getAuth, signInAnonymously, onAuthStateChanged
+    } = window.FB;
+
+    const firebaseConfig = {
+  apiKey: "AIzaSyC9P1pSA8sVyaQEGaA5sA8ThPYgmVAFab8",
+  authDomain: "replicaos.firebaseapp.com",
+  projectId: "replicaos",
+  storageBucket: "replicaos.firebasestorage.app",
+  messagingSenderId: "34115825829",
+  appId: "1:34115825829:web:246973f8280df47f221d4c",
+  measurementId: "G-F26619EETW"
+};
+
+    this.db = getFirestore(app);
+    this.auth = getAuth();
+
+    await signInAnonymously(this.auth);
+
+    onAuthStateChanged(this.auth, (u) => {
+      if (!u) return;
+
+      this.user = u;
+      this.setStatus("Logged in: " + u.uid);
+
+      this.initPeer(u.uid);
+      this.listen();
+    });
+  },
+
+  initPeer(uid) {
+    this.peer = new Peer(uid);
+
+    this.peer.on("call", call => {
+      this.currentCall = call;
+
+      openWindow("call");
+      this.setStatus("Incoming call from " + call.peer);
+    });
+  },
+
+  async getMedia() {
+    if (!this.localStream) {
+      this.localStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true
+      });
+
+      document.getElementById("localVideo").srcObject = this.localStream;
+    }
+    return this.localStream;
+  },
+
+  async start() {
+    const target = document.getElementById("callTarget").value;
+    if (!target) return alert("Enter UID");
+
+    const callId = crypto.randomUUID();
+
+    await window.FB.setDoc(window.FB.doc(this.db, "calls", callId), {
+      from: this.user.uid,
+      to: target,
+      status: "ringing"
+    });
+
+    const stream = await this.getMedia();
+
+    const call = this.peer.call(target, stream);
+    this.currentCall = call;
+
+    call.on("stream", remote => {
+      document.getElementById("remoteVideo").srcObject = remote;
+    });
+
+    openWindow("call");
+    this.setStatus("Calling " + target);
+  },
+
+  listen() {
+    const q = window.FB.query(
+      window.FB.collection(this.db, "calls"),
+      window.FB.where("to", "==", this.user.uid),
+      window.FB.where("status", "==", "ringing")
+    );
+
+    window.FB.onSnapshot(q, snap => {
+      snap.forEach(docSnap => {
+        this.incomingCallId = docSnap.id;
+
+        openWindow("call");
+        this.setStatus("Incoming call...");
+      });
+    });
+  },
+
+  async accept() {
+    if (!this.currentCall) return;
+
+    await window.FB.updateDoc(
+      window.FB.doc(this.db, "calls", this.incomingCallId),
+      { status: "accepted" }
+    );
+
+    const stream = await this.getMedia();
+
+    this.currentCall.answer(stream);
+
+    this.currentCall.on("stream", remote => {
+      document.getElementById("remoteVideo").srcObject = remote;
+    });
+
+    this.setStatus("Connected");
+  },
+
+  async reject() {
+    if (!this.incomingCallId) return;
+
+    await window.FB.updateDoc(
+      window.FB.doc(this.db, "calls", this.incomingCallId),
+      { status: "rejected" }
+    );
+
+    this.end();
+  },
+
+  end() {
+    if (this.currentCall) this.currentCall.close();
+
+    document.getElementById("remoteVideo").srcObject = null;
+
+    this.currentCall = null;
+    this.setStatus("Ended");
+    closeWindow("call");
+  },
+
+  setStatus(msg) {
+    document.getElementById("callStatus").innerText = msg;
+  }
+};
+
+Call.init();
 /* ================= WINDOW SYSTEM ================= */
 /**
  * Internal helper to manage visibility, ARIA states, and native dialog behavior.
