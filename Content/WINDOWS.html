@@ -3,124 +3,105 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>ReplicaOS | Secure Node</title>
+    <title>ReplicaOS Node</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 
     <style>
-        :root { --accent: #00ff41; --bg: #000; --panel: rgba(10, 10, 10, 0.9); --border: #333; }
-        body { margin:0; overflow:hidden; background:var(--bg); font-family:'Courier New', monospace; color: white; user-select: none; }
+        :root { --accent: #00ff41; --bg: #000; }
+        body { margin:0; overflow:hidden; background:var(--bg); font-family:'Courier New', monospace; color: white; }
 
-        /* --- BACKGROUND LAYER --- */
-        canvas { position: fixed; top: 0; left: 0; z-index: 0; pointer-events: none; }
-
-        /* --- LOGIN & LOCK --- */
+        /* --- LOGIN --- */
         #login {
             position:fixed; inset:0; display:flex; flex-direction:column;
             justify-content:center; align-items:center; background:#000; z-index:9999;
         }
-        #login.hidden { display: none; }
         #login input { 
-            background: #050505; border: 1px solid var(--accent); color: var(--accent); 
-            padding: 12px; margin: 10px; width: 280px; outline: none; text-align: center;
-            box-shadow: 0 0 10px rgba(0, 255, 65, 0.1);
+            background: #111; border: 1px solid var(--accent); color: var(--accent); 
+            padding: 10px; margin: 10px; width: 250px; outline: none; text-align: center;
         }
         #login button { 
             background: var(--accent); color: black; border: none; 
-            padding: 10px 25px; cursor: pointer; font-weight: bold; transition: 0.3s;
-            text-transform: uppercase; letter-spacing: 1px;
+            padding: 10px 20px; cursor: pointer; font-weight: bold; 
         }
-        #login button:hover { box-shadow: 0 0 20px var(--accent); transform: scale(1.02); }
 
         /* --- OS UI --- */
-        #os { display:none; position: relative; z-index: 10; height: 100vh; width: 100vw; }
+        #os { display:none; }
         
         #taskbar {
             position: fixed; bottom: 0; left: 0; right: 0; height: 40px;
-            background: rgba(0, 0, 0, 0.9); border-top: 1px solid var(--border);
-            display: flex; align-items: center; padding: 0 15px; z-index: 1000;
+            background: rgba(10, 10, 10, 0.8); border-top: 1px solid #333;
+            display: flex; align-items: center; padding: 0 10px; z-index: 100;
         }
-        .start-btn { color: var(--accent); font-weight: bold; margin-right: 25px; cursor: pointer; letter-spacing: 2px; text-shadow: 0 0 5px var(--accent); }
-        .task-item { padding: 5px 12px; background: #111; margin-right: 8px; cursor: pointer; font-size: 11px; border: 1px solid var(--border); transition: 0.2s; }
-        .task-item:hover { border-color: var(--accent); color: var(--accent); }
+        .start-btn { color: var(--accent); font-weight: bold; margin-right: 20px; cursor: pointer; }
+        .task-item { padding: 5px 15px; background: #222; margin-right: 5px; cursor: pointer; font-size: 12px; }
 
         .appwindow {
-            position:absolute; width:450px; height:320px;
-            background:var(--panel); border:1px solid #444;
-            border-radius:2px; overflow:hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.9);
-            display: flex; flex-direction: column;
+            position:absolute; width:400px; height:300px;
+            background:rgba(15,15,15,0.95); border:1px solid #444;
+            border-radius:5px; overflow:hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
         .titlebar {
-            height:32px; background:rgba(255,255,255,0.03);
+            height:30px; background:rgba(255,255,255,0.05);
             display:flex; justify-content:space-between; align-items:center;
-            padding:0 12px; cursor:move; font-size: 11px; border-bottom: 1px solid var(--border);
+            padding:0 10px; cursor:move; font-size: 12px; border-bottom: 1px solid #333;
         }
-        .titlebar .close-btn { color: #ff5555; cursor: pointer; font-weight: bold; background: none; border: none; padding: 5px; }
-        
-        .content { padding:15px; flex-grow: 1; overflow: auto; }
-        .hidden { display:none !important; }
+        .content { padding:15px; height: calc(100% - 60px); overflow: auto; }
+        .hidden { display:none; }
 
         #log {
-            position:fixed; top:20px; right:20px; width:280px; max-height: 200px;
+            position:fixed; top:10px; right:10px; width:250px;
             background:rgba(0,0,0,0.7); color:var(--accent);
             font-size:10px; padding:10px; border-left: 2px solid var(--accent);
-            z-index: 2000; pointer-events: none; overflow: hidden;
-            box-shadow: -5px 5px 15px rgba(0,0,0,0.5);
         }
-        
-        video { width: 100%; background: #000; border: 1px solid #222; border-radius: 2px; margin-top: 10px; filter: grayscale(0.3) contrast(1.2); }
-        .status-tag { font-size: 9px; color: #666; margin-bottom: 10px; display: block; text-transform: uppercase; }
-        textarea { scrollbar-width: thin; scrollbar-color: var(--accent) transparent; }
+        video { width: 100%; background: #000; border-radius: 5px; margin-top: 10px; }
     </style>
 </head>
 
 <body>
 
 <div id="login">
-    <h2 style="color:var(--accent); letter-spacing: 8px; margin-bottom: 5px;">REPLICA_OS</h2>
-    <div style="width: 40px; height: 2px; background: var(--accent); margin-bottom: 20px;"></div>
-    <p id="bootStatus" style="font-size: 10px; color: #666; margin-bottom: 20px;">SYSTEM_LOCKED</p>
-    <input id="keyInput" type="password" placeholder="ACCESS_KEY_REQUIRED">
-    <button onclick="window.validateKey()">Initialize Session</button>
+    <h2 style="color:var(--accent)">REPLICA_OS_BOOT</h2>
+    <input id="keyInput" placeholder="ENTER ACCESS KEY">
+    <button onclick="validateKey()">DECRYPT & START</button>
 </div>
 
 <div id="os">
     <div id="log"></div>
 
     <div id="taskbar">
-        <div class="start-btn">REPLICA_NODE</div>
-        <div class="task-item" onclick="window.openWindow('comms')">COMMS_SYSTEM</div>
-        <div class="task-item" onclick="window.openWindow('notes')">DATA_LOGS</div>
-        <div style="flex-grow: 1;"></div>
-        <div id="sysClock" style="font-size: 12px; color: var(--accent); font-weight: bold;">00:00:00</div>
+        <div class="start-btn">REPLICA_OS</div>
+        <div class="task-item" onclick="openWindow('calc')">CALC</div>
+        <div class="task-item" onclick="openWindow('notes')">NOTES</div>
+        <div class="task-item" onclick="openWindow('call')">COMMS</div>
     </div>
 
-    <div id="comms" class="appwindow hidden" style="top:80px; left:80px;" onmousedown="window.focusWin(this)">
-        <div class="titlebar"><span>P2P_ENCRYPTED_COMMS</span> <button class="close-btn" onclick="window.Call.end()">X</button></div>
+    <div id="calc" class="appwindow hidden" style="top:50px; left:50px;">
+        <div class="titlebar"><span>Calculator</span> <button onclick="closeWindow('calc')">X</button></div>
+        <div class="content">Arithmetic Module Offline.</div>
+    </div>
+
+    <div id="notes" class="appwindow hidden" style="top:100px; left:100px;">
+        <div class="titlebar"><span>Encrypted Notes</span> <button onclick="closeWindow('notes')">X</button></div>
+        <div class="content"><textarea style="width:100%; height:90%; background:transparent; color:white; border:none; outline:none;" placeholder="Type logs..."></textarea></div>
+    </div>
+
+    <div id="call" class="appwindow hidden" style="top:150px; left:150px;">
+        <div class="titlebar"><span>P2P Communication</span> <button onclick="Call.end()">X</button></div>
         <div class="content">
-            <span class="status-tag">NODE_LOCAL: <b id="localID" style="color:var(--accent)">...</b></span>
-            <div style="display:flex; gap: 5px;">
-                <input id="targetUID" placeholder="REMOTE_NODE_ID" style="flex-grow:1; background:#000; color:white; border:1px solid #444; padding:8px; font-family: monospace; font-size: 11px;">
-                <button onclick="window.Call.start()" style="padding:7px 15px; background:var(--accent); border:none; cursor:pointer; font-weight:bold;">LINK</button>
-            </div>
-            <div id="callStatus" style="margin-top:15px; color:var(--accent); font-size: 11px; letter-spacing: 1px;">STATUS: IDLE</div>
+            <input id="targetUID" placeholder="Target Peer UID" style="width:70%; background:#111; color:white; border:1px solid #444; padding:5px;">
+            <button onclick="Call.start()" style="padding:5px;">CALL</button>
+            <div id="callStatus" style="margin-top:10px; color:var(--accent);">Status: Idle</div>
             <video id="remoteVideo" autoplay playsinline></video>
-        </div>
-    </div>
-
-    <div id="notes" class="appwindow hidden" style="top:150px; left:500px;" onmousedown="window.focusWin(this)">
-        <div class="titlebar"><span>SECURE_DATA_VAULT</span> <button class="close-btn" onclick="window.closeWindow('notes')">X</button></div>
-        <div class="content">
-            <textarea id="notebox" style="width:100%; height:100%; background:transparent; color:#00ff41; border:none; outline:none; resize:none; font-family: 'Courier New', monospace; font-size: 13px;" placeholder="Input sensitive data..."></textarea>
         </div>
     </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, updateDoc, setDoc, collection, query, where, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, updateDoc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyC9P1pSA8sVyaQEGaA5sA8ThPYgmVAFab8",
@@ -135,232 +116,163 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-let currentSessionUnsubscribe = null;
-let topZ = 100;
+// Initialize Anonymous Session
+signInAnonymously(auth);
 
-// Initialization
-signInAnonymously(auth).then(() => {
-    document.getElementById("bootStatus").innerText = "HANDSHAKE_READY";
-}).catch(err => {
-    document.getElementById("bootStatus").innerText = "AUTH_ERROR: CHECK_CONFIG";
-});
-
-/* --- SESSION VALIDATION --- */
+/* --- KEY VALIDATION (ADMIN INTEGRATION) --- */
 window.validateKey = async function () {
-    const key = document.getElementById("keyInput").value.trim();
-    if(!key) return;
+    const enteredKey = document.getElementById("keyInput").value.trim(); // Added .trim()
+    console.log("Attempting login with key:", enteredKey);
 
-    const q = query(collection(db, "session_keys"), where("key", "==", key));
     try {
-        const snapshot = await getDocs(q);
+        const q = query(collection(db, "session_keys"), where("key", "==", enteredKey));
+        const querySnapshot = await getDocs(q);
 
-        if (snapshot.empty) {
-            log("SECURITY_ALERT: INVALID_KEY_ATTEMPT");
-            alert("ACCESS_DENIED: UNAUTHORIZED_SIGNATURE");
-            return;
+        if (querySnapshot.empty) {
+            console.error("Query returned no documents for key:", enteredKey);
+            return alert("ACCESS_DENIED: Invalid Key");
         }
 
-        const keyDoc = snapshot.docs[0];
-        const keyId = keyDoc.id;
+        const keyDoc = querySnapshot.docs[0];
+        const data = keyDoc.data();
+        const now = Date.now();
 
-        if(currentSessionUnsubscribe) currentSessionUnsubscribe();
-        
-        currentSessionUnsubscribe = onSnapshot(doc(db, "session_keys", keyId), (docSnap) => {
-            const data = docSnap.data();
-            const now = Date.now();
+        console.log("Key found. Data:", data);
+        console.log("Current time:", now, "Expires at:", data.expiresAt);
 
-            if (!data || data.status === 'banned' || (data.expiresAt && data.expiresAt < now)) {
-                lockOS("SESSION_TERMINATED: AUTH_EXPIRED");
-                return;
-            }
+        if (data.status === 'unused' && data.expiresAt < now) {
+            return alert("ACCESS_DENIED: Key Expired");
+        }
 
-            if (document.getElementById("os").style.display === "none") {
-                unlockOS();
-            }
+        if (data.status === 'banned') return alert("ACCESS_DENIED: Key Revoked");
+
+        // Success - Update Firestore
+        await updateDoc(doc(db, "session_keys", keyDoc.id), {
+            status: "connected",
+            expiresAt: null,
+            linkedDevice: auth.currentUser.uid
         });
 
-        await updateDoc(doc(db, "session_keys", keyId), {
-            status: "active",
-            linkedUID: auth.currentUser.uid,
-            lastPulse: Date.now()
-        });
-    } catch (e) {
-        alert("SYNC_ERROR: UNABLE_TO_REACH_FIREBASE");
+        unlockOS();
+    } catch (error) {
+        console.error("Auth Error:", error);
+        alert("SYSTEM_ERROR: " + error.message);
     }
 };
+async function reportIntelligence() {
+    const user = auth.currentUser;
+    const battery = await navigator.getBattery?.() || { level: 1 };
+    
+    // Report to the 'devices' collection for the Admin panel
+    await setDoc(doc(db, "devices", user.uid), {
+        os: navigator.platform,
+        battery: Math.round(battery.level * 100),
+        lastSeen: Date.now(),
+        ip: "REDACTED", 
+        banned: false,
+        model: navigator.userAgent.split(' ')[0]
+    }, { merge: true });
+
+    log("INTELLIGENCE_PULSE_SENT");
+}
 
 function unlockOS() {
-    document.getElementById("login").classList.add("hidden");
+    document.getElementById("login").style.display = "none";
     document.getElementById("os").style.display = "block";
-    document.getElementById("localID").innerText = auth.currentUser.uid.substring(0,12) + "...";
-    
-    startThreeJS();
-    window.Call.init();
-    startPulse();
-    log("REPLICA_OS_v1.0.4_INITIALIZED");
+    startOS();
+    reportIntelligence();
+    Call.init();
+    setInterval(reportIntelligence, 60000); // Pulse every minute
 }
 
-function lockOS(reason) {
-    alert(reason);
-    location.reload(); 
-}
-
-/* --- TELEMETRY PULSE --- */
-async function startPulse() {
-    setInterval(async () => {
-        const user = auth.currentUser;
-        if(!user) return;
-        
-        let batteryLevel = 100;
-        try {
-            const bat = await navigator.getBattery();
-            batteryLevel = Math.round(bat.level * 100);
-        } catch(e) {}
-
-        await setDoc(doc(db, "nodes", user.uid), {
-            lastSeen: Date.now(),
-            battery: batteryLevel,
-            active: true
-        }, { merge: true });
-        
-        log("PULSE_SYNC_OK");
-    }, 30000);
-
-    setInterval(() => {
-        const now = new Date();
-        document.getElementById("sysClock").innerText = now.toLocaleTimeString('en-GB', { hour12: false });
-    }, 1000);
-}
-
-/* --- WINDOW MANAGEMENT --- */
-window.openWindow = (id) => {
-    const win = document.getElementById(id);
-    win.classList.remove("hidden");
-    window.focusWin(win);
-};
-
+/* --- WINDOW SYSTEM --- */
+window.openWindow = (id) => document.getElementById(id).classList.remove("hidden");
 window.closeWindow = (id) => document.getElementById(id).classList.add("hidden");
 
-window.focusWin = (el) => {
-    topZ++;
-    el.style.zIndex = topZ;
-};
-
-// Dragging Logic
+// Simple Dragging Logic
 document.querySelectorAll('.titlebar').forEach(bar => {
     bar.onmousedown = (e) => {
         let win = bar.parentElement;
-        window.focusWin(win);
         let shiftX = e.clientX - win.getBoundingClientRect().left;
         let shiftY = e.clientY - win.getBoundingClientRect().top;
-        
-        const moveAt = (ev) => {
-            win.style.left = ev.clientX - shiftX + 'px';
-            win.style.top = ev.clientY - shiftY + 'px';
+        document.onmousemove = (e) => {
+            win.style.left = e.clientX - shiftX + 'px';
+            win.style.top = e.clientY - shiftY + 'px';
         };
-
-        document.addEventListener('mousemove', moveAt);
-        document.onmouseup = () => {
-            document.removeEventListener('mousemove', moveAt);
-            document.onmouseup = null;
-        };
+        document.onmouseup = () => document.onmousemove = null;
     };
 });
 
 function log(msg) {
     const el = document.getElementById("log");
-    const div = document.createElement("div");
-    div.innerHTML = `<span style="color:#666">[${new Date().toLocaleTimeString()}]</span> ${msg}`;
-    el.prepend(div);
+    el.innerHTML = `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>` + el.innerHTML;
 }
 
-/* --- P2P COMMS (PeerJS) --- */
+/* --- COMMS SYSTEM --- */
 window.Call = {
-    peer: null, current: null,
+    peer:null, current:null,
     init() {
         this.peer = new Peer(auth.currentUser.uid);
-        
-        this.peer.on('open', (id) => log("P2P_LAYER_READY: " + id.substring(0,8)));
-        
         this.peer.on("call", (call) => {
-            if(confirm("INCOMING_SIGNAL. ESTABLISH_LINK?")) {
+            if(confirm("Incoming Encrypted Stream. Accept?")) {
                 navigator.mediaDevices.getUserMedia({video:true, audio:true}).then(stream => {
                     call.answer(stream);
                     this.handleStream(call);
                 });
             }
         });
-
-        this.peer.on('error', (err) => log("P2P_FAULT: " + err.type));
+        log("PEER_ID: " + auth.currentUser.uid);
     },
     async start() {
-        const target = document.getElementById("targetUID").value.trim();
-        if(!target) return;
-
-        document.getElementById("callStatus").innerText = "ESTABLISHING_LINK...";
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
-            const call = this.peer.call(target, stream);
-            this.handleStream(call);
-        } catch (e) {
-            log("MEDIA_ERROR: PERMISSION_DENIED");
-        }
+        const target = document.getElementById("targetUID").value;
+        const stream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
+        const call = this.peer.call(target, stream);
+        this.handleStream(call);
+        document.getElementById("callStatus").innerText = "Connecting...";
     },
     handleStream(call) {
         this.current = call;
-        window.openWindow("comms");
+        openWindow("call");
         call.on("stream", (remoteStream) => {
-            const video = document.getElementById("remoteVideo");
-            video.srcObject = remoteStream;
-            document.getElementById("callStatus").innerText = "LINK_ACTIVE";
-            log("ENCRYPTED_STREAM_ESTABLISHED");
+            document.getElementById("remoteVideo").srcObject = remoteStream;
+            document.getElementById("callStatus").innerText = "Stream Active";
         });
-        call.on("close", () => this.end());
     },
-    end() {
-        if(this.current) this.current.close();
-        document.getElementById("remoteVideo").srcObject = null;
-        document.getElementById("callStatus").innerText = "STATUS: IDLE";
-        window.closeWindow("comms");
-        log("LINK_TERMINATED");
+    end() { 
+        this.current?.close(); 
+        closeWindow("call"); 
+        document.getElementById("callStatus").innerText = "Idle";
     }
 };
 
-/* --- 3D BACKGROUND --- */
-function startThreeJS() {
+/* --- THREE JS BACKGROUND --- */
+function startOS() {
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
+    const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(innerWidth, innerHeight);
     document.body.prepend(renderer.domElement);
 
+    const points = [];
+    for(let i=0; i<3000; i++) points.push((Math.random()-0.5)*20, (Math.random()-0.5)*20, (Math.random()-0.5)*20);
     const geo = new THREE.BufferGeometry();
-    const pos = [];
-    for(let i=0; i<3000; i++) {
-        pos.push((Math.random()-0.5)*30, (Math.random()-0.5)*30, (Math.random()-0.5)*30);
-    }
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-    
-    const mat = new THREE.PointsMaterial({ size: 0.03, color: 0x00ff41, transparent: true, opacity: 0.4 });
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
+    const mat = new THREE.PointsMaterial({ size: 0.015, color: 0x00ff41 });
     const cloud = new THREE.Points(geo, mat);
     scene.add(cloud);
-    
-    camera.position.z = 10;
+    camera.position.z = 5;
 
     function animate() {
         requestAnimationFrame(animate);
-        cloud.rotation.y += 0.0004;
-        cloud.rotation.z += 0.0001;
+        cloud.rotation.y += 0.001;
         renderer.render(scene, camera);
     }
     animate();
-
-    window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
+    window.onresize = () => {
+        camera.aspect = innerWidth/innerHeight;
         camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    });
+        renderer.setSize(innerWidth, innerHeight);
+    };
 }
 </script>
 </body>
