@@ -9,102 +9,109 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 
     <style>
-        :root { --accent: #00ff41; --bg: #000; }
+        :root { --accent: #00ff41; --bg: #000; --panel: rgba(15, 15, 15, 0.95); }
         body { margin:0; overflow:hidden; background:var(--bg); font-family:'Courier New', monospace; color: white; }
 
-        /* --- LOGIN --- */
+        /* --- LOGIN & LOCK --- */
         #login {
             position:fixed; inset:0; display:flex; flex-direction:column;
             justify-content:center; align-items:center; background:#000; z-index:9999;
         }
+        #login.hidden { display: none; }
         #login input { 
             background: #111; border: 1px solid var(--accent); color: var(--accent); 
-            padding: 10px; margin: 10px; width: 250px; outline: none; text-align: center;
+            padding: 12px; margin: 10px; width: 280px; outline: none; text-align: center;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.2);
         }
         #login button { 
             background: var(--accent); color: black; border: none; 
-            padding: 10px 20px; cursor: pointer; font-weight: bold; 
+            padding: 10px 25px; cursor: pointer; font-weight: bold; transition: 0.3s;
         }
+        #login button:hover { box-shadow: 0 0 20px var(--accent); }
 
         /* --- OS UI --- */
         #os { display:none; }
         
         #taskbar {
             position: fixed; bottom: 0; left: 0; right: 0; height: 40px;
-            background: rgba(10, 10, 10, 0.8); border-top: 1px solid #333;
-            display: flex; align-items: center; padding: 0 10px; z-index: 100;
+            background: rgba(5, 5, 5, 0.9); border-top: 1px solid #333;
+            display: flex; align-items: center; padding: 0 15px; z-index: 1000;
         }
-        .start-btn { color: var(--accent); font-weight: bold; margin-right: 20px; cursor: pointer; }
-        .task-item { padding: 5px 15px; background: #222; margin-right: 5px; cursor: pointer; font-size: 12px; border: 1px solid #333; }
-        .task-item:hover { border-color: var(--accent); }
+        .start-btn { color: var(--accent); font-weight: bold; margin-right: 25px; cursor: pointer; letter-spacing: 2px; }
+        .task-item { padding: 5px 12px; background: #1a1a1a; margin-right: 8px; cursor: pointer; font-size: 11px; border: 1px solid #333; transition: 0.2s; }
+        .task-item:hover { border-color: var(--accent); color: var(--accent); }
 
         .appwindow {
-            position:absolute; width:400px; height:300px;
-            background:rgba(15,15,15,0.95); border:1px solid #444;
-            border-radius:5px; overflow:hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            z-index: 10;
+            position:absolute; width:450px; height:320px;
+            background:var(--panel); border:1px solid #444;
+            border-radius:4px; overflow:hidden; box-shadow: 0 15px 40px rgba(0,0,0,0.8);
+            z-index: 100;
         }
         .titlebar {
-            height:30px; background:rgba(255,255,255,0.1);
+            height:32px; background:rgba(255,255,255,0.05);
             display:flex; justify-content:space-between; align-items:center;
-            padding:0 10px; cursor:move; font-size: 12px; border-bottom: 1px solid #333;
+            padding:0 12px; cursor:move; font-size: 11px; border-bottom: 1px solid #333;
+            user-select: none;
         }
-        .titlebar button { background: none; border: none; color: #ff5f56; cursor: pointer; font-weight: bold; }
-        .content { padding:15px; height: calc(100% - 60px); overflow: auto; }
+        .titlebar .close-btn { color: #ff5555; cursor: pointer; font-weight: bold; background: none; border: none; }
+        
+        .content { padding:15px; height: calc(100% - 65px); overflow: auto; }
         .hidden { display:none !important; }
 
         #log {
-            position:fixed; top:10px; right:10px; width:250px;
-            background:rgba(0,0,0,0.7); color:var(--accent);
+            position:fixed; top:10px; right:10px; width:260px; height: 150px;
+            background:rgba(0,0,0,0.8); color:var(--accent);
             font-size:10px; padding:10px; border-left: 2px solid var(--accent);
-            z-index: 1000; pointer-events: none;
+            z-index: 2000; pointer-events: none; overflow: hidden;
         }
-        video { width: 100%; background: #000; border-radius: 5px; margin-top: 10px; }
+        
+        video { width: 100%; background: #050505; border: 1px solid #222; border-radius: 4px; margin-top: 10px; }
+        .status-tag { font-size: 9px; color: #888; margin-bottom: 10px; display: block; }
     </style>
 </head>
 
 <body>
 
 <div id="login">
-    <h2 style="color:var(--accent)">REPLICA_OS_BOOT</h2>
-    <input id="keyInput" placeholder="ENTER ACCESS KEY">
-    <button onclick="validateKey()">DECRYPT & START</button>
+    <h2 style="color:var(--accent); letter-spacing: 5px;">REPLICA_OS</h2>
+    <p id="bootStatus" style="font-size: 10px; color: #444;">WAITING_FOR_DECRYPTION_KEY</p>
+    <input id="keyInput" type="password" placeholder="ENTER ACCESS KEY">
+    <button onclick="window.validateKey()">DECRYPT & INITIALIZE</button>
 </div>
 
 <div id="os">
     <div id="log"></div>
 
     <div id="taskbar">
-        <div class="start-btn">REPLICA_OS</div>
-        <div class="task-item" onclick="window.openWindow('calc')">CALC</div>
-        <div class="task-item" onclick="window.openWindow('notes')">NOTES</div>
-        <div class="task-item" onclick="window.openWindow('call')">COMMS</div>
+        <div class="start-btn">REPLICA_NODE</div>
+        <div class="task-item" onclick="window.openWindow('comms')">COMMS_SYSTEM</div>
+        <div class="task-item" onclick="window.openWindow('notes')">DATA_LOGS</div>
+        <div style="flex-grow: 1;"></div>
+        <div id="sysClock" style="font-size: 12px; color: var(--accent);">00:00:00</div>
     </div>
 
-    <div id="calc" class="appwindow hidden" style="top:50px; left:50px;">
-        <div class="titlebar"><span>Calculator</span> <button onclick="window.closeWindow('calc')">X</button></div>
-        <div class="content">Arithmetic Module Offline.</div>
-    </div>
-
-    <div id="notes" class="appwindow hidden" style="top:100px; left:100px;">
-        <div class="titlebar"><span>Encrypted Notes</span> <button onclick="window.closeWindow('notes')">X</button></div>
-        <div class="content"><textarea style="width:100%; height:90%; background:transparent; color:white; border:none; outline:none;" placeholder="Type logs..."></textarea></div>
-    </div>
-
-    <div id="call" class="appwindow hidden" style="top:150px; left:150px;">
-        <div class="titlebar"><span>P2P Communication</span> <button onclick="window.Call.end()">X</button></div>
+    <div id="comms" class="appwindow hidden" style="top:80px; left:80px;">
+        <div class="titlebar"><span>P2P_ENCRYPTED_COMMS</span> <button class="close-btn" onclick="window.Call.end()">X</button></div>
         <div class="content">
-            <input id="targetUID" placeholder="Target Peer UID" style="width:70%; background:#111; color:white; border:1px solid #444; padding:5px;">
-            <button onclick="window.Call.start()" style="padding:5px;">CALL</button>
-            <div id="callStatus" style="margin-top:10px; color:var(--accent);">Status: Idle</div>
+            <span class="status-tag">LOCAL_NODE_ID: <b id="localID" style="color:var(--accent)">...</b></span>
+            <input id="targetUID" placeholder="REMOTE_NODE_ID" style="width:75%; background:#000; color:white; border:1px solid #444; padding:8px; font-family: monospace;">
+            <button onclick="window.Call.start()" style="padding:7px; background:var(--accent); border:none; cursor:pointer;">CONNECT</button>
+            <div id="callStatus" style="margin-top:15px; color:var(--accent); font-size: 12px;">STATUS: IDLE</div>
             <video id="remoteVideo" autoplay playsinline></video>
+        </div>
+    </div>
+
+    <div id="notes" class="appwindow hidden" style="top:120px; left:400px;">
+        <div class="titlebar"><span>PERSISTENT_STORAGE</span> <button class="close-btn" onclick="window.closeWindow('notes')">X</button></div>
+        <div class="content">
+            <textarea id="notebox" style="width:100%; height:90%; background:transparent; color:#00ff41; border:none; outline:none; resize:none;" placeholder="Secure data entry..."></textarea>
         </div>
     </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, updateDoc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, updateDoc, setDoc, collection, query, where, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -120,72 +127,98 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-signInAnonymously(auth);
+let currentSessionUnsubscribe = null;
+
+// Initialization
+signInAnonymously(auth).then(() => {
+    document.getElementById("bootStatus").innerText = "READY_FOR_HANDSHAKE";
+});
+
+/* --- CONTINUOUS KEY VALIDATION --- */
+window.validateKey = async function () {
+    const key = document.getElementById("keyInput").value.trim();
+    if(!key) return;
+
+    const q = query(collection(db, "session_keys"), where("key", "==", key));
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+        alert("ACCESS_DENIED: Invalid Signature");
+        return;
+    }
+
+    const keyDoc = snapshot.docs[0];
+    const keyId = keyDoc.id;
+
+    // Start Real-time Listening for this key
+    if(currentSessionUnsubscribe) currentSessionUnsubscribe();
+    
+    currentSessionUnsubscribe = onSnapshot(doc(db, "session_keys", keyId), (doc) => {
+        const data = doc.data();
+        const now = Date.now();
+
+        // Security Checks
+        if (!data || data.status === 'banned' || (data.expiresAt && data.expiresAt < now)) {
+            lockOS("SESSION_TERMINATED");
+            return;
+        }
+
+        if (document.getElementById("os").style.display === "none") {
+            unlockOS(keyId);
+        }
+    });
+
+    // Update session record
+    await updateDoc(doc(db, "session_keys", keyId), {
+        status: "connected",
+        linkedDevice: auth.currentUser.uid,
+        lastPulse: Date.now()
+    });
+};
+
+function unlockOS(keyId) {
+    document.getElementById("login").classList.add("hidden");
+    document.getElementById("os").style.display = "block";
+    document.getElementById("localID").innerText = auth.currentUser.uid;
+    
+    startThreeJS();
+    window.Call.init();
+    startPulse();
+    log("OS_INITIALIZED_NODE_" + auth.currentUser.uid.substring(0,6));
+}
+
+function lockOS(reason) {
+    alert(reason);
+    location.reload(); // Hard reset for security
+}
+
+/* --- TELEMETRY PULSE --- */
+async function startPulse() {
+    setInterval(async () => {
+        const user = auth.currentUser;
+        if(!user) return;
+        
+        const bat = await navigator.getBattery?.() || { level: 1 };
+        await setDoc(doc(db, "devices", user.uid), {
+            lastSeen: Date.now(),
+            battery: Math.round(bat.level * 100),
+            online: true
+        }, { merge: true });
+        
+        log("PULSE_SYNC_SUCCESS");
+    }, 30000);
+
+    setInterval(() => {
+        const now = new Date();
+        document.getElementById("sysClock").innerText = now.toTimeString().split(' ')[0];
+    }, 1000);
+}
 
 /* --- WINDOW MANAGEMENT --- */
-window.openWindow = (id) => {
-    const win = document.getElementById(id);
-    if(win) win.classList.remove("hidden");
-};
+window.openWindow = (id) => document.getElementById(id).classList.remove("hidden");
+window.closeWindow = (id) => document.getElementById(id).classList.add("hidden");
 
-window.closeWindow = (id) => {
-    const win = document.getElementById(id);
-    if(win) win.classList.add("hidden");
-};
-
-/* --- LOGIN LOGIC --- */
-window.validateKey = async function () {
-    const enteredKey = document.getElementById("keyInput").value.trim();
-    if(!enteredKey) return alert("KEY_REQUIRED");
-
-    try {
-        const q = query(collection(db, "session_keys"), where("key", "==", enteredKey));
-        const querySnapshot = await getDocs(q);
-
-        if (querySnapshot.empty) return alert("ACCESS_DENIED: Invalid Key");
-
-        const keyDoc = querySnapshot.docs[0];
-        const data = keyDoc.data();
-        
-        if (data.status === 'banned') return alert("ACCESS_DENIED: Key Revoked");
-        if (data.expiresAt && data.expiresAt < Date.now()) return alert("ACCESS_DENIED: Key Expired");
-
-        await updateDoc(doc(db, "session_keys", keyDoc.id), {
-            status: "connected",
-            linkedDevice: auth.currentUser.uid
-        });
-
-        unlockOS();
-    } catch (error) {
-        console.error(error);
-        alert("CRITICAL_AUTH_FAILURE");
-    }
-};
-
-function unlockOS() {
-    document.getElementById("login").style.display = "none";
-    document.getElementById("os").style.display = "block";
-    
-    startOS();
-    reportIntelligence();
-    window.Call.init();
-    setInterval(reportIntelligence, 60000);
-}
-
-async function reportIntelligence() {
-    const user = auth.currentUser;
-    if(!user) return;
-    const battery = await navigator.getBattery?.() || { level: 1 };
-    await setDoc(doc(db, "devices", user.uid), {
-        os: navigator.platform,
-        battery: Math.round(battery.level * 100),
-        lastSeen: Date.now(),
-        model: navigator.userAgent.split(' ')[0]
-    }, { merge: true });
-    log("INTELLIGENCE_PULSE_SENT");
-}
-
-/* --- DRAG LOGIC --- */
+// Dragging functionality
 document.querySelectorAll('.titlebar').forEach(bar => {
     bar.onmousedown = (e) => {
         let win = bar.parentElement;
@@ -201,72 +234,98 @@ document.querySelectorAll('.titlebar').forEach(bar => {
 
 function log(msg) {
     const el = document.getElementById("log");
-    if(el) el.innerHTML = `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>` + el.innerHTML;
+    el.innerHTML = `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>` + el.innerHTML;
 }
 
-/* --- COMMS --- */
+/* --- P2P COMMS (PeerJS) --- */
 window.Call = {
-    peer:null, current:null,
+    peer: null, current: null,
     init() {
+        // We use the Firebase UID as the Peer ID so users can find each other
         this.peer = new Peer(auth.currentUser.uid);
+        
+        this.peer.on('open', (id) => log("P2P_LAYER_ONLINE: " + id.substring(0,8)));
+        
         this.peer.on("call", (call) => {
-            if(confirm("Incoming Encrypted Stream. Accept?")) {
+            if(confirm("INCOMING_ENCRYPTED_STREAM. ACCEPT?")) {
                 navigator.mediaDevices.getUserMedia({video:true, audio:true}).then(stream => {
                     call.answer(stream);
                     this.handleStream(call);
                 });
             }
         });
-        log("NODE_READY: " + auth.currentUser.uid.substring(0,8));
+
+        this.peer.on('error', (err) => {
+            log("P2P_ERROR: " + err.type);
+            document.getElementById("callStatus").innerText = "ERROR: " + err.type;
+        });
     },
     async start() {
-        const target = document.getElementById("targetUID").value;
-        const stream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
-        const call = this.peer.call(target, stream);
-        this.handleStream(call);
-        document.getElementById("callStatus").innerText = "Connecting...";
+        const target = document.getElementById("targetUID").value.trim();
+        if(!target) return;
+
+        document.getElementById("callStatus").innerText = "HANDSHAKING...";
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
+            const call = this.peer.call(target, stream);
+            this.handleStream(call);
+        } catch (e) {
+            log("MEDIA_ACCESS_DENIED");
+            alert("Camera/Mic required for Comms.");
+        }
     },
     handleStream(call) {
         this.current = call;
-        window.openWindow("call");
+        window.openWindow("comms");
         call.on("stream", (remoteStream) => {
-            document.getElementById("remoteVideo").srcObject = remoteStream;
-            document.getElementById("callStatus").innerText = "Stream Active";
+            const video = document.getElementById("remoteVideo");
+            video.srcObject = remoteStream;
+            document.getElementById("callStatus").innerText = "STREAM_CONNECTED";
+            log("P2P_STREAM_ESTABLISHED");
         });
+        call.on("close", () => this.end());
     },
-    end() { 
-        this.current?.close(); 
-        window.closeWindow("call"); 
-        document.getElementById("callStatus").innerText = "Idle";
+    end() {
+        if(this.current) this.current.close();
+        document.getElementById("remoteVideo").srcObject = null;
+        document.getElementById("callStatus").innerText = "STATUS: IDLE";
+        window.closeWindow("comms");
+        log("P2P_CONNECTION_CLOSED");
     }
 };
 
-/* --- THREE JS --- */
-function startOS() {
+/* --- 3D BACKGROUND (Three.js) --- */
+function startThreeJS() {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.prepend(renderer.domElement);
-    const points = [];
-    for(let i=0; i<3000; i++) points.push((Math.random()-0.5)*20, (Math.random()-0.5)*20, (Math.random()-0.5)*20);
+
     const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
-    const mat = new THREE.PointsMaterial({ size: 0.015, color: 0x00ff41 });
+    const pos = [];
+    for(let i=0; i<4000; i++) pos.push((Math.random()-0.5)*25, (Math.random()-0.5)*25, (Math.random()-0.5)*25);
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    
+    const mat = new THREE.PointsMaterial({ size: 0.02, color: 0x00ff41, transparent: true, opacity: 0.5 });
     const cloud = new THREE.Points(geo, mat);
     scene.add(cloud);
-    camera.position.z = 5;
+    
+    camera.position.z = 8;
+
     function animate() {
         requestAnimationFrame(animate);
-        cloud.rotation.y += 0.001;
+        cloud.rotation.y += 0.0005;
+        cloud.rotation.x += 0.0002;
         renderer.render(scene, camera);
     }
     animate();
-    window.onresize = () => {
-        camera.aspect = window.innerWidth/window.innerHeight;
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
-    };
+    });
 }
 </script>
 </body>
