@@ -35,25 +35,29 @@
             display: flex; align-items: center; padding: 0 10px; z-index: 100;
         }
         .start-btn { color: var(--accent); font-weight: bold; margin-right: 20px; cursor: pointer; }
-        .task-item { padding: 5px 15px; background: #222; margin-right: 5px; cursor: pointer; font-size: 12px; }
+        .task-item { padding: 5px 15px; background: #222; margin-right: 5px; cursor: pointer; font-size: 12px; border: 1px solid #333; }
+        .task-item:hover { border-color: var(--accent); }
 
         .appwindow {
             position:absolute; width:400px; height:300px;
             background:rgba(15,15,15,0.95); border:1px solid #444;
             border-radius:5px; overflow:hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 10;
         }
         .titlebar {
-            height:30px; background:rgba(255,255,255,0.05);
+            height:30px; background:rgba(255,255,255,0.1);
             display:flex; justify-content:space-between; align-items:center;
             padding:0 10px; cursor:move; font-size: 12px; border-bottom: 1px solid #333;
         }
+        .titlebar button { background: none; border: none; color: #ff5f56; cursor: pointer; font-weight: bold; }
         .content { padding:15px; height: calc(100% - 60px); overflow: auto; }
-        .hidden { display:none; }
+        .hidden { display:none !important; }
 
         #log {
             position:fixed; top:10px; right:10px; width:250px;
             background:rgba(0,0,0,0.7); color:var(--accent);
             font-size:10px; padding:10px; border-left: 2px solid var(--accent);
+            z-index: 1000; pointer-events: none;
         }
         video { width: 100%; background: #000; border-radius: 5px; margin-top: 10px; }
     </style>
@@ -72,26 +76,26 @@
 
     <div id="taskbar">
         <div class="start-btn">REPLICA_OS</div>
-        <div class="task-item" onclick="openWindow('calc')">CALC</div>
-        <div class="task-item" onclick="openWindow('notes')">NOTES</div>
-        <div class="task-item" onclick="openWindow('call')">COMMS</div>
+        <div class="task-item" onclick="window.openWindow('calc')">CALC</div>
+        <div class="task-item" onclick="window.openWindow('notes')">NOTES</div>
+        <div class="task-item" onclick="window.openWindow('call')">COMMS</div>
     </div>
 
     <div id="calc" class="appwindow hidden" style="top:50px; left:50px;">
-        <div class="titlebar"><span>Calculator</span> <button onclick="closeWindow('calc')">X</button></div>
+        <div class="titlebar"><span>Calculator</span> <button onclick="window.closeWindow('calc')">X</button></div>
         <div class="content">Arithmetic Module Offline.</div>
     </div>
 
     <div id="notes" class="appwindow hidden" style="top:100px; left:100px;">
-        <div class="titlebar"><span>Encrypted Notes</span> <button onclick="closeWindow('notes')">X</button></div>
+        <div class="titlebar"><span>Encrypted Notes</span> <button onclick="window.closeWindow('notes')">X</button></div>
         <div class="content"><textarea style="width:100%; height:90%; background:transparent; color:white; border:none; outline:none;" placeholder="Type logs..."></textarea></div>
     </div>
 
     <div id="call" class="appwindow hidden" style="top:150px; left:150px;">
-        <div class="titlebar"><span>P2P Communication</span> <button onclick="Call.end()">X</button></div>
+        <div class="titlebar"><span>P2P Communication</span> <button onclick="window.Call.end()">X</button></div>
         <div class="content">
             <input id="targetUID" placeholder="Target Peer UID" style="width:70%; background:#111; color:white; border:1px solid #444; padding:5px;">
-            <button onclick="Call.start()" style="padding:5px;">CALL</button>
+            <button onclick="window.Call.start()" style="padding:5px;">CALL</button>
             <div id="callStatus" style="margin-top:10px; color:var(--accent);">Status: Idle</div>
             <video id="remoteVideo" autoplay playsinline></video>
         </div>
@@ -100,8 +104,8 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, getDoc, updateDoc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, updateDoc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyC9P1pSA8sVyaQEGaA5sA8ThPYgmVAFab8",
@@ -116,80 +120,72 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// Initialize Anonymous Session
 signInAnonymously(auth);
 
-/* --- KEY VALIDATION (ADMIN INTEGRATION) --- */
+/* --- WINDOW MANAGEMENT --- */
+window.openWindow = (id) => {
+    const win = document.getElementById(id);
+    if(win) win.classList.remove("hidden");
+};
+
+window.closeWindow = (id) => {
+    const win = document.getElementById(id);
+    if(win) win.classList.add("hidden");
+};
+
+/* --- LOGIN LOGIC --- */
 window.validateKey = async function () {
-    const enteredKey = document.getElementById("keyInput").value.trim(); // Added .trim()
-    console.log("Attempting login with key:", enteredKey);
+    const enteredKey = document.getElementById("keyInput").value.trim();
+    if(!enteredKey) return alert("KEY_REQUIRED");
 
     try {
         const q = query(collection(db, "session_keys"), where("key", "==", enteredKey));
         const querySnapshot = await getDocs(q);
 
-        if (querySnapshot.empty) {
-            console.error("Query returned no documents for key:", enteredKey);
-            return alert("ACCESS_DENIED: Invalid Key");
-        }
+        if (querySnapshot.empty) return alert("ACCESS_DENIED: Invalid Key");
 
         const keyDoc = querySnapshot.docs[0];
         const data = keyDoc.data();
-        const now = Date.now();
-
-        console.log("Key found. Data:", data);
-        console.log("Current time:", now, "Expires at:", data.expiresAt);
-
-        if (data.status === 'unused' && data.expiresAt < now) {
-            return alert("ACCESS_DENIED: Key Expired");
-        }
-
+        
         if (data.status === 'banned') return alert("ACCESS_DENIED: Key Revoked");
+        if (data.expiresAt && data.expiresAt < Date.now()) return alert("ACCESS_DENIED: Key Expired");
 
-        // Success - Update Firestore
         await updateDoc(doc(db, "session_keys", keyDoc.id), {
             status: "connected",
-            expiresAt: null,
             linkedDevice: auth.currentUser.uid
         });
 
         unlockOS();
     } catch (error) {
-        console.error("Auth Error:", error);
-        alert("SYSTEM_ERROR: " + error.message);
+        console.error(error);
+        alert("CRITICAL_AUTH_FAILURE");
     }
 };
-async function reportIntelligence() {
-    const user = auth.currentUser;
-    const battery = await navigator.getBattery?.() || { level: 1 };
-    
-    // Report to the 'devices' collection for the Admin panel
-    await setDoc(doc(db, "devices", user.uid), {
-        os: navigator.platform,
-        battery: Math.round(battery.level * 100),
-        lastSeen: Date.now(),
-        ip: "REDACTED", 
-        banned: false,
-        model: navigator.userAgent.split(' ')[0]
-    }, { merge: true });
-
-    log("INTELLIGENCE_PULSE_SENT");
-}
 
 function unlockOS() {
     document.getElementById("login").style.display = "none";
     document.getElementById("os").style.display = "block";
+    
     startOS();
     reportIntelligence();
-    Call.init();
-    setInterval(reportIntelligence, 60000); // Pulse every minute
+    window.Call.init();
+    setInterval(reportIntelligence, 60000);
 }
 
-/* --- WINDOW SYSTEM --- */
-window.openWindow = (id) => document.getElementById(id).classList.remove("hidden");
-window.closeWindow = (id) => document.getElementById(id).classList.add("hidden");
+async function reportIntelligence() {
+    const user = auth.currentUser;
+    if(!user) return;
+    const battery = await navigator.getBattery?.() || { level: 1 };
+    await setDoc(doc(db, "devices", user.uid), {
+        os: navigator.platform,
+        battery: Math.round(battery.level * 100),
+        lastSeen: Date.now(),
+        model: navigator.userAgent.split(' ')[0]
+    }, { merge: true });
+    log("INTELLIGENCE_PULSE_SENT");
+}
 
-// Simple Dragging Logic
+/* --- DRAG LOGIC --- */
 document.querySelectorAll('.titlebar').forEach(bar => {
     bar.onmousedown = (e) => {
         let win = bar.parentElement;
@@ -205,10 +201,10 @@ document.querySelectorAll('.titlebar').forEach(bar => {
 
 function log(msg) {
     const el = document.getElementById("log");
-    el.innerHTML = `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>` + el.innerHTML;
+    if(el) el.innerHTML = `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>` + el.innerHTML;
 }
 
-/* --- COMMS SYSTEM --- */
+/* --- COMMS --- */
 window.Call = {
     peer:null, current:null,
     init() {
@@ -221,7 +217,7 @@ window.Call = {
                 });
             }
         });
-        log("PEER_ID: " + auth.currentUser.uid);
+        log("NODE_READY: " + auth.currentUser.uid.substring(0,8));
     },
     async start() {
         const target = document.getElementById("targetUID").value;
@@ -232,7 +228,7 @@ window.Call = {
     },
     handleStream(call) {
         this.current = call;
-        openWindow("call");
+        window.openWindow("call");
         call.on("stream", (remoteStream) => {
             document.getElementById("remoteVideo").srcObject = remoteStream;
             document.getElementById("callStatus").innerText = "Stream Active";
@@ -240,19 +236,18 @@ window.Call = {
     },
     end() { 
         this.current?.close(); 
-        closeWindow("call"); 
+        window.closeWindow("call"); 
         document.getElementById("callStatus").innerText = "Idle";
     }
 };
 
-/* --- THREE JS BACKGROUND --- */
+/* --- THREE JS --- */
 function startOS() {
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(innerWidth, innerHeight);
+    renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.prepend(renderer.domElement);
-
     const points = [];
     for(let i=0; i<3000; i++) points.push((Math.random()-0.5)*20, (Math.random()-0.5)*20, (Math.random()-0.5)*20);
     const geo = new THREE.BufferGeometry();
@@ -261,7 +256,6 @@ function startOS() {
     const cloud = new THREE.Points(geo, mat);
     scene.add(cloud);
     camera.position.z = 5;
-
     function animate() {
         requestAnimationFrame(animate);
         cloud.rotation.y += 0.001;
@@ -269,9 +263,9 @@ function startOS() {
     }
     animate();
     window.onresize = () => {
-        camera.aspect = innerWidth/innerHeight;
+        camera.aspect = window.innerWidth/window.innerHeight;
         camera.updateProjectionMatrix();
-        renderer.setSize(innerWidth, innerHeight);
+        renderer.setSize(window.innerWidth, window.innerHeight);
     };
 }
 </script>
