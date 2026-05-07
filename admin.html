@@ -5,16 +5,15 @@
 <title>ReplicaOS Admin Control Center</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-<!-- MAP -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <style>
 body {
   margin:0;
-  font-family: monospace;
   background:#0a0a0a;
   color:white;
+  font-family: monospace;
   display:flex;
   height:100vh;
 }
@@ -26,32 +25,28 @@ body {
   border-right:1px solid #222;
 }
 
-h2 {
-  margin-top:0;
-}
+h2 { margin-top:0; }
 
 button {
-  margin:4px;
-  padding:5px 8px;
   background:#222;
   color:white;
   border:1px solid #444;
+  padding:5px 8px;
+  margin:4px;
   cursor:pointer;
 }
 
-button:hover {
-  background:#333;
+button:hover { background:#333; }
+
+.device {
+  padding:8px;
+  border-bottom:1px solid #222;
 }
 
 #map {
   height:300px;
   width:100%;
-  margin-top:10px;
   border:1px solid #333;
-}
-.device {
-  padding:8px;
-  border-bottom:1px solid #222;
 }
 </style>
 
@@ -67,14 +62,14 @@ button:hover {
 
 <!-- ================= MAP ================= -->
 <div class="panel">
-  <h2>📍 Live Device Map</h2>
+  <h2>🗺️ Live World Map</h2>
   <div id="map"></div>
 </div>
 
 <!-- ================= KEYS ================= -->
 <div class="panel">
   <h2>🔑 Key Generator</h2>
-  <button onclick="createKey()">Generate Key</button>
+  <button onclick="generateKey()">Create Key</button>
   <div id="keys"></div>
 </div>
 
@@ -90,16 +85,20 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import {
   getFirestore,
   collection,
+  onSnapshot,
   doc,
-  setDoc,
-  updateDoc,
-  onSnapshot
+  updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+import {
+  getFunctions,
+  httpsCallable
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 
 /* ================= FIREBASE ================= */
 
 const app = initializeApp({
-  apiKey: "AIzaSyC9P1pSA8sVyaQEGaA5sA8ThPYgmVAFab8",
+  apiKey: "YOUR_KEY",
   authDomain: "replicaos.firebaseapp.com",
   projectId: "replicaos",
   storageBucket: "replicaos.firebasestorage.app",
@@ -108,13 +107,18 @@ const app = initializeApp({
 });
 
 const db = getFirestore(app);
+const functions = getFunctions(app);
 
-/* ================= MAP INIT ================= */
+/* ================= CLOUD FUNCTION ================= */
 
-const map = L.map('map').setView([20, 0], 2);
+const generateKeyFn = httpsCallable(functions, "generateKey");
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap'
+/* ================= MAP ================= */
+
+const map = L.map("map").setView([20, 0], 2);
+
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  attribution: "&copy; OpenStreetMap"
 }).addTo(map);
 
 const markers = {};
@@ -136,62 +140,53 @@ onSnapshot(collection(db, "devices"), (snap) => {
       <b>${d.id}</b><br>
       IP: ${data.ip || "unknown"}<br>
       ${data.banned ? "⛔ BANNED" : "🟢 ACTIVE"}<br>
-      <button onclick="kickDevice('${d.id}')">Kick</button>
-      <button onclick="banDevice('${d.id}')">Ban</button>
+
+      <button onclick="kick('${d.id}')">Kick</button>
+      <button onclick="ban('${d.id}')">Ban</button>
     `;
 
     box.appendChild(div);
 
-    /* ================= MAP MARKER ================= */
-    if (data.location) {
+    /* ================= MAP UPDATE ================= */
 
+    if (data.location) {
       if (markers[d.id]) {
         markers[d.id].setLatLng([data.location.lat, data.location.lng]);
       } else {
-        markers[d.id] = L.marker([data.location.lat, data.location.lng])
-          .addTo(map)
-          .bindPopup(d.id);
+        markers[d.id] = L.marker([
+          data.location.lat,
+          data.location.lng
+        ]).addTo(map).bindPopup(d.id);
       }
     }
   });
 });
 
-/* ================= KICK DEVICE ================= */
+/* ================= KICK ================= */
 
-window.kickDevice = async (id) => {
+window.kick = async (id) => {
   await updateDoc(doc(db, "devices", id), {
     lastSeen: 0
   });
-  alert("Kicked: " + id);
 };
 
-/* ================= BAN DEVICE ================= */
+/* ================= BAN ================= */
 
-window.banDevice = async (id) => {
+window.ban = async (id) => {
   await updateDoc(doc(db, "devices", id), {
     banned: true
   });
-  alert("Banned: " + id);
 };
 
-/* ================= KEY GENERATOR ================= */
+/* ================= KEY GENERATION ================= */
 
-function generateKey() {
-  return "KEY-" + Math.random().toString(36).substring(2, 10).toUpperCase();
-}
-
-window.createKey = async () => {
-
-  const key = generateKey();
-
-  await setDoc(doc(db, "keys", key), {
-    active: true,
-    used: false,
-    createdAt: Date.now(),
-    expiresAt: Date.now() + 86400000
-  });
-
-  alert("Key created: " + key);
+window.generateKey = async () => {
+  try {
+    const res = await generateKeyFn();
+    alert("KEY CREATED: " + res.data.key);
+  } catch (e) {
+    alert("Not authorized (admin only)");
+  }
 };
 
 /* ================= LOGS ================= */
@@ -207,7 +202,7 @@ onSnapshot(collection(db, "logs"), (snap) => {
     box.innerHTML += `
       <div>
         [${new Date(v.time).toLocaleString()}]<br>
-        ${v.deviceId} | ${v.ip} | ${v.action}
+        ${v.deviceId} | ${v.ip || "no-ip"} | ${v.action}
       </div>
     `;
   });
