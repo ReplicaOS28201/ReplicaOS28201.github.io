@@ -3,14 +3,17 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>ReplicaOS Node</title>
+    <title>ReplicaOS | Secure Node</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 
     <style>
-        :root { --accent: #00ff41; --bg: #000; --panel: rgba(15, 15, 15, 0.95); }
-        body { margin:0; overflow:hidden; background:var(--bg); font-family:'Courier New', monospace; color: white; }
+        :root { --accent: #00ff41; --bg: #000; --panel: rgba(10, 10, 10, 0.9); --border: #333; }
+        body { margin:0; overflow:hidden; background:var(--bg); font-family:'Courier New', monospace; color: white; user-select: none; }
+
+        /* --- BACKGROUND LAYER --- */
+        canvas { position: fixed; top: 0; left: 0; z-index: 0; pointer-events: none; }
 
         /* --- LOGIN & LOCK --- */
         #login {
@@ -19,64 +22,67 @@
         }
         #login.hidden { display: none; }
         #login input { 
-            background: #111; border: 1px solid var(--accent); color: var(--accent); 
+            background: #050505; border: 1px solid var(--accent); color: var(--accent); 
             padding: 12px; margin: 10px; width: 280px; outline: none; text-align: center;
-            box-shadow: 0 0 15px rgba(0, 255, 65, 0.2);
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.1);
         }
         #login button { 
             background: var(--accent); color: black; border: none; 
             padding: 10px 25px; cursor: pointer; font-weight: bold; transition: 0.3s;
+            text-transform: uppercase; letter-spacing: 1px;
         }
-        #login button:hover { box-shadow: 0 0 20px var(--accent); }
+        #login button:hover { box-shadow: 0 0 20px var(--accent); transform: scale(1.02); }
 
         /* --- OS UI --- */
-        #os { display:none; }
+        #os { display:none; position: relative; z-index: 10; height: 100vh; width: 100vw; }
         
         #taskbar {
             position: fixed; bottom: 0; left: 0; right: 0; height: 40px;
-            background: rgba(5, 5, 5, 0.9); border-top: 1px solid #333;
+            background: rgba(0, 0, 0, 0.9); border-top: 1px solid var(--border);
             display: flex; align-items: center; padding: 0 15px; z-index: 1000;
         }
-        .start-btn { color: var(--accent); font-weight: bold; margin-right: 25px; cursor: pointer; letter-spacing: 2px; }
-        .task-item { padding: 5px 12px; background: #1a1a1a; margin-right: 8px; cursor: pointer; font-size: 11px; border: 1px solid #333; transition: 0.2s; }
+        .start-btn { color: var(--accent); font-weight: bold; margin-right: 25px; cursor: pointer; letter-spacing: 2px; text-shadow: 0 0 5px var(--accent); }
+        .task-item { padding: 5px 12px; background: #111; margin-right: 8px; cursor: pointer; font-size: 11px; border: 1px solid var(--border); transition: 0.2s; }
         .task-item:hover { border-color: var(--accent); color: var(--accent); }
 
         .appwindow {
             position:absolute; width:450px; height:320px;
             background:var(--panel); border:1px solid #444;
-            border-radius:4px; overflow:hidden; box-shadow: 0 15px 40px rgba(0,0,0,0.8);
-            z-index: 100;
+            border-radius:2px; overflow:hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.9);
+            display: flex; flex-direction: column;
         }
         .titlebar {
-            height:32px; background:rgba(255,255,255,0.05);
+            height:32px; background:rgba(255,255,255,0.03);
             display:flex; justify-content:space-between; align-items:center;
-            padding:0 12px; cursor:move; font-size: 11px; border-bottom: 1px solid #333;
-            user-select: none;
+            padding:0 12px; cursor:move; font-size: 11px; border-bottom: 1px solid var(--border);
         }
-        .titlebar .close-btn { color: #ff5555; cursor: pointer; font-weight: bold; background: none; border: none; }
+        .titlebar .close-btn { color: #ff5555; cursor: pointer; font-weight: bold; background: none; border: none; padding: 5px; }
         
-        .content { padding:15px; height: calc(100% - 65px); overflow: auto; }
+        .content { padding:15px; flex-grow: 1; overflow: auto; }
         .hidden { display:none !important; }
 
         #log {
-            position:fixed; top:10px; right:10px; width:260px; height: 150px;
-            background:rgba(0,0,0,0.8); color:var(--accent);
+            position:fixed; top:20px; right:20px; width:280px; max-height: 200px;
+            background:rgba(0,0,0,0.7); color:var(--accent);
             font-size:10px; padding:10px; border-left: 2px solid var(--accent);
             z-index: 2000; pointer-events: none; overflow: hidden;
+            box-shadow: -5px 5px 15px rgba(0,0,0,0.5);
         }
         
-        video { width: 100%; background: #050505; border: 1px solid #222; border-radius: 4px; margin-top: 10px; }
-        .status-tag { font-size: 9px; color: #888; margin-bottom: 10px; display: block; }
+        video { width: 100%; background: #000; border: 1px solid #222; border-radius: 2px; margin-top: 10px; filter: grayscale(0.3) contrast(1.2); }
+        .status-tag { font-size: 9px; color: #666; margin-bottom: 10px; display: block; text-transform: uppercase; }
+        textarea { scrollbar-width: thin; scrollbar-color: var(--accent) transparent; }
     </style>
 </head>
 
 <body>
 
 <div id="login">
-    <h2 style="color:var(--accent); letter-spacing: 5px;">REPLICA_OS</h2>
-    <p id="bootStatus" style="font-size: 10px; color: #444;">WAITING_FOR_DECRYPTION_KEY</p>
-    <input id="keyInput" type="password" placeholder="ENTER ACCESS KEY">
-    <button onclick="window.validateKey()">DECRYPT & INITIALIZE</button>
+    <h2 style="color:var(--accent); letter-spacing: 8px; margin-bottom: 5px;">REPLICA_OS</h2>
+    <div style="width: 40px; height: 2px; background: var(--accent); margin-bottom: 20px;"></div>
+    <p id="bootStatus" style="font-size: 10px; color: #666; margin-bottom: 20px;">SYSTEM_LOCKED</p>
+    <input id="keyInput" type="password" placeholder="ACCESS_KEY_REQUIRED">
+    <button onclick="window.validateKey()">Initialize Session</button>
 </div>
 
 <div id="os">
@@ -87,24 +93,26 @@
         <div class="task-item" onclick="window.openWindow('comms')">COMMS_SYSTEM</div>
         <div class="task-item" onclick="window.openWindow('notes')">DATA_LOGS</div>
         <div style="flex-grow: 1;"></div>
-        <div id="sysClock" style="font-size: 12px; color: var(--accent);">00:00:00</div>
+        <div id="sysClock" style="font-size: 12px; color: var(--accent); font-weight: bold;">00:00:00</div>
     </div>
 
-    <div id="comms" class="appwindow hidden" style="top:80px; left:80px;">
+    <div id="comms" class="appwindow hidden" style="top:80px; left:80px;" onmousedown="window.focusWin(this)">
         <div class="titlebar"><span>P2P_ENCRYPTED_COMMS</span> <button class="close-btn" onclick="window.Call.end()">X</button></div>
         <div class="content">
-            <span class="status-tag">LOCAL_NODE_ID: <b id="localID" style="color:var(--accent)">...</b></span>
-            <input id="targetUID" placeholder="REMOTE_NODE_ID" style="width:75%; background:#000; color:white; border:1px solid #444; padding:8px; font-family: monospace;">
-            <button onclick="window.Call.start()" style="padding:7px; background:var(--accent); border:none; cursor:pointer;">CONNECT</button>
-            <div id="callStatus" style="margin-top:15px; color:var(--accent); font-size: 12px;">STATUS: IDLE</div>
+            <span class="status-tag">NODE_LOCAL: <b id="localID" style="color:var(--accent)">...</b></span>
+            <div style="display:flex; gap: 5px;">
+                <input id="targetUID" placeholder="REMOTE_NODE_ID" style="flex-grow:1; background:#000; color:white; border:1px solid #444; padding:8px; font-family: monospace; font-size: 11px;">
+                <button onclick="window.Call.start()" style="padding:7px 15px; background:var(--accent); border:none; cursor:pointer; font-weight:bold;">LINK</button>
+            </div>
+            <div id="callStatus" style="margin-top:15px; color:var(--accent); font-size: 11px; letter-spacing: 1px;">STATUS: IDLE</div>
             <video id="remoteVideo" autoplay playsinline></video>
         </div>
     </div>
 
-    <div id="notes" class="appwindow hidden" style="top:120px; left:400px;">
-        <div class="titlebar"><span>PERSISTENT_STORAGE</span> <button class="close-btn" onclick="window.closeWindow('notes')">X</button></div>
+    <div id="notes" class="appwindow hidden" style="top:150px; left:500px;" onmousedown="window.focusWin(this)">
+        <div class="titlebar"><span>SECURE_DATA_VAULT</span> <button class="close-btn" onclick="window.closeWindow('notes')">X</button></div>
         <div class="content">
-            <textarea id="notebox" style="width:100%; height:90%; background:transparent; color:#00ff41; border:none; outline:none; resize:none;" placeholder="Secure data entry..."></textarea>
+            <textarea id="notebox" style="width:100%; height:100%; background:transparent; color:#00ff41; border:none; outline:none; resize:none; font-family: 'Courier New', monospace; font-size: 13px;" placeholder="Input sensitive data..."></textarea>
         </div>
     </div>
 </div>
@@ -128,68 +136,73 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 let currentSessionUnsubscribe = null;
+let topZ = 100;
 
 // Initialization
 signInAnonymously(auth).then(() => {
-    document.getElementById("bootStatus").innerText = "READY_FOR_HANDSHAKE";
+    document.getElementById("bootStatus").innerText = "HANDSHAKE_READY";
+}).catch(err => {
+    document.getElementById("bootStatus").innerText = "AUTH_ERROR: CHECK_CONFIG";
 });
 
-/* --- CONTINUOUS KEY VALIDATION --- */
+/* --- SESSION VALIDATION --- */
 window.validateKey = async function () {
     const key = document.getElementById("keyInput").value.trim();
     if(!key) return;
 
     const q = query(collection(db, "session_keys"), where("key", "==", key));
-    const snapshot = await getDocs(q);
+    try {
+        const snapshot = await getDocs(q);
 
-    if (snapshot.empty) {
-        alert("ACCESS_DENIED: Invalid Signature");
-        return;
-    }
-
-    const keyDoc = snapshot.docs[0];
-    const keyId = keyDoc.id;
-
-    // Start Real-time Listening for this key
-    if(currentSessionUnsubscribe) currentSessionUnsubscribe();
-    
-    currentSessionUnsubscribe = onSnapshot(doc(db, "session_keys", keyId), (doc) => {
-        const data = doc.data();
-        const now = Date.now();
-
-        // Security Checks
-        if (!data || data.status === 'banned' || (data.expiresAt && data.expiresAt < now)) {
-            lockOS("SESSION_TERMINATED");
+        if (snapshot.empty) {
+            log("SECURITY_ALERT: INVALID_KEY_ATTEMPT");
+            alert("ACCESS_DENIED: UNAUTHORIZED_SIGNATURE");
             return;
         }
 
-        if (document.getElementById("os").style.display === "none") {
-            unlockOS(keyId);
-        }
-    });
+        const keyDoc = snapshot.docs[0];
+        const keyId = keyDoc.id;
 
-    // Update session record
-    await updateDoc(doc(db, "session_keys", keyId), {
-        status: "connected",
-        linkedDevice: auth.currentUser.uid,
-        lastPulse: Date.now()
-    });
+        if(currentSessionUnsubscribe) currentSessionUnsubscribe();
+        
+        currentSessionUnsubscribe = onSnapshot(doc(db, "session_keys", keyId), (docSnap) => {
+            const data = docSnap.data();
+            const now = Date.now();
+
+            if (!data || data.status === 'banned' || (data.expiresAt && data.expiresAt < now)) {
+                lockOS("SESSION_TERMINATED: AUTH_EXPIRED");
+                return;
+            }
+
+            if (document.getElementById("os").style.display === "none") {
+                unlockOS();
+            }
+        });
+
+        await updateDoc(doc(db, "session_keys", keyId), {
+            status: "active",
+            linkedUID: auth.currentUser.uid,
+            lastPulse: Date.now()
+        });
+    } catch (e) {
+        alert("SYNC_ERROR: UNABLE_TO_REACH_FIREBASE");
+    }
 };
 
-function unlockOS(keyId) {
+function unlockOS() {
     document.getElementById("login").classList.add("hidden");
     document.getElementById("os").style.display = "block";
-    document.getElementById("localID").innerText = auth.currentUser.uid;
+    document.getElementById("localID").innerText = auth.currentUser.uid.substring(0,12) + "...";
     
     startThreeJS();
     window.Call.init();
     startPulse();
-    log("OS_INITIALIZED_NODE_" + auth.currentUser.uid.substring(0,6));
+    log("REPLICA_OS_v1.0.4_INITIALIZED");
 }
 
 function lockOS(reason) {
     alert(reason);
-    location.reload(); // Hard reset for security
+    location.reload(); 
 }
 
 /* --- TELEMETRY PULSE --- */
@@ -198,56 +211,79 @@ async function startPulse() {
         const user = auth.currentUser;
         if(!user) return;
         
-        const bat = await navigator.getBattery?.() || { level: 1 };
-        await setDoc(doc(db, "devices", user.uid), {
+        let batteryLevel = 100;
+        try {
+            const bat = await navigator.getBattery();
+            batteryLevel = Math.round(bat.level * 100);
+        } catch(e) {}
+
+        await setDoc(doc(db, "nodes", user.uid), {
             lastSeen: Date.now(),
-            battery: Math.round(bat.level * 100),
-            online: true
+            battery: batteryLevel,
+            active: true
         }, { merge: true });
         
-        log("PULSE_SYNC_SUCCESS");
+        log("PULSE_SYNC_OK");
     }, 30000);
 
     setInterval(() => {
         const now = new Date();
-        document.getElementById("sysClock").innerText = now.toTimeString().split(' ')[0];
+        document.getElementById("sysClock").innerText = now.toLocaleTimeString('en-GB', { hour12: false });
     }, 1000);
 }
 
 /* --- WINDOW MANAGEMENT --- */
-window.openWindow = (id) => document.getElementById(id).classList.remove("hidden");
+window.openWindow = (id) => {
+    const win = document.getElementById(id);
+    win.classList.remove("hidden");
+    window.focusWin(win);
+};
+
 window.closeWindow = (id) => document.getElementById(id).classList.add("hidden");
 
-// Dragging functionality
+window.focusWin = (el) => {
+    topZ++;
+    el.style.zIndex = topZ;
+};
+
+// Dragging Logic
 document.querySelectorAll('.titlebar').forEach(bar => {
     bar.onmousedown = (e) => {
         let win = bar.parentElement;
+        window.focusWin(win);
         let shiftX = e.clientX - win.getBoundingClientRect().left;
         let shiftY = e.clientY - win.getBoundingClientRect().top;
-        document.onmousemove = (e) => {
-            win.style.left = e.clientX - shiftX + 'px';
-            win.style.top = e.clientY - shiftY + 'px';
+        
+        const moveAt = (ev) => {
+            win.style.left = ev.clientX - shiftX + 'px';
+            win.style.top = ev.clientY - shiftY + 'px';
         };
-        document.onmouseup = () => document.onmousemove = null;
+
+        document.addEventListener('mousemove', moveAt);
+        document.onmouseup = () => {
+            document.removeEventListener('mousemove', moveAt);
+            document.onmouseup = null;
+        };
     };
 });
 
 function log(msg) {
     const el = document.getElementById("log");
-    el.innerHTML = `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>` + el.innerHTML;
+    const div = document.createElement("div");
+    div.innerHTML = `<span style="color:#666">[${new Date().toLocaleTimeString()}]</span> ${msg}`;
+    el.prepend(div);
 }
 
 /* --- P2P COMMS (PeerJS) --- */
 window.Call = {
     peer: null, current: null,
     init() {
-        // We use the Firebase UID as the Peer ID so users can find each other
         this.peer = new Peer(auth.currentUser.uid);
         
-        this.peer.on('open', (id) => log("P2P_LAYER_ONLINE: " + id.substring(0,8)));
+        this.peer.on('open', (id) => log("P2P_LAYER_READY: " + id.substring(0,8)));
         
         this.peer.on("call", (call) => {
-            if(confirm("INCOMING_ENCRYPTED_STREAM. ACCEPT?")) {
+            if(confirm("INCOMING_SIGNAL. ESTABLISH_LINK?")) {
                 navigator.mediaDevices.getUserMedia({video:true, audio:true}).then(stream => {
                     call.answer(stream);
                     this.handleStream(call);
@@ -255,23 +291,19 @@ window.Call = {
             }
         });
 
-        this.peer.on('error', (err) => {
-            log("P2P_ERROR: " + err.type);
-            document.getElementById("callStatus").innerText = "ERROR: " + err.type;
-        });
+        this.peer.on('error', (err) => log("P2P_FAULT: " + err.type));
     },
     async start() {
         const target = document.getElementById("targetUID").value.trim();
         if(!target) return;
 
-        document.getElementById("callStatus").innerText = "HANDSHAKING...";
+        document.getElementById("callStatus").innerText = "ESTABLISHING_LINK...";
         try {
             const stream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
             const call = this.peer.call(target, stream);
             this.handleStream(call);
         } catch (e) {
-            log("MEDIA_ACCESS_DENIED");
-            alert("Camera/Mic required for Comms.");
+            log("MEDIA_ERROR: PERMISSION_DENIED");
         }
     },
     handleStream(call) {
@@ -280,8 +312,8 @@ window.Call = {
         call.on("stream", (remoteStream) => {
             const video = document.getElementById("remoteVideo");
             video.srcObject = remoteStream;
-            document.getElementById("callStatus").innerText = "STREAM_CONNECTED";
-            log("P2P_STREAM_ESTABLISHED");
+            document.getElementById("callStatus").innerText = "LINK_ACTIVE";
+            log("ENCRYPTED_STREAM_ESTABLISHED");
         });
         call.on("close", () => this.end());
     },
@@ -290,33 +322,36 @@ window.Call = {
         document.getElementById("remoteVideo").srcObject = null;
         document.getElementById("callStatus").innerText = "STATUS: IDLE";
         window.closeWindow("comms");
-        log("P2P_CONNECTION_CLOSED");
+        log("LINK_TERMINATED");
     }
 };
 
-/* --- 3D BACKGROUND (Three.js) --- */
+/* --- 3D BACKGROUND --- */
 function startThreeJS() {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
     document.body.prepend(renderer.domElement);
 
     const geo = new THREE.BufferGeometry();
     const pos = [];
-    for(let i=0; i<4000; i++) pos.push((Math.random()-0.5)*25, (Math.random()-0.5)*25, (Math.random()-0.5)*25);
+    for(let i=0; i<3000; i++) {
+        pos.push((Math.random()-0.5)*30, (Math.random()-0.5)*30, (Math.random()-0.5)*30);
+    }
     geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
     
-    const mat = new THREE.PointsMaterial({ size: 0.02, color: 0x00ff41, transparent: true, opacity: 0.5 });
+    const mat = new THREE.PointsMaterial({ size: 0.03, color: 0x00ff41, transparent: true, opacity: 0.4 });
     const cloud = new THREE.Points(geo, mat);
     scene.add(cloud);
     
-    camera.position.z = 8;
+    camera.position.z = 10;
 
     function animate() {
         requestAnimationFrame(animate);
-        cloud.rotation.y += 0.0005;
-        cloud.rotation.x += 0.0002;
+        cloud.rotation.y += 0.0004;
+        cloud.rotation.z += 0.0001;
         renderer.render(scene, camera);
     }
     animate();
