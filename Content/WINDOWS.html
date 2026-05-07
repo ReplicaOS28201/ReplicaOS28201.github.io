@@ -214,16 +214,29 @@ const Call = {
       getAuth, signInAnonymously, onAuthStateChanged
     } = window.FB;
 
-    const firebaseConfig = {
-  apiKey: "AIzaSyC9P1pSA8sVyaQEGaA5sA8ThPYgmVAFab8",
-  authDomain: "replicaos.firebaseapp.com",
-  projectId: "replicaos",
-  storageBucket: "replicaos.firebasestorage.app",
-  messagingSenderId: "34115825829",
-  appId: "1:34115825829:web:246973f8280df47f221d4c",
-  measurementId: "G-F26619EETW"
-};
+    const _0x7a91 = [
+  "AIzaSyC9P1pSA8sVyaQEGaA5sA8ThPYgmVAFab8",
+  "replicaos.firebaseapp.com",
+  "replicaos",
+  "replicaos.firebasestorage.app",
+  "34115825829",
+  "1:34115825829:web:246973f8280df47f221d4c",
+  "G-F26619EETW"
+];
 
+const firebaseConfig = (() => {
+  const _0xf = (i) => _0x7a91[i];
+
+  return {
+    apiKey: _0xf(0),
+    authDomain: _0xf(1),
+    projectId: _0xf(2),
+    storageBucket: _0xf(3),
+    messagingSenderId: _0xf(4),
+    appId: _0xf(5),
+    measurementId: _0xf(6)
+  };
+})();
     this.db = getFirestore(app);
     this.auth = getAuth();
 
