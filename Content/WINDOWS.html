@@ -2,548 +2,294 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
-<title>ReplicaOS 3D</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ReplicaOS</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, updateDoc, onSnapshot, collection, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-const auth = getAuth();
-
-async function login(email, pass) {
-  return await signInWithEmailAndPassword(auth, email, pass);
-}
-
-async function register(email, pass) {
-  return await createUserWithEmailAndPassword(auth, email, pass);
-}
-window.FB = {
-  initializeApp, getFirestore, doc, setDoc, updateDoc,
-  onSnapshot, collection, query, where,
-  getAuth, signInAnonymously, onAuthStateChanged
-};
-</script>
 <style>
 body {
-  margin: 0;
-  overflow: hidden;
-  background: black;
-  font-family: sans-serif;
-  touch-action: none;
+  margin:0;
+  overflow:hidden;
+  background:black;
+  font-family:sans-serif;
 }
 
-#ui {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
+/* LOGIN */
+#login {
+  position:fixed;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  background:#000;
+  color:white;
+  z-index:9999;
 }
 
-#dock-container {
-  pointer-events: auto;
+/* OS */
+#os {
+  display:none;
 }
 
-/* ================= WINDOWS ================= */
+/* WINDOWS */
 .appwindow {
-  position: absolute;
-  width: 320px;
-  height: 220px;
-  background: rgba(20,20,20,0.95);
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 12px;
-  overflow: hidden;
-  pointer-events: auto;
-
-  left: 100px;
-  top: 100px;
+  position:absolute;
+  width:320px;
+  height:220px;
+  background:rgba(20,20,20,0.95);
+  border:1px solid rgba(255,255,255,0.2);
+  border-radius:10px;
+  overflow:hidden;
 }
 
-.hidden { display: none; }
+.hidden { display:none; }
 
-.window-titlebar {
-  height: 40px;
-  background: rgba(255,255,255,0.08);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 10px;
-  color: white;
-  cursor: grab;
+.titlebar {
+  height:35px;
+  background:rgba(255,255,255,0.1);
+  color:white;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:0 10px;
+  cursor:grab;
 }
 
-.window-content {
-  width: 100%;
-  height: calc(100% - 40px);
-  color: white;
-  border: none;
+.content {
+  height:calc(100% - 35px);
+  color:white;
+  padding:10px;
 }
 
-.system-log {
-  position: fixed;
-  top: 16px;
-  right: 16px;
-  width: 320px;
-  max-height: 35vh;
-  overflow: auto;
-  color: #dce7ff;
-  font-size: 12px;
-  background: rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
-  backdrop-filter: blur(8px);
-  pointer-events: auto;
-  z-index: 1200;
-}
-
-.system-log h3 {
-  margin: 0;
-  padding: 8px 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  font-size: 13px;
-}
-
-#system-log-list {
-  padding: 10px;
-}
-
-#system-log-list div {
-  margin-bottom: 8px;
-}
-
-.quick-send {
-  margin-top: 8px;
-  width: 100%;
-  background: rgba(255, 255, 255, 0.14);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 6px;
-  padding: 6px;
-  cursor: pointer;
+/* LOG */
+#log {
+  position:fixed;
+  top:10px;
+  right:10px;
+  width:280px;
+  max-height:200px;
+  overflow:auto;
+  background:rgba(0,0,0,0.6);
+  color:#9fd;
+  font-size:12px;
+  padding:10px;
 }
 </style>
 </head>
 
 <body>
 
-<div id="ui">
+<!-- 🔐 LOGIN -->
+<div id="login">
+  <h2>ReplicaOS Key</h2>
+  <input id="keyInput" placeholder="Enter Access Key">
+  <button onclick="validateKey()">Unlock</button>
+</div>
+
+<!-- 💻 OS -->
+<div id="os">
+
+  <div id="log"></div>
 
   <!-- CALC -->
   <div id="calc" class="appwindow hidden">
-    <div class="window-titlebar">
-      Calculator
-      <button onclick="closeWindow('calc')">×</button>
-    </div>
-    <div class="window-content">
-      <iframe class="window-content" src="Apps/com.calc.app/Index.html"></iframe>
-      <button class="quick-send" onclick="Dock.send('calc', { source: 'calc', message: 'calc ping', time: Date.now() })">Send data to System</button>
-    </div>
+    <div class="titlebar">Calculator <button onclick="closeWindow('calc')">X</button></div>
+    <div class="content">Calculator App</div>
   </div>
 
   <!-- NOTES -->
   <div id="notes" class="appwindow hidden">
-    <div class="window-titlebar">
-      Notes
-      <button onclick="closeWindow('notes')">×</button>
-    </div>
-    <div class="window-content">
-      <textarea style="width:100%; height:70%; background:transparent; color:white; border:none;">Write notes...</textarea>
-      <button class="quick-send" onclick="Dock.send('notes', { source: 'notes', message: 'notes ping', time: Date.now() })">Send data to System</button>
-    </div>
+    <div class="titlebar">Notes <button onclick="closeWindow('notes')">X</button></div>
+    <div class="content">Notes App</div>
   </div>
 
-  <!-- BROWSER -->
-  <div id="browser" class="appwindow hidden">
-    <div class="window-titlebar">
-      Browser
-      <button onclick="closeWindow('browser')">×</button>
-    </div>
-    <div class="window-content">
-      <iframe class="window-content" src="https://example.com"></iframe>
-      <button class="quick-send" onclick="Dock.send('browser', { source: 'browser', message: 'browser ping', time: Date.now() })">Send data to System</button>
-    </div>
-  </div>
+  <!-- CALL -->
   <div id="call" class="appwindow hidden">
-  <div class="window-titlebar">
-    Call
-    <button onclick="Call.end()">×</button>
-  </div>
-
-  <div class="window-content" style="display:flex; flex-direction:column; gap:6px;">
-    <video id="localVideo" autoplay muted style="height:35%; background:black;"></video>
-    <video id="remoteVideo" autoplay style="height:35%; background:black;"></video>
-
-    <input id="callTarget" placeholder="User UID">
-
-    <div style="display:flex; gap:6px;">
+    <div class="titlebar">Call <button onclick="Call.end()">X</button></div>
+    <div class="content">
+      <input id="targetUID" placeholder="User UID">
       <button onclick="Call.start()">Call</button>
       <button onclick="Call.accept()">Accept</button>
       <button onclick="Call.reject()">Reject</button>
+      <div id="callStatus">Idle</div>
     </div>
-
-    <div id="callStatus">Idle</div>
   </div>
+
 </div>
 
-  <div id="dock-container"></div>
+<script type="module">
 
-  <aside class="system-log" aria-live="polite">
-    <h3>System Log</h3>
-    <div id="system-log-list"></div>
-  </aside>
-</div>
+/* ================= FIREBASE ================= */
 
-<script>
-/* ================= FIREBASE + CALL SYSTEM ================= */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  updateDoc,
+  setDoc,
+  collection,
+  query,
+  where,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+import {
+  getAuth,
+  signInAnonymously,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "YOUR_KEY",
+  authDomain: "replicaos.firebaseapp.com",
+  projectId: "replicaos",
+  storageBucket: "replicaos.firebasestorage.app",
+  messagingSenderId: "34115825829",
+  appId: "1:34115825829:web:246973f8280df47f221d4c",
+  measurementId: "G-F26619EETW"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+await signInAnonymously(auth);
+
+/* ================= KEY SYSTEM ================= */
+
+window.validateKey = async function () {
+  const key = document.getElementById("keyInput").value;
+
+  const ref = doc(db, "keys", key);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) return alert("Invalid Key");
+
+  const data = snap.data();
+
+  if (!data.active || data.used) {
+    return alert("Key not valid");
+  }
+
+  await updateDoc(ref, { used: true });
+
+  unlockOS();
+};
+
+function unlockOS() {
+  document.getElementById("login").style.display = "none";
+  document.getElementById("os").style.display = "block";
+
+  startOS();
+  Call.init();
+}
+
+/* ================= WINDOW SYSTEM ================= */
+
+window.openWindow = (id) => {
+  document.getElementById(id).classList.remove("hidden");
+};
+
+window.closeWindow = (id) => {
+  document.getElementById(id).classList.add("hidden");
+};
+
+/* ================= SYSTEM LOG ================= */
+
+function log(msg) {
+  const el = document.getElementById("log");
+  el.innerHTML += `<div>${msg}</div>`;
+}
+
+/* ================= CALL SYSTEM ================= */
 
 const Call = {
-  db: null,
-  auth: null,
-  user: null,
-  peer: null,
-  currentCall: null,
-  localStream: null,
-  incomingCallId: null,
+  peer:null,
+  stream:null,
+  current:null,
 
   async init() {
-    const {
-      initializeApp, getFirestore, doc, setDoc, updateDoc,
-      onSnapshot, collection, query, where,
-      getAuth, signInAnonymously, onAuthStateChanged
-    } = window.FB;
+    const uid = auth.currentUser.uid;
 
-    const _0x7a91 = [
-  "AIzaSyC9P1pSA8sVyaQEGaA5sA8ThPYgmVAFab8",
-  "replicaos.firebaseapp.com",
-  "replicaos",
-  "replicaos.firebasestorage.app",
-  "34115825829",
-  "1:34115825829:web:246973f8280df47f221d4c",
-  "G-F26619EETW"
-];
-
-const firebaseConfig = (() => {
-  const _0xf = (i) => _0x7a91[i];
-
-  return {
-    apiKey: _0xf(0),
-    authDomain: _0xf(1),
-    projectId: _0xf(2),
-    storageBucket: _0xf(3),
-    messagingSenderId: _0xf(4),
-    appId: _0xf(5),
-    measurementId: _0xf(6)
-  };
-})();
-    this.db = getFirestore(app);
-    this.auth = getAuth();
-
-    await signInAnonymously(this.auth);
-
-    onAuthStateChanged(this.auth, (u) => {
-      if (!u) return;
-
-      this.user = u;
-      this.setStatus("Logged in: " + u.uid);
-
-      this.initPeer(u.uid);
-      this.listen();
-    });
-  },
-
-  initPeer(uid) {
     this.peer = new Peer(uid);
 
-    this.peer.on("call", call => {
-      this.currentCall = call;
-
+    this.peer.on("call", async (call) => {
+      this.current = call;
       openWindow("call");
-      this.setStatus("Incoming call from " + call.peer);
+      document.getElementById("callStatus").innerText = "Incoming...";
     });
-  },
-
-  async getMedia() {
-    if (!this.localStream) {
-      this.localStream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true
-      });
-
-      document.getElementById("localVideo").srcObject = this.localStream;
-    }
-    return this.localStream;
   },
 
   async start() {
-    const target = document.getElementById("callTarget").value;
-    if (!target) return alert("Enter UID");
-
-    const callId = crypto.randomUUID();
-
-    await window.FB.setDoc(window.FB.doc(this.db, "calls", callId), {
-      from: this.user.uid,
-      to: target,
-      status: "ringing"
-    });
-
-    const stream = await this.getMedia();
-
-    const call = this.peer.call(target, stream);
-    this.currentCall = call;
-
-    call.on("stream", remote => {
-      document.getElementById("remoteVideo").srcObject = remote;
-    });
-
+    const target = document.getElementById("targetUID").value;
+    this.current = this.peer.call(target, await this.getStream());
     openWindow("call");
-    this.setStatus("Calling " + target);
+    document.getElementById("callStatus").innerText = "Calling...";
   },
 
-  listen() {
-    const q = window.FB.query(
-      window.FB.collection(this.db, "calls"),
-      window.FB.where("to", "==", this.user.uid),
-      window.FB.where("status", "==", "ringing")
-    );
-
-    window.FB.onSnapshot(q, snap => {
-      snap.forEach(docSnap => {
-        this.incomingCallId = docSnap.id;
-
-        openWindow("call");
-        this.setStatus("Incoming call...");
-      });
-    });
+  async getStream() {
+    if (!this.stream) {
+      this.stream = await navigator.mediaDevices.getUserMedia({ video:true, audio:true });
+    }
+    return this.stream;
   },
 
-  async accept() {
-    if (!this.currentCall) return;
-
-    await window.FB.updateDoc(
-      window.FB.doc(this.db, "calls", this.incomingCallId),
-      { status: "accepted" }
-    );
-
-    const stream = await this.getMedia();
-
-    this.currentCall.answer(stream);
-
-    this.currentCall.on("stream", remote => {
-      document.getElementById("remoteVideo").srcObject = remote;
-    });
-
-    this.setStatus("Connected");
+  accept() {
+    document.getElementById("callStatus").innerText = "Connected";
   },
 
-  async reject() {
-    if (!this.incomingCallId) return;
-
-    await window.FB.updateDoc(
-      window.FB.doc(this.db, "calls", this.incomingCallId),
-      { status: "rejected" }
-    );
-
-    this.end();
-  },
-
-  end() {
-    if (this.currentCall) this.currentCall.close();
-
-    document.getElementById("remoteVideo").srcObject = null;
-
-    this.currentCall = null;
-    this.setStatus("Ended");
+  reject() {
+    this.current?.close();
     closeWindow("call");
   },
 
-  setStatus(msg) {
-    document.getElementById("callStatus").innerText = msg;
+  end() {
+    this.current?.close();
+    closeWindow("call");
   }
 };
-async function callUser(targetUID) {
-  const user = auth.currentUser;
-  if (!user) return alert("Not logged in");
-
-  const callId = crypto.randomUUID();
-
-  await setDoc(doc(db, "calls", callId), {
-    from: user.uid,
-    to: targetUID,
-    status: "ringing",
-    created: Date.now()
-  });
-
-  startPeerCall(targetUID);
-}
-Call.init();
-/* ================= WINDOW SYSTEM ================= */
-/**
- * Internal helper to manage visibility, ARIA states, and native dialog behavior.
- * Supports both ID strings and direct HTMLElement references for flexibility.
- */
-function setWindowState(target, isOpen) {
-  const el = typeof target === 'string' ? document.getElementById(target) : target;
-
-  if (!el) return;
-
-  // Handle native <dialog> elements correctly for focus/backdrop support
-  if (el.tagName === 'DIALOG') {
-    if (isOpen) {
-      if (!el.open) el.showModal();
-    } else {
-      if (el.open) el.close();
-    }
-  } else {
-    // Handle standard elements with class toggling and ARIA attributes
-    el.classList.toggle('hidden', !isOpen);
-    el.setAttribute('aria-hidden', String(!isOpen));
-  }
-}
-
-/**
- * Opens a window by ID or element reference.
- * @param {string|HTMLElement} id 
- */
-function openWindow(id) {
-  setWindowState(id, true);
-}
-
-/**
- * Closes a window by ID or element reference.
- * @param {string|HTMLElement} id 
- */
-function closeWindow(id) {
-  setWindowState(id, false);
-}
-
-/* ================= DRAG SYSTEM ================= */
-document.querySelectorAll('.appwindow').forEach((win) => {
-  const bar = win.querySelector('.window-titlebar');
-
-  let dragging = false;
-  let offsetX = 0;
-  let offsetY = 0;
-
-  bar.addEventListener('mousedown', start);
-  bar.addEventListener('touchstart', start, { passive: false });
-
-  function start(e) {
-    e.preventDefault();
-    dragging = true;
-
-    const rect = win.getBoundingClientRect();
-    const pos = getPos(e);
-
-    offsetX = pos.x - rect.left;
-    offsetY = pos.y - rect.top;
-
-    document.addEventListener('mousemove', move);
-    document.addEventListener('mouseup', stop);
-    document.addEventListener('touchmove', move, { passive: false });
-    document.addEventListener('touchend', stop);
-  }
-
-  function move(e) {
-    if (!dragging) return;
-    e.preventDefault();
-
-    const pos = getPos(e);
-    win.style.left = `${pos.x - offsetX}px`;
-    win.style.top = `${pos.y - offsetY}px`;
-  }
-
-  function stop() {
-    dragging = false;
-
-    document.removeEventListener('mousemove', move);
-    document.removeEventListener('mouseup', stop);
-    document.removeEventListener('touchmove', move);
-    document.removeEventListener('touchend', stop);
-  }
-
-  function getPos(e) {
-    return e.touches
-      ? { x: e.touches[0].clientX, y: e.touches[0].clientY }
-      : { x: e.clientX, y: e.clientY };
-  }
-});
 
 /* ================= THREE BACKGROUND ================= */
-let scene = new THREE.Scene();
-let camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
-camera.position.z = 5;
 
-let renderer = new THREE.WebGLRenderer({ antialias:true });
-renderer.setSize(innerWidth, innerHeight);
-document.body.appendChild(renderer.domElement);
+function startOS() {
+  log("OS Booted");
 
-const geo = new THREE.BufferGeometry();
-const arr = [];
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
+  camera.position.z = 5;
 
-for (let i=0;i<3000;i++) {
-  arr.push((Math.random()-0.5)*20);
-  arr.push((Math.random()-0.5)*20);
-  arr.push((Math.random()-0.5)*20);
-}
-
-geo.setAttribute('position', new THREE.Float32BufferAttribute(arr,3));
-
-const mat = new THREE.PointsMaterial({ color:0xffffff, size:0.02 });
-scene.add(new THREE.Points(geo, mat));
-
-function animate() {
-  requestAnimationFrame(animate);
-  renderer.render(scene, camera);
-}
-animate();
-
-window.addEventListener('resize', () => {
-  camera.aspect = innerWidth/innerHeight;
-  camera.updateProjectionMatrix();
+  const renderer = new THREE.WebGLRenderer();
   renderer.setSize(innerWidth, innerHeight);
-});
+  document.body.appendChild(renderer.domElement);
+
+  const geo = new THREE.BufferGeometry();
+  const arr = [];
+
+  for (let i=0;i<2000;i++) {
+    arr.push((Math.random()-0.5)*20);
+    arr.push((Math.random()-0.5)*20);
+    arr.push((Math.random()-0.5)*20);
+  }
+
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(arr,3));
+
+  const mat = new THREE.PointsMaterial({ size:0.02, color:0xffffff });
+
+  scene.add(new THREE.Points(geo, mat));
+
+  function animate() {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+  }
+
+  animate();
+}
 
 </script>
 
-<script src="./system32/DockManagment/server.js"></script>
-<script src="./system32/DockManagment/dock.js"></script>
-
-<script>
-function renderSystemLogs() {
-  const target = document.getElementById('system-log-list');
-  if (!window.System || !target) return;
-
-  target.innerHTML = System.getLogs()
-    .map((entry) => `<div>[${entry.time}] ${entry.type} :: ${entry.app} ${entry.data ? JSON.stringify(entry.data) : ''}</div>`)
-    .join('');
-}
-
-function handleDockEvent(event) {
-  if (!event || !window.System) return;
-
-  if (event.type === 'open-app') {
-    openWindow(event.app);
-    System.open(event.app);
-    renderSystemLogs();
-    return;
-  }
-
-  if (event.type === 'send-data') {
-    System.send(event.app, event.data);
-    renderSystemLogs();
-  }
-}
-
-fetch('./system32/DockManagment/dock.html')
-  .then((res) => res.text())
-  .then((html) => {
-    document.getElementById('dock-container').innerHTML = html;
-    Dock.connectMain(handleDockEvent);
-    Dock.init();
-    renderSystemLogs();
-  });
-</script>
 </body>
 </html>
