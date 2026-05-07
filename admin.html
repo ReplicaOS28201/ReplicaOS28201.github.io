@@ -123,7 +123,7 @@
             width: 100%;
             border: 1px solid #333;
             margin-top: 10px;
-            filter: grayscale(1) invert(1); /* Hacky "Dark Mode" for standard maps */
+            filter: grayscale(1) invert(1); 
         }
 
         .log-entry {
@@ -195,9 +195,9 @@
         updateDoc, 
         query, 
         orderBy, 
-        limit 
+        limit,
+        addDoc // Added for key generation
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 
     // --- CONFIGURATION ---
     const firebaseConfig = {
@@ -212,7 +212,6 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const functions = getFunctions(app);
 
     /* ================= AUTHENTICATION ================= */
 
@@ -220,14 +219,12 @@
     const registerBtn = document.getElementById('register-btn');
     const overlay = document.getElementById('auth-overlay');
 
-    // UI Toggle Function (Global scope for the onclick handlers)
     window.toggleAuth = (isRegistering) => {
         document.getElementById('login-container').classList.toggle('hidden', isRegistering);
         document.getElementById('register-container').classList.toggle('hidden', !isRegistering);
         document.getElementById('auth-title').innerText = isRegistering ? "CREATE_ADMIN_ACCOUNT" : "SYSTEM_ACCESS_LOGIN";
     };
 
-    // Action: Login
     loginBtn.onclick = async () => {
         const e = document.getElementById('email').value;
         const p = document.getElementById('password').value;
@@ -236,7 +233,6 @@
         } catch (err) { alert("ERR_AUTH_FAILED: " + err.message); }
     };
 
-    // Action: Register
     registerBtn.onclick = async () => {
         const e = document.getElementById('email').value;
         const p = document.getElementById('password').value;
@@ -320,7 +316,7 @@
         mapInitialized = true;
     }
 
-    /* ================= GLOBAL ACTIONS ================= */
+    /* ================= GLOBAL ACTIONS (No Cloud Functions) ================= */
 
     window.kickDevice = async (id) => {
         if(confirm("Confirm force disconnect?")) 
@@ -335,12 +331,34 @@
     window.generateKey = async () => {
         const btn = document.getElementById('key-gen-btn');
         btn.disabled = true;
+
+        // Create a random alphanumeric key string
+        const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        let newKey = "REPL-";
+        for (let i = 0; i < 12; i++) {
+            newKey += charset.charAt(Math.floor(Math.random() * charset.length));
+        }
+
         try {
-            const generateKeyFn = httpsCallable(functions, "generateKey");
-            const res = await generateKeyFn();
-            alert("NEW SESSION KEY GENERATED:\n" + res.data.key);
+            // 1. Add key to database
+            await addDoc(collection(db, "session_keys"), {
+                key: newKey,
+                createdAt: Date.now(),
+                createdBy: auth.currentUser.uid,
+                status: "active"
+            });
+
+            // 2. Log the action so it appears in the log panel
+            await addDoc(collection(db, "logs"), {
+                action: "SESSION_KEY_GENERATED",
+                deviceId: "ADMIN_CONSOLE",
+                time: Date.now()
+            });
+
+            alert("SUCCESS\nNEW SESSION KEY: " + newKey);
         } catch (e) {
-            alert("KEY_GEN_FAILURE: Ensure Cloud Functions are deployed.");
+            console.error(e);
+            alert("ACCESS_DENIED: Check Firestore Security Rules.");
         } finally {
             btn.disabled = false;
         }
