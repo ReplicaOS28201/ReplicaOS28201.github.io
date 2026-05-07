@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>ReplicaOS Admin Panel</title>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+/* ================= FIREBASE ================= */
+
+const firebaseConfig = {
+  apiKey: "YOUR_KEY",
+  authDomain: "replicaos.firebaseapp.com",
+  projectId: "replicaos",
+  storageBucket: "replicaos.firebasestorage.app",
+  messagingSenderId: "34115825829",
+  appId: "1:34115825829:web:246973f8280df47f221d4c"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+/* ================= UI ================= */
+
+function status(data, now) {
+  if (!data.used) return "🟡 unused";
+  if (now > data.expiresAt) return "🔴 expired";
+  return "🟢 active";
+}
+
+/* ================= LIVE TRACKER ================= */
+
+function startPanel() {
+  const container = document.getElementById("list");
+
+  onSnapshot(collection(db, "keys"), (snap) => {
+
+    container.innerHTML = "";
+
+    const now = Date.now();
+
+    snap.forEach(doc => {
+      const d = doc.data();
+
+      const div = document.createElement("div");
+      div.style.padding = "10px";
+      div.style.borderBottom = "1px solid #333";
+      div.style.color = "#fff";
+
+      div.innerHTML = `
+        <b>KEY:</b> ${doc.id}<br>
+        <b>Device:</b> ${d.deviceId || "none"}<br>
+        <b>Status:</b> ${status(d, now)}<br>
+        <b>Expires:</b> ${new Date(d.expiresAt).toLocaleString()}
+      `;
+
+      container.appendChild(div);
+    });
+
+  });
+}
+
+window.onload = startPanel;
+
+</script>
+
+<style>
+body {
+  margin:0;
+  background:#0a0a0a;
+  font-family: monospace;
+  color:white;
+}
+
+h1 {
+  padding:10px;
+  border-bottom:1px solid #333;
+}
+
+#list {
+  padding:10px;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>ReplicaOS Device Tracking Panel</h1>
+<div id="list"></div>
+
+</body>
+</html>
