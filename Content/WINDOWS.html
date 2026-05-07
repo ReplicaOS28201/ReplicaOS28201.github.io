@@ -121,35 +121,44 @@ signInAnonymously(auth);
 
 /* --- KEY VALIDATION (ADMIN INTEGRATION) --- */
 window.validateKey = async function () {
-    const enteredKey = document.getElementById("keyInput").value;
-    
-    // Find key in session_keys where 'key' matches the string
-    const q = query(collection(db, "session_keys"), where("key", "==", enteredKey));
-    const querySnapshot = await getDocs(q);
+    const enteredKey = document.getElementById("keyInput").value.trim(); // Added .trim()
+    console.log("Attempting login with key:", enteredKey);
 
-    if (querySnapshot.empty) return alert("ACCESS_DENIED: Invalid Key");
+    try {
+        const q = query(collection(db, "session_keys"), where("key", "==", enteredKey));
+        const querySnapshot = await getDocs(q);
 
-    const keyDoc = querySnapshot.docs[0];
-    const data = keyDoc.data();
-    const now = Date.now();
+        if (querySnapshot.empty) {
+            console.error("Query returned no documents for key:", enteredKey);
+            return alert("ACCESS_DENIED: Invalid Key");
+        }
 
-    // 1. Expiry Check (30 min logic)
-    if (data.status === 'unused' && data.expiresAt < now) {
-        return alert("ACCESS_DENIED: Key Expired");
+        const keyDoc = querySnapshot.docs[0];
+        const data = keyDoc.data();
+        const now = Date.now();
+
+        console.log("Key found. Data:", data);
+        console.log("Current time:", now, "Expires at:", data.expiresAt);
+
+        if (data.status === 'unused' && data.expiresAt < now) {
+            return alert("ACCESS_DENIED: Key Expired");
+        }
+
+        if (data.status === 'banned') return alert("ACCESS_DENIED: Key Revoked");
+
+        // Success - Update Firestore
+        await updateDoc(doc(db, "session_keys", keyDoc.id), {
+            status: "connected",
+            expiresAt: null,
+            linkedDevice: auth.currentUser.uid
+        });
+
+        unlockOS();
+    } catch (error) {
+        console.error("Auth Error:", error);
+        alert("SYSTEM_ERROR: " + error.message);
     }
-
-    if (data.status === 'banned') return alert("ACCESS_DENIED: Key Revoked by Admin");
-
-    // 2. Link & Upgrade Key to Permanent
-    await updateDoc(doc(db, "session_keys", keyDoc.id), {
-        status: "connected",
-        expiresAt: null, // Makes it never expire now that it's connected
-        linkedDevice: auth.currentUser.uid
-    });
-
-    unlockOS();
 };
-
 async function reportIntelligence() {
     const user = auth.currentUser;
     const battery = await navigator.getBattery?.() || { level: 1 };
