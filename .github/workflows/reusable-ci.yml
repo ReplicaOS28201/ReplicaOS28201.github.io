@@ -1,0 +1,15 @@
+name: Reusable CI
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  placeholder:
+    name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      - name: Not implemented yet
+        run: echo "TODO: Implement Reusable CI workflow."

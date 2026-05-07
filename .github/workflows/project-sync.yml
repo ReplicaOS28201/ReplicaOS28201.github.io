@@ -1,0 +1,16 @@
+name: Project Sync
+
+on:
+  issues:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  placeholder:
+    name: Placeholder
+    runs-on: ubuntu-latest
+    steps:
+      - name: Not implemented yet
+        run: echo "TODO: Implement Project Sync workflow."

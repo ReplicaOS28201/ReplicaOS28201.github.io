@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ReplicaOS - System Not Found</title>
+<style>
+    body {
+        margin: 0;
+        background: #0a0a0a;
+        color: #00ffcc;
+        font-family: "Consolas", monospace;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+    }
+
+    .container {
+        text-align: center;
+        max-width: 700px;
+    }
+
+    h1 {
+        font-size: 48px;
+        margin-bottom: 10px;
+        color: #00ffaa;
+    }
+
+    p {
+        font-size: 18px;
+        color: #cccccc;
+        margin: 10px 0;
+    }
+
+    .code {
+        background: #111;
+        border: 1px solid #00ffaa;
+        padding: 15px;
+        margin-top: 20px;
+        text-align: left;
+        font-size: 14px;
+        color: #00ffcc;
+        overflow-x: auto;
+    }
+
+    .blink {
+        animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+        50% { opacity: 0; }
+    }
+
+    button {
+        margin-top: 20px;
+        padding: 10px 20px;
+        background: #00ffaa;
+        border: none;
+        color: #000;
+        font-weight: bold;
+        cursor: pointer;
+        border-radius: 5px;
+    }
+
+    button:hover {
+        background: #00dd99;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>⚠ SYSTEM NOT FOUND</h1>
+    <p>ReplicaOS failed to locate a valid system environment.</p>
+    <p>Error Code: <strong>SYS_NULL_404</strong></p>
+
+    <div class="code">
+        Boot Sequence Initiated...<br>
+        Checking kernel... FAILED<br>
+        Locating system files... FAILED<br>
+        Mounting filesystem... FAILED<br>
+        <br>
+        >> CRITICAL ERROR: SYSTEM DIRECTORY MISSING<br>
+        >> Unable to continue boot process<br>
+        <br>
+        Press restart or load recovery module<span class="blink">_</span>
+    </div>
+
+    <button onclick="restart()">Restart System</button>
+    <button onclick="recovery()">Recovery Mode</button>
+</div>
+
+<script>
+function restart() {
+    location.href = "./../../../WINDOWS.html"; // your boot file
+}
+
+function recovery() {
+    location.href = "./recovery.html"; // optional recovery page
+}
+</script>
+
+</body>
+</html>

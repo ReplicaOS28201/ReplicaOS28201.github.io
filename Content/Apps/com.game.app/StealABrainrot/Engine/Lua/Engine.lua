@@ -7,9 +7,8 @@ function server.validateEvent(server,localplayer, caller)
   if server then 
     if localplayer then
       local udo = localplayer
-      local sr = server
       local rex = udo + sr
-      rex:Call(sr,caller)
+      server:Call(udo,caller)
     else
       -- no lp
     end

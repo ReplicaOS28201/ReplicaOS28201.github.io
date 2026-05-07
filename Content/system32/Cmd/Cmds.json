@@ -1,0 +1,57 @@
+{
+  "system": {
+    "name": "ReplicaOS CLI",
+    "version": "1.2.0",
+    "prefix": ""
+  },
+  "commands": [
+    {
+      "name": "help",
+      "description": "Displays all commands or detailed info about a specific command",
+      "usage": "help [command]",
+      "args": [
+        {
+          "name": "command",
+          "type": "string",
+          "optional": true
+        }
+      ],
+      "examples": ["help", "help cmd"]
+    },
+    {
+      "name": "exit",
+      "description": "Closes the terminal session",
+      "usage": "exit",
+      "args": [],
+      "examples": ["exit"]
+    },
+    {
+      "name": "cmd",
+      "description": "Launches advanced command shell",
+      "usage": "cmd",
+      "args": [],
+      "examples": ["cmd"]
+    },
+    {
+      "name": "clear",
+      "description": "Clears the terminal screen",
+      "usage": "clear",
+      "args": [],
+      "examples": ["clear"]
+    },
+    {
+      "name": "status",
+      "description": "Displays system status information",
+      "usage": "status",
+      "args": [],
+      "examples": ["status"]
+    },
+    {
+      "name": "version",
+      "description": "Shows system version",
+      "usage": "version",
+      "args": [],
+      "examples": ["version"]
+    }
+  ]
+}
