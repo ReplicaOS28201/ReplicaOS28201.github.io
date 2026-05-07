@@ -1,91 +1,57 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>ReplicaOS Admin Panel</title>
+<title>ReplicaOS Admin Control Center</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-<script type="module">
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {
-  getFirestore,
-  collection,
-  onSnapshot
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-/* ================= FIREBASE ================= */
-
-const firebaseConfig = {
-  apiKey: "YOUR_KEY",
-  authDomain: "replicaos.firebaseapp.com",
-  projectId: "replicaos",
-  storageBucket: "replicaos.firebasestorage.app",
-  messagingSenderId: "34115825829",
-  appId: "1:34115825829:web:246973f8280df47f221d4c"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-/* ================= UI ================= */
-
-function status(data, now) {
-  if (!data.used) return "🟡 unused";
-  if (now > data.expiresAt) return "🔴 expired";
-  return "🟢 active";
-}
-
-/* ================= LIVE TRACKER ================= */
-
-function startPanel() {
-  const container = document.getElementById("list");
-
-  onSnapshot(collection(db, "keys"), (snap) => {
-
-    container.innerHTML = "";
-
-    const now = Date.now();
-
-    snap.forEach(doc => {
-      const d = doc.data();
-
-      const div = document.createElement("div");
-      div.style.padding = "10px";
-      div.style.borderBottom = "1px solid #333";
-      div.style.color = "#fff";
-
-      div.innerHTML = `
-        <b>KEY:</b> ${doc.id}<br>
-        <b>Device:</b> ${d.deviceId || "none"}<br>
-        <b>Status:</b> ${status(d, now)}<br>
-        <b>Expires:</b> ${new Date(d.expiresAt).toLocaleString()}
-      `;
-
-      container.appendChild(div);
-    });
-
-  });
-}
-
-window.onload = startPanel;
-
-</script>
+<!-- MAP -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <style>
 body {
   margin:0;
-  background:#0a0a0a;
   font-family: monospace;
+  background:#0a0a0a;
   color:white;
+  display:flex;
+  height:100vh;
 }
 
-h1 {
+.panel {
+  flex:1;
+  overflow:auto;
   padding:10px;
-  border-bottom:1px solid #333;
+  border-right:1px solid #222;
 }
 
-#list {
-  padding:10px;
+h2 {
+  margin-top:0;
+}
+
+button {
+  margin:4px;
+  padding:5px 8px;
+  background:#222;
+  color:white;
+  border:1px solid #444;
+  cursor:pointer;
+}
+
+button:hover {
+  background:#333;
+}
+
+#map {
+  height:300px;
+  width:100%;
+  margin-top:10px;
+  border:1px solid #333;
+}
+.device {
+  padding:8px;
+  border-bottom:1px solid #222;
 }
 </style>
 
@@ -93,8 +59,162 @@ h1 {
 
 <body>
 
-<h1>ReplicaOS Device Tracking Panel</h1>
-<div id="list"></div>
+<!-- ================= DEVICES ================= -->
+<div class="panel">
+  <h2>🌍 Devices</h2>
+  <div id="devices"></div>
+</div>
+
+<!-- ================= MAP ================= -->
+<div class="panel">
+  <h2>📍 Live Device Map</h2>
+  <div id="map"></div>
+</div>
+
+<!-- ================= KEYS ================= -->
+<div class="panel">
+  <h2>🔑 Key Generator</h2>
+  <button onclick="createKey()">Generate Key</button>
+  <div id="keys"></div>
+</div>
+
+<!-- ================= LOGS ================= -->
+<div class="panel">
+  <h2>📊 Login Logs</h2>
+  <div id="logs"></div>
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  doc,
+  setDoc,
+  updateDoc,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+/* ================= FIREBASE ================= */
+
+const app = initializeApp({
+  apiKey: "YOUR_KEY",
+  authDomain: "replicaos.firebaseapp.com",
+  projectId: "replicaos",
+  storageBucket: "replicaos.firebasestorage.app",
+  messagingSenderId: "34115825829",
+  appId: "1:34115825829:web:246973f8280df47f221d4c"
+});
+
+const db = getFirestore(app);
+
+/* ================= MAP INIT ================= */
+
+const map = L.map('map').setView([20, 0], 2);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap'
+}).addTo(map);
+
+const markers = {};
+
+/* ================= DEVICES ================= */
+
+onSnapshot(collection(db, "devices"), (snap) => {
+
+  const box = document.getElementById("devices");
+  box.innerHTML = "";
+
+  snap.forEach(d => {
+    const data = d.data();
+
+    const div = document.createElement("div");
+    div.className = "device";
+
+    div.innerHTML = `
+      <b>${d.id}</b><br>
+      IP: ${data.ip || "unknown"}<br>
+      ${data.banned ? "⛔ BANNED" : "🟢 ACTIVE"}<br>
+      <button onclick="kickDevice('${d.id}')">Kick</button>
+      <button onclick="banDevice('${d.id}')">Ban</button>
+    `;
+
+    box.appendChild(div);
+
+    /* ================= MAP MARKER ================= */
+    if (data.location) {
+
+      if (markers[d.id]) {
+        markers[d.id].setLatLng([data.location.lat, data.location.lng]);
+      } else {
+        markers[d.id] = L.marker([data.location.lat, data.location.lng])
+          .addTo(map)
+          .bindPopup(d.id);
+      }
+    }
+  });
+});
+
+/* ================= KICK DEVICE ================= */
+
+window.kickDevice = async (id) => {
+  await updateDoc(doc(db, "devices", id), {
+    lastSeen: 0
+  });
+  alert("Kicked: " + id);
+};
+
+/* ================= BAN DEVICE ================= */
+
+window.banDevice = async (id) => {
+  await updateDoc(doc(db, "devices", id), {
+    banned: true
+  });
+  alert("Banned: " + id);
+};
+
+/* ================= KEY GENERATOR ================= */
+
+function generateKey() {
+  return "KEY-" + Math.random().toString(36).substring(2, 10).toUpperCase();
+}
+
+window.createKey = async () => {
+
+  const key = generateKey();
+
+  await setDoc(doc(db, "keys", key), {
+    active: true,
+    used: false,
+    createdAt: Date.now(),
+    expiresAt: Date.now() + 86400000
+  });
+
+  alert("Key created: " + key);
+};
+
+/* ================= LOGS ================= */
+
+onSnapshot(collection(db, "logs"), (snap) => {
+
+  const box = document.getElementById("logs");
+  box.innerHTML = "";
+
+  snap.forEach(d => {
+    const v = d.data();
+
+    box.innerHTML += `
+      <div>
+        [${new Date(v.time).toLocaleString()}]<br>
+        ${v.deviceId} | ${v.ip} | ${v.action}
+      </div>
+    `;
+  });
+
+});
+
+</script>
 
 </body>
 </html>
