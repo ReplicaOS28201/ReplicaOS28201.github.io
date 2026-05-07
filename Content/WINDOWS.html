@@ -13,7 +13,10 @@
     --title-bar: #ffffff;
 }
 
-* { box-sizing: border-box; }
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
 
 body, html {
     margin: 0;
@@ -53,6 +56,8 @@ body, html {
     display: none;
     flex-direction: column;
     overflow: hidden;
+    left: 0;
+    top: 0;
 }
 
 .title-bar {
@@ -60,8 +65,8 @@ body, html {
     padding: 10px;
     display: flex;
     justify-content: space-between;
-    cursor: grab;
     user-select: none;
+    cursor: grab;
     border-bottom: 1px solid #ddd;
 }
 
@@ -94,7 +99,7 @@ body, html {
     </div>
 </div>
 
-<!-- CHAT WINDOW -->
+<!-- WINDOW -->
 <div id="chat" class="window">
     <div class="title-bar" onpointerdown="dragElement(event, 'chat')">
         <span>Messenger</span>
@@ -103,6 +108,7 @@ body, html {
     <div class="content"></div>
 </div>
 
+<!-- TASKBAR -->
 <div id="taskbar">
     <div>🪟 Start</div>
     <div id="clock"></div>
@@ -111,19 +117,24 @@ body, html {
 <script>
 let highestZ = 1000;
 
-/* ---------------- WINDOW SYSTEM ---------------- */
+/* ================= WINDOW SYSTEM ================= */
 
 window.openWindow = (id) => {
     const el = document.getElementById(id);
+
     el.style.display = "flex";
     el.style.zIndex = ++highestZ;
+
+    // spawn ALWAYS at 0,0
+    el.style.left = "0px";
+    el.style.top = "0px";
 };
 
 window.closeWindow = (id) => {
     document.getElementById(id).style.display = "none";
 };
 
-/* ---------------- REAL DRAG SYSTEM ---------------- */
+/* ================= DRAG SYSTEM (PC + MOBILE) ================= */
 
 window.dragElement = (e, id) => {
     const el = document.getElementById(id);
@@ -139,7 +150,7 @@ window.dragElement = (e, id) => {
 
     let lastX = x0;
     let lastY = y0;
-    let lastTime = Date.now();
+    let lastTime = performance.now();
 
     let vx = 0;
     let vy = 0;
@@ -153,13 +164,10 @@ window.dragElement = (e, id) => {
         let x = ev.clientX;
         let y = ev.clientY;
 
-        let dx = x - x0;
-        let dy = y - y0;
+        let newLeft = startLeft + (x - x0);
+        let newTop = startTop + (y - y0);
 
-        let newLeft = startLeft + dx;
-        let newTop = startTop + dy;
-
-        let now = Date.now();
+        let now = performance.now();
         let dt = now - lastTime;
 
         if (dt > 0) {
@@ -182,21 +190,22 @@ window.dragElement = (e, id) => {
         document.removeEventListener("pointermove", move);
         document.removeEventListener("pointerup", end);
 
+        // ===== inertia =====
         let friction = 0.92;
-        let vx2 = vx * 20;
-        let vy2 = vy * 20;
+        let ivx = vx * 25;
+        let ivy = vy * 25;
 
-        const inertia = () => {
-            if (Math.abs(vx2) < 0.5 && Math.abs(vy2) < 0.5) {
+        const animate = () => {
+            if (Math.abs(ivx) < 0.3 && Math.abs(ivy) < 0.3) {
                 snap();
                 return;
             }
 
-            let left = parseFloat(el.style.left || 0) + vx2;
-            let top = parseFloat(el.style.top || 0) + vy2;
+            let left = parseFloat(el.style.left || 0) + ivx;
+            let top = parseFloat(el.style.top || 0) + ivy;
 
-            vx2 *= friction;
-            vy2 *= friction;
+            ivx *= friction;
+            ivy *= friction;
 
             left = Math.max(0, Math.min(maxX(), left));
             top = Math.max(0, Math.min(maxY(), top));
@@ -204,21 +213,21 @@ window.dragElement = (e, id) => {
             el.style.left = left + "px";
             el.style.top = top + "px";
 
-            requestAnimationFrame(inertia);
+            requestAnimationFrame(animate);
         };
 
-        inertia();
+        animate();
     };
 
     const snap = () => {
         let left = parseFloat(el.style.left || 0);
         let top = parseFloat(el.style.top || 0);
 
-        const snap = 30;
+        const snapDist = 25;
 
-        if (left < snap) left = 0;
-        if (left > maxX() - snap) left = maxX();
-        if (top < snap) top = 0;
+        if (left < snapDist) left = 0;
+        if (left > maxX() - snapDist) left = maxX();
+        if (top < snapDist) top = 0;
 
         el.style.transition = "0.2s ease";
         el.style.left = left + "px";
