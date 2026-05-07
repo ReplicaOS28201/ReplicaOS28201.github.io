@@ -119,7 +119,26 @@ body,html {
     border-radius:6px;
     cursor:pointer;
 }
+#call {
+    background: #000;
+    overflow: hidden;
+    position: relative;
+}
 
+#remoteVideo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#localVideo {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    width: 120px;
+    border: 2px solid white;
+    border-radius: 8px;
+}
 /* CALL COLORS */
 .accept{background:#4CAF50;color:white;}
 .decline{background:#e53935;color:white;}
@@ -170,161 +189,142 @@ body,html {
 </div>
 
 <script type="module">
-/* ================= FIREBASE ================= */
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
-    getDatabase,
-    ref,
-    set,
-    onValue,
-    push,
-    serverTimestamp,
-    onDisconnect
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
+//* ================= FIREBASE CONFIG ================= */
+// Make sure these are filled!
 const firebaseConfig = {
-    apiKey:"YOUR_KEY",
-    databaseURL:"YOUR_DB",
-    projectId:"YOUR_ID"
+  apiKey: "AIzaSyCnJPv3cclaIArwUPKEq5of0NyafJ7d4QI",
+  authDomain: "replicanewos3030.firebaseapp.com",
+  projectId: "replicanewos3030",
+  storageBucket: "replicanewos3030.firebasestorage.app",
+  messagingSenderId: "60780972584",
+  appId: "1:60780972584:web:db097a4cda968fec80831d",
+  measurementId: "G-HBTY5EYH29"
 };
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, set, onValue, push, serverTimestamp, onDisconnect, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* ================= USER ================= */
-const myId = Math.random().toString(36).substring(2,10);
-set(ref(db,"presence/"+myId),true);
-onDisconnect(ref(db,"presence/"+myId)).remove();
+/* ================= USER SETUP ================= */
+const myId = Math.random().toString(36).substring(2, 10);
+const presenceRef = ref(db, "presence/" + myId);
+set(presenceRef, true);
+onDisconnect(presenceRef).remove();
 
-/* ================= SYSTEM NOTIFICATIONS ================= */
-function notifySystem(title, text, actions = []) {
-    const box = document.getElementById("systemNotifications");
-
-    const n = document.createElement("div");
-    n.className = "notification";
-
-    n.innerHTML = `
-        <b>${title}</b><br>
-        <small>${text}</small>
-        <div class="notif-actions"></div>
-    `;
-
-    const actionsBox = n.querySelector(".notif-actions");
-
-    actions.forEach(a=>{
-        const btn=document.createElement("button");
-        btn.innerText=a.label;
-        btn.className=a.type;
-        btn.onclick=()=>a.action(n);
-        actionsBox.appendChild(btn);
-    });
-
-    box.appendChild(n);
-
-    setTimeout(()=>n.remove(),8000);
-}
-
-/* ================= FRIEND SYSTEM ================= */
-onValue(ref(db,"friends/"+myId),(snap)=>{
-    const data=snap.val()||{};
-    console.log("Friends:",Object.keys(data));
-});
-
-/* ================= CHAT ================= */
-window.sendMsg=(msg)=>{
-    push(ref(db,"messages"),{
-        from:myId,
-        text:msg,
-        time:serverTimestamp()
-    });
-};
-
-onValue(ref(db,"messages"),(snap)=>{
-    console.log("chat updated");
-});
-
-/* ================= CALL SYSTEM ================= */
+/* ================= WEBRTC CORE ================= */
 const pc = new RTCPeerConnection({
-    iceServers:[{urls:"stun:stun.l.google.com:19302"}]
+    iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
 });
 
 let localStream;
 
-async function startMedia(){
-    if(localStream) return;
-    localStream=await navigator.mediaDevices.getUserMedia({video:true,audio:true});
+// 1. Handle incoming ICE candidates
+pc.onicecandidate = (e) => {
+    if (e.candidate) {
+        // You would typically push these to a 'candidates' collection in Firebase
+        // For a simple demo, we'll focus on the Offer/Answer flow
+    }
+};
+
+pc.ontrack = (e) => {
+    const remoteVid = document.getElementById("remoteVideo");
+    if (remoteVid) remoteVid.srcObject = e.streams[0];
+};
+
+async function startMedia() {
+    if (!localStream) {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        document.getElementById("localVideo").srcObject = localStream;
+        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+    }
 }
 
-pc.ontrack=(e)=>{
-    document.getElementById("remoteVideo").srcObject=e.streams[0];
+/* ================= CALLING LOGIC ================= */
+
+// FUNCTION: Initiate a call
+window.makeCall = async (targetId) => {
+    await startMedia();
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+
+    const callRef = push(ref(db, "calls"));
+    const callId = callRef.key;
+
+    await set(callRef, {
+        from: myId,
+        to: targetId,
+        offer: { type: offer.type, sdp: offer.sdp },
+        status: "pending"
+    });
+
+    // Listen for the answer
+    onValue(ref(db, `calls/${callId}/answer`), async (snap) => {
+        const answer = snap.val();
+        if (answer && !pc.currentRemoteDescription) {
+            await pc.setRemoteDescription(new RTCSessionDescription(answer));
+        }
+    });
 };
 
-/* CALL NOTIFICATION (GLOBAL SYSTEM LEVEL) */
-onValue(ref(db,"calls"),async(snap)=>{
-    const calls=snap.val();
-    if(!calls) return;
+// LISTEN: Incoming Calls
+onValue(ref(db, "calls"), async (snap) => {
+    const data = snap.val();
+    if (!data) return;
 
-    for(const id in calls){
-        const c=calls[id];
-
-        if(c.to===myId && c.offer && !pc.currentRemoteDescription){
-
-            notifySystem(
-                "Incoming Call",
-                "User "+c.from+" is calling you",
-                [
-                    {
-                        label:"Accept",
-                        type:"accept",
-                        action:async()=>{
-                            await startMedia();
-
-                            await pc.setRemoteDescription(c.offer);
-
-                            const ans=await pc.createAnswer();
-                            await pc.setLocalDescription(ans);
-
-                            set(ref(db,"calls/"+id+"/answer"),pc.localDescription);
-
-                            openWindow("call");
-                        }
-                    },
-                    {
-                        label:"Decline",
-                        type:"decline",
-                        action:()=>{}
+    Object.keys(data).forEach(async (id) => {
+        const c = data[id];
+        if (c.to === myId && c.offer && !pc.currentRemoteDescription) {
+            notifySystem("Incoming Call", `User ${c.from} is calling`, [
+                {
+                    label: "Accept",
+                    type: "accept",
+                    action: async (notif) => {
+                        await startMedia();
+                        await pc.setRemoteDescription(new RTCSessionDescription(c.offer));
+                        const ans = await pc.createAnswer();
+                        await pc.setLocalDescription(ans);
+                        
+                        update(ref(db, `calls/${id}`), { 
+                            answer: { type: ans.type, sdp: ans.sdp },
+                            status: "active" 
+                        });
+                        
+                        openWindow("call");
+                        notif.remove();
                     }
-                ]
-            );
+                },
+                {
+                    label: "Decline",
+                    type: "decline",
+                    action: (notif) => notif.remove()
+                }
+            ]);
         }
-    }
+    });
 });
 
-/* ================= WINDOW CORE ================= */
-let highestZ=1000;
-
-window.openWindow=(id)=>{
-    const el=document.getElementById(id);
-    el.style.display="flex";
-    el.style.zIndex=++highestZ;
-    el.style.left="0px";
-    el.style.top="0px";
+/* ================= WINDOW MANAGEMENT ================= */
+let highestZ = 1000;
+window.openWindow = (id) => {
+    const el = document.getElementById(id);
+    el.style.display = "flex";
+    el.style.zIndex = ++highestZ;
+    // Center the window
+    el.style.left = "50%";
+    el.style.top = "50%";
+    el.style.transform = "translate(-50%, -50%)";
 };
 
-window.toggleStart=()=>{
-    const s=document.getElementById("startMenu");
-    s.style.display=s.style.display==="flex"?"none":"flex";
+window.toggleStart = () => {
+    const s = document.getElementById("startMenu");
+    s.style.display = s.style.display === "flex" ? "none" : "flex";
 };
 
-/* CLOCK */
-setInterval(()=>{
-    document.getElementById("clock").innerText=
-    new Date().toLocaleTimeString([],{
-        hour:"2-digit",
-        minute:"2-digit"
-    });
-},1000);
-
+setInterval(() => {
+    document.getElementById("clock").innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}, 1000);
 </script>
 
 </body>
