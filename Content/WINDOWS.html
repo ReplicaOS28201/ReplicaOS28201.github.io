@@ -2,250 +2,305 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ReplicaOS - Ultimate</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ReplicaOS - P2P Edition</title>
 
 <style>
 :root {
-    --taskbar-bg: rgba(20, 20, 20, 0.85);
+    --taskbar-bg: rgba(20,20,20,0.85);
     --win-bg: #f3f3f3;
     --accent: #0078d4;
-    --title-bar: #ffffff;
+    --title-bar: #fff;
 }
 
-* {
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
-}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-body, html {
-    margin: 0;
-    height: 100%;
-    overflow: hidden;
-    font-family: system-ui;
-    background: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+body,html {
+    margin:0;
+    height:100%;
+    overflow:hidden;
+    font-family:system-ui;
+    background:url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1920&q=80') center/cover;
 }
 
 /* Desktop */
-#desktop {
-    height: calc(100vh - 48px);
-    padding: 20px;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, 90px);
-    grid-auto-rows: 100px;
-    gap: 15px;
+#desktop{
+    height:calc(100vh - 48px);
+    padding:20px;
+    display:grid;
+    grid-template-columns:repeat(auto-fill,90px);
+    gap:15px;
 }
 
-.icon {
-    color: white;
-    text-align: center;
-    cursor: pointer;
-}
-.icon img {
-    width: 45px;
-}
+.icon{color:#fff;text-align:center;cursor:pointer;}
+.icon img{width:45px;}
 
 /* Window */
-.window {
-    position: absolute;
-    width: 400px;
-    height: 500px;
-    background: var(--win-bg);
-    border-radius: 10px;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.4);
-    display: none;
-    flex-direction: column;
-    overflow: hidden;
-    left: 0;
-    top: 0;
+.window{
+    position:absolute;
+    width:420px;
+    height:500px;
+    background:var(--win-bg);
+    border-radius:10px;
+    box-shadow:0 15px 40px rgba(0,0,0,.4);
+    display:none;
+    flex-direction:column;
+    overflow:hidden;
+    left:0;
+    top:0;
 }
 
-.title-bar {
-    background: var(--title-bar);
-    padding: 10px;
-    display: flex;
-    justify-content: space-between;
-    user-select: none;
-    cursor: grab;
-    border-bottom: 1px solid #ddd;
-}
-
-.content {
-    flex: 1;
+.title-bar{
+    background:var(--title-bar);
+    padding:10px;
+    display:flex;
+    justify-content:space-between;
+    user-select:none;
+    cursor:grab;
 }
 
 /* Taskbar */
-#taskbar {
-    position: fixed;
-    bottom: 0;
-    height: 48px;
-    width: 100%;
-    background: var(--taskbar-bg);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: white;
-    padding: 0 15px;
+#taskbar{
+    position:fixed;
+    bottom:0;
+    height:48px;
+    width:100%;
+    background:var(--taskbar-bg);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    color:white;
+    padding:0 15px;
+}
+
+/* START MENU */
+#startMenu{
+    position:fixed;
+    bottom:55px;
+    left:10px;
+    width:220px;
+    background:rgba(30,30,30,0.95);
+    border-radius:10px;
+    display:none;
+    flex-direction:column;
+    padding:10px;
+    color:white;
+    z-index:9999;
+}
+
+.start-item{
+    padding:10px;
+    border-radius:6px;
+    cursor:pointer;
+}
+.start-item:hover{background:rgba(255,255,255,0.1);}
+
+/* VIDEO */
+video{
+    width:100%;
+    height:100%;
+    background:#000;
+    object-fit:cover;
+}
+
+.video-ui{
+    padding:10px;
+    background:#111;
+    color:#aaa;
 }
 </style>
 </head>
 
 <body>
 
+<!-- DESKTOP -->
 <div id="desktop">
+
     <div class="icon" onclick="openWindow('chat')">
         <img src="https://cdn-icons-png.flaticon.com/512/733/733585.png">
         <div>Chat</div>
     </div>
+
+    <div class="icon" onclick="openWindow('p2p')">
+        <img src="https://cdn-icons-png.flaticon.com/512/3059/3059502.png">
+        <div>P2P Call</div>
+    </div>
+
+    <div class="icon" onclick="openWindow('browser')">
+        <img src="https://cdn-icons-png.flaticon.com/512/1006/1006771.png">
+        <div>Browser</div>
+    </div>
+
 </div>
 
-<!-- WINDOW -->
+<!-- CHAT -->
 <div id="chat" class="window">
-    <div class="title-bar" onpointerdown="dragElement(event, 'chat')">
+    <div class="title-bar" onpointerdown="drag(event,'chat')">
         <span>Messenger</span>
         <button onclick="closeWindow('chat')">✕</button>
     </div>
     <div class="content"></div>
 </div>
 
+<!-- P2P VIDEO CALL -->
+<div id="p2p" class="window">
+    <div class="title-bar" onpointerdown="drag(event,'p2p')">
+        <span>P2P Video Call</span>
+        <button onclick="closeWindow('p2p')">✕</button>
+    </div>
+
+    <video id="remoteVideo" autoplay playsinline></video>
+    <video id="localVideo" autoplay muted playsinline></video>
+
+    <div class="video-ui">
+        <div>Your ID: <span id="myId"></span></div>
+
+        <input id="targetId" placeholder="Partner ID" style="width:100%;padding:8px;margin-top:5px;">
+        <button onclick="callUser()" style="margin-top:5px;width:100%;padding:8px;background:#4CAF50;color:#fff;border:none;">
+            Call
+        </button>
+    </div>
+</div>
+
+<!-- START MENU -->
+<div id="startMenu">
+    <div class="start-item" onclick="openWindow('chat')">💬 Chat</div>
+    <div class="start-item" onclick="openWindow('p2p')">📞 P2P Call</div>
+    <div class="start-item" onclick="openWindow('browser')">🌐 Browser</div>
+</div>
+
 <!-- TASKBAR -->
 <div id="taskbar">
-    <div>🪟 Start</div>
+    <div onclick="toggleStart()">🪟 Start</div>
     <div id="clock"></div>
 </div>
 
-<script>
+<script type="module">
+/* ================= FIREBASE ================= */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, set, onValue } 
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    databaseURL: "YOUR_DB_URL",
+    projectId: "YOUR_PROJECT_ID"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+/* ================= OS CORE ================= */
 let highestZ = 1000;
 
-/* ================= WINDOW SYSTEM ================= */
-
-window.openWindow = (id) => {
+window.openWindow = (id)=>{
     const el = document.getElementById(id);
-
-    el.style.display = "flex";
-    el.style.zIndex = ++highestZ;
-
-    // spawn ALWAYS at 0,0
-    el.style.left = "0px";
-    el.style.top = "0px";
+    el.style.display="flex";
+    el.style.zIndex=++highestZ;
+    el.style.left="0px";
+    el.style.top="0px";
 };
 
-window.closeWindow = (id) => {
-    document.getElementById(id).style.display = "none";
+window.closeWindow=(id)=>{
+    document.getElementById(id).style.display="none";
 };
 
-/* ================= DRAG SYSTEM (PC + MOBILE) ================= */
+window.toggleStart=()=>{
+    const m=document.getElementById("startMenu");
+    m.style.display=m.style.display==="flex"?"none":"flex";
+};
 
-window.dragElement = (e, id) => {
-    const el = document.getElementById(id);
-    el.style.zIndex = ++highestZ;
+/* ================= DRAG ================= */
+window.drag=(e,id)=>{
+    const el=document.getElementById(id);
+    el.style.zIndex=++highestZ;
 
-    let rect = el.getBoundingClientRect();
+    let x0=e.clientX,y0=e.clientY;
+    let r=el.getBoundingClientRect();
 
-    let x0 = e.clientX;
-    let y0 = e.clientY;
+    let sx=r.left,sy=r.top;
 
-    let startLeft = rect.left;
-    let startTop = rect.top;
+    const move=(ev)=>{
+        el.style.left=(sx+(ev.clientX-x0))+"px";
+        el.style.top=(sy+(ev.clientY-y0))+"px";
+    };
 
-    let lastX = x0;
-    let lastY = y0;
-    let lastTime = performance.now();
+    const end=()=>{
+        document.removeEventListener("pointermove",move);
+        document.removeEventListener("pointerup",end);
+    };
 
-    let vx = 0;
-    let vy = 0;
+    document.addEventListener("pointermove",move);
+    document.addEventListener("pointerup",end);
+};
 
-    const maxX = () => window.innerWidth - el.offsetWidth;
-    const maxY = () => window.innerHeight - el.offsetHeight - 48;
+/* ================= P2P VIDEO ================= */
+const pc = new RTCPeerConnection({
+    iceServers:[{urls:"stun:stun.l.google.com:19302"}]
+});
 
-    const move = (ev) => {
-        ev.preventDefault?.();
+let localStream;
 
-        let x = ev.clientX;
-        let y = ev.clientY;
+const localVideo=document.getElementById("localVideo");
+const remoteVideo=document.getElementById("remoteVideo");
 
-        let newLeft = startLeft + (x - x0);
-        let newTop = startTop + (y - y0);
+async function startCamera(){
+    if(localStream) return;
+    localStream=await navigator.mediaDevices.getUserMedia({video:true,audio:true});
+    localVideo.srcObject=localStream;
+    localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
+}
 
-        let now = performance.now();
-        let dt = now - lastTime;
+pc.ontrack=(e)=>remoteVideo.srcObject=e.streams[0];
 
-        if (dt > 0) {
-            vx = (x - lastX) / dt;
-            vy = (y - lastY) / dt;
+/* USER ID */
+const myId=Math.floor(Math.random()*9999).toString();
+document.getElementById("myId").innerText=myId;
+
+/* CALL */
+window.callUser=async()=>{
+    const target=document.getElementById("targetId").value;
+    if(!target) return;
+
+    await startCamera();
+
+    const offer=await pc.createOffer();
+    await pc.setLocalDescription(offer);
+
+    set(ref(db,"calls/"+target),{
+        offer:pc.localDescription
+    });
+
+    onValue(ref(db,"calls/"+myId),async(s)=>{
+        const data=s.val();
+        if(data?.answer){
+            await pc.setRemoteDescription(data.answer);
         }
-
-        lastX = x;
-        lastY = y;
-        lastTime = now;
-
-        newLeft = Math.max(0, Math.min(maxX(), newLeft));
-        newTop = Math.max(0, Math.min(maxY(), newTop));
-
-        el.style.left = newLeft + "px";
-        el.style.top = newTop + "px";
-    };
-
-    const end = () => {
-        document.removeEventListener("pointermove", move);
-        document.removeEventListener("pointerup", end);
-
-        // ===== inertia =====
-        let friction = 0.92;
-        let ivx = vx * 25;
-        let ivy = vy * 25;
-
-        const animate = () => {
-            if (Math.abs(ivx) < 0.3 && Math.abs(ivy) < 0.3) {
-                snap();
-                return;
-            }
-
-            let left = parseFloat(el.style.left || 0) + ivx;
-            let top = parseFloat(el.style.top || 0) + ivy;
-
-            ivx *= friction;
-            ivy *= friction;
-
-            left = Math.max(0, Math.min(maxX(), left));
-            top = Math.max(0, Math.min(maxY(), top));
-
-            el.style.left = left + "px";
-            el.style.top = top + "px";
-
-            requestAnimationFrame(animate);
-        };
-
-        animate();
-    };
-
-    const snap = () => {
-        let left = parseFloat(el.style.left || 0);
-        let top = parseFloat(el.style.top || 0);
-
-        const snapDist = 25;
-
-        if (left < snapDist) left = 0;
-        if (left > maxX() - snapDist) left = maxX();
-        if (top < snapDist) top = 0;
-
-        el.style.transition = "0.2s ease";
-        el.style.left = left + "px";
-        el.style.top = top + "px";
-
-        setTimeout(() => el.style.transition = "", 200);
-    };
-
-    document.addEventListener("pointermove", move);
-    document.addEventListener("pointerup", end);
+    });
 };
+
+/* RECEIVE */
+onValue(ref(db,"calls/"+myId),async(s)=>{
+    const data=s.val();
+    if(data?.offer && !pc.currentRemoteDescription){
+        await startCamera();
+        await pc.setRemoteDescription(data.offer);
+
+        const answer=await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+
+        set(ref(db,"calls/"+data.offerer||"unknown"),{
+            answer:pc.localDescription
+        });
+    }
+});
 
 /* CLOCK */
-setInterval(() => {
-    document.getElementById("clock").innerText =
-        new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-}, 1000);
-</script>
+setInterval(()=>{
+    document.getElementById("clock").innerText=
+        new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+},1000);
 
+</script>
 </body>
 </html>
