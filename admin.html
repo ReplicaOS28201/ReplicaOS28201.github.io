@@ -7,96 +7,134 @@
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    
     <style>
         :root {
             --bg: #0a0a0a;
+            --panel-bg: #111;
             --border: #222;
             --accent: #00ff41; /* Terminal Green */
             --danger: #ff4444;
+            --text: #ffffff;
         }
 
         body {
             margin:0;
             background: var(--bg);
-            color:white;
+            color: var(--text);
             font-family: 'Courier New', monospace;
-            display:flex;
-            height:100vh;
+            display: flex;
+            height: 100vh;
             overflow: hidden;
         }
 
-        /* Login Overlay */
+        /* --- Auth Overlay --- */
         #auth-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.95);
+            background: rgba(0,0,0,0.98);
             z-index: 1000;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
         }
 
         .login-box {
-            background: #111;
-            padding: 20px;
+            background: var(--panel-bg);
+            padding: 30px;
             border: 1px solid var(--accent);
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 15px;
+            width: 320px;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
         }
 
+        .login-box h3 { margin: 0 0 10px 0; color: var(--accent); text-align: center; }
+        
+        .login-box input {
+            background: #000;
+            border: 1px solid #444;
+            color: var(--accent);
+            padding: 10px;
+            outline: none;
+        }
+
+        .login-box input:focus { border-color: var(--accent); }
+
+        .auth-toggle-text {
+            font-size: 0.75rem;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .auth-toggle-text span {
+            color: var(--accent);
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        /* --- Main Dashboard --- */
         .panel {
-            flex:1;
-            overflow-y:auto;
-            padding:15px;
-            border-right:1px solid var(--border);
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
         }
 
         h2 { 
-            margin-top:0; 
-            font-size: 1.2rem; 
+            margin-top: 0; 
+            font-size: 1.1rem; 
             border-bottom: 1px solid var(--border);
             padding-bottom: 10px;
+            color: var(--accent);
+            text-transform: uppercase;
         }
 
         button {
-            background:#1a1a1a;
-            color:white;
-            border:1px solid #444;
-            padding:8px 12px;
-            cursor:pointer;
+            background: #1a1a1a;
+            color: white;
+            border: 1px solid #444;
+            padding: 10px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
             transition: 0.2s;
         }
 
-        button:hover { background:#333; border-color: var(--accent); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        button:hover { background: #222; border-color: var(--accent); color: var(--accent); }
+        button:disabled { opacity: 0.3; cursor: not-allowed; }
 
         .device {
-            padding:10px;
-            border-bottom:1px solid var(--border);
+            padding: 15px;
+            border: 1px solid var(--border);
+            margin-bottom: 10px;
             font-size: 0.85rem;
-            line-height: 1.4;
+            line-height: 1.6;
+            background: #0d0d0d;
         }
 
-        .status-active { color: var(--accent); }
-        .status-banned { color: var(--danger); }
+        .status-active { color: var(--accent); font-weight: bold; }
+        .status-banned { color: var(--danger); font-weight: bold; }
 
         #map {
-            height:400px;
-            width:100%;
-            border:1px solid #333;
+            height: 450px;
+            width: 100%;
+            border: 1px solid #333;
             margin-top: 10px;
+            filter: grayscale(1) invert(1); /* Hacky "Dark Mode" for standard maps */
         }
 
         .log-entry {
             font-size: 0.75rem;
-            margin-bottom: 8px;
-            padding: 5px;
-            background: #111;
+            margin-bottom: 5px;
+            padding: 8px;
+            background: #050505;
+            border-left: 2px solid var(--accent);
         }
 
-        #logout-btn { position: fixed; bottom: 10px; right: 10px; font-size: 0.7rem; }
+        #logout-btn { position: fixed; bottom: 15px; right: 15px; font-size: 0.7rem; z-index: 10; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -105,167 +143,208 @@
 
 <div id="auth-overlay">
     <div class="login-box">
-        <h3>REPLICA_OS LOGIN</h3>
-        <input type="email" id="email" placeholder="Admin Email" style="padding:5px">
-        <input type="password" id="password" placeholder="Password" style="padding:5px">
-        <button id="login-btn">Secure Login</button>
+        <h3 id="auth-title">SYSTEM_ACCESS_LOGIN</h3>
+        <input type="email" id="email" placeholder="Admin Email">
+        <input type="password" id="password" placeholder="Password">
+        
+        <div id="login-container">
+            <button id="login-btn" style="width: 100%">INITIALIZE LOGIN</button>
+            <p class="auth-toggle-text">First time? <span onclick="toggleAuth(true)">Register Admin</span></p>
+        </div>
+
+        <div id="register-container" class="hidden">
+            <button id="register-btn" style="width: 100%; border-color: var(--accent)">CREATE CREDENTIALS</button>
+            <p class="auth-toggle-text">Active account? <span onclick="toggleAuth(false)">Back to Login</span></p>
+        </div>
     </div>
 </div>
 
 <div class="panel">
-    <h2>🌍 Devices</h2>
+    <h2>📡 Linked Devices</h2>
     <div id="devices"></div>
 </div>
 
-<div class="panel">
-    <h2>🗺️ World Operations</h2>
+<div class="panel" style="flex: 1.5;">
+    <h2>🗺️ Global Tracking</h2>
     <div id="map"></div>
-    <button id="logout-btn">SYSTEM_LOGOUT</button>
+    <button id="logout-btn">TERMINATE_SESSION</button>
 </div>
 
 <div class="panel">
-    <h2>🔑 Access Management</h2>
-    <button onclick="generateKey()" id="key-gen-btn">Create New Session Key</button>
-    <div id="keys" style="margin-top:10px"></div>
+    <h2>🔑 Access Control</h2>
+    <button onclick="generateKey()" id="key-gen-btn">GENERATE SESSION KEY</button>
     
-    <h2 style="margin-top:30px">📊 System Logs</h2>
+    <h2 style="margin-top:40px">📊 Kernel Logs</h2>
     <div id="logs"></div>
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, collection, onSnapshot, doc, updateDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { 
+        getAuth, 
+        signInWithEmailAndPassword, 
+        createUserWithEmailAndPassword, 
+        onAuthStateChanged, 
+        signOut 
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { 
+        getFirestore, 
+        collection, 
+        onSnapshot, 
+        doc, 
+        updateDoc, 
+        query, 
+        orderBy, 
+        limit 
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 
-// REPLACE WITH YOUR ACTUAL FIREBASE CONFIG
-const firebaseConfig = {
-    apiKey: "AIzaSyC9P1pSA8sVyaQEGaA5sA8ThPYgmVAFab8",
-    authDomain: "replicaos.firebaseapp.com",
-    projectId: "replicaos",
-    storageBucket: "replicaos.firebasestorage.app",
-    messagingSenderId: "34115825829",
-    appId: "1:34115825829:web:246973f8280df47f221d4c"
-};
+    // --- CONFIGURATION ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyC9P1pSA8sVyaQEGaA5sA8ThPYgmVAFab8",
+        authDomain: "replicaos.firebaseapp.com",
+        projectId: "replicaos",
+        storageBucket: "replicaos.firebasestorage.app",
+        messagingSenderId: "34115825829",
+        appId: "1:34115825829:web:246973f8280df47f221d4c"
+    };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const functions = getFunctions(app);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const functions = getFunctions(app);
 
-/* ================= AUTH LOGIC ================= */
+    /* ================= AUTHENTICATION ================= */
 
-const loginBtn = document.getElementById('login-btn');
-const overlay = document.getElementById('auth-overlay');
+    const loginBtn = document.getElementById('login-btn');
+    const registerBtn = document.getElementById('register-btn');
+    const overlay = document.getElementById('auth-overlay');
 
-loginBtn.onclick = async () => {
-    const e = document.getElementById('email').value;
-    const p = document.getElementById('password').value;
-    try {
-        await signInWithEmailAndPassword(auth, e, p);
-    } catch (err) {
-        alert("Authentication Failed: " + err.message);
-    }
-};
+    // UI Toggle Function (Global scope for the onclick handlers)
+    window.toggleAuth = (isRegistering) => {
+        document.getElementById('login-container').classList.toggle('hidden', isRegistering);
+        document.getElementById('register-container').classList.toggle('hidden', !isRegistering);
+        document.getElementById('auth-title').innerText = isRegistering ? "CREATE_ADMIN_ACCOUNT" : "SYSTEM_ACCESS_LOGIN";
+    };
 
-document.getElementById('logout-btn').onclick = () => signOut(auth);
+    // Action: Login
+    loginBtn.onclick = async () => {
+        const e = document.getElementById('email').value;
+        const p = document.getElementById('password').value;
+        try {
+            await signInWithEmailAndPassword(auth, e, p);
+        } catch (err) { alert("ERR_AUTH_FAILED: " + err.message); }
+    };
 
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        overlay.classList.add('hidden');
-        initDashboard();
-    } else {
-        overlay.classList.remove('hidden');
-    }
-});
+    // Action: Register
+    registerBtn.onclick = async () => {
+        const e = document.getElementById('email').value;
+        const p = document.getElementById('password').value;
+        if(p.length < 6) return alert("SECURITY_ERR: Password must be 6+ chars");
+        try {
+            await createUserWithEmailAndPassword(auth, e, p);
+        } catch (err) { alert("ERR_REGISTRATION_FAILED: " + err.message); }
+    };
 
-/* ================= DASHBOARD LOGIC ================= */
+    document.getElementById('logout-btn').onclick = () => signOut(auth);
 
-function initDashboard() {
-    // 1. Initialize Map
-    const map = L.map("map").setView([20, 0], 2);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "&copy; OpenStreetMap"
-    }).addTo(map);
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            overlay.classList.add('hidden');
+            initDashboard();
+        } else {
+            overlay.classList.remove('hidden');
+        }
+    });
 
-    const markers = {};
+    /* ================= DASHBOARD CORE ================= */
 
-    // 2. Listen to Devices
-    onSnapshot(collection(db, "devices"), (snap) => {
-        const box = document.getElementById("devices");
-        box.innerHTML = "";
-        
-        snap.forEach(d => {
-            const data = d.data();
-            const div = document.createElement("div");
-            div.className = "device";
-            div.innerHTML = `
-                <b>ID: ${d.id}</b><br>
-                IP: ${data.ip || "---"}<br>
-                STATUS: <span class="${data.banned ? 'status-banned' : 'status-active'}">
-                    ${data.banned ? "⛔ BANNED" : "🟢 ACTIVE"}
-                </span><br>
-                <button onclick="kickDevice('${d.id}')">KICK</button>
-                <button onclick="banDevice('${d.id}')" style="color:red">BAN</button>
-            `;
-            box.appendChild(div);
+    let mapInitialized = false;
+    let map, markers = {};
 
-            if (data.location) {
-                if (markers[d.id]) {
-                    markers[d.id].setLatLng([data.location.lat, data.location.lng]);
-                } else {
-                    markers[d.id] = L.marker([data.location.lat, data.location.lng])
-                        .addTo(map)
-                        .bindPopup(`Device: ${d.id}`);
+    function initDashboard() {
+        if (mapInitialized) return;
+
+        // 1. Map Setup
+        map = L.map("map").setView([20, 0], 2);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+
+        // 2. Real-time Device Tracking
+        onSnapshot(collection(db, "devices"), (snap) => {
+            const box = document.getElementById("devices");
+            box.innerHTML = "";
+            
+            snap.forEach(d => {
+                const data = d.data();
+                const deviceDiv = document.createElement("div");
+                deviceDiv.className = "device";
+                deviceDiv.innerHTML = `
+                    <b>UUID: ${d.id}</b><br>
+                    IPv4: ${data.ip || "UNKNOWN"}<br>
+                    NODE: <span class="${data.banned ? 'status-banned' : 'status-active'}">
+                        ${data.banned ? "UNAUTHORIZED" : "CONNECTED"}
+                    </span><br><br>
+                    <button onclick="kickDevice('${d.id}')">KICK</button>
+                    <button onclick="banDevice('${d.id}')" style="color:var(--danger)">BAN</button>
+                `;
+                box.appendChild(deviceDiv);
+
+                if (data.location) {
+                    if (markers[d.id]) {
+                        markers[d.id].setLatLng([data.location.lat, data.location.lng]);
+                    } else {
+                        markers[d.id] = L.marker([data.location.lat, data.location.lng])
+                            .addTo(map)
+                            .bindPopup(`ID: ${d.id}`);
+                    }
                 }
-            }
+            });
         });
-    });
 
-    // 3. Listen to Logs (Limit to last 20 for performance)
-    const logQuery = query(collection(db, "logs"), orderBy("time", "desc"), limit(20));
-    onSnapshot(logQuery, (snap) => {
-        const logBox = document.getElementById("logs");
-        logBox.innerHTML = "";
-        snap.forEach(d => {
-            const v = d.data();
-            const time = v.time ? new Date(v.time).toLocaleTimeString() : '??';
-            logBox.innerHTML += `
-                <div class="log-entry">
-                    [${time}] ${v.deviceId}<br>
-                    ACTION: <b>${v.action}</b>
-                </div>
-            `;
+        // 3. Security Logs
+        const logQuery = query(collection(db, "logs"), orderBy("time", "desc"), limit(25));
+        onSnapshot(logQuery, (snap) => {
+            const logBox = document.getElementById("logs");
+            logBox.innerHTML = "";
+            snap.forEach(d => {
+                const v = d.data();
+                const ts = v.time ? new Date(v.time).toLocaleTimeString() : '--:--';
+                logBox.innerHTML += `
+                    <div class="log-entry">
+                        [${ts}] EVENT: <b>${v.action}</b><br>
+                        SRC: ${v.deviceId || 'SYSTEM'}
+                    </div>`;
+            });
         });
-    });
-}
 
-/* ================= ACTIONS ================= */
-
-window.kickDevice = async (id) => {
-    if(!confirm("Force disconnect device?")) return;
-    await updateDoc(doc(db, "devices", id), { lastSeen: 0 });
-};
-
-window.banDevice = async (id) => {
-    if(!confirm("PERMANENTLY ban this device?")) return;
-    await updateDoc(doc(db, "devices", id), { banned: true });
-};
-
-window.generateKey = async () => {
-    const btn = document.getElementById('key-gen-btn');
-    btn.disabled = true;
-    try {
-        const generateKeyFn = httpsCallable(functions, "generateKey");
-        const res = await generateKeyFn();
-        alert("NEW KEY GENERATED:\n" + res.data.key);
-    } catch (e) {
-        alert("Error: " + e.message);
-    } finally {
-        btn.disabled = false;
+        mapInitialized = true;
     }
-};
 
+    /* ================= GLOBAL ACTIONS ================= */
+
+    window.kickDevice = async (id) => {
+        if(confirm("Confirm force disconnect?")) 
+            await updateDoc(doc(db, "devices", id), { lastSeen: 0 });
+    };
+
+    window.banDevice = async (id) => {
+        if(confirm("Permanently ban this node?")) 
+            await updateDoc(doc(db, "devices", id), { banned: true });
+    };
+
+    window.generateKey = async () => {
+        const btn = document.getElementById('key-gen-btn');
+        btn.disabled = true;
+        try {
+            const generateKeyFn = httpsCallable(functions, "generateKey");
+            const res = await generateKeyFn();
+            alert("NEW SESSION KEY GENERATED:\n" + res.data.key);
+        } catch (e) {
+            alert("KEY_GEN_FAILURE: Ensure Cloud Functions are deployed.");
+        } finally {
+            btn.disabled = false;
+        }
+    };
 </script>
 
 </body>
