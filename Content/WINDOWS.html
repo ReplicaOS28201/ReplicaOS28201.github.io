@@ -1,279 +1,240 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>ReplicaOS Node</title>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReplicaOS - Desktop</title>
+    <!-- FIX: Use ../ to reference styles in the root directory if they exist -->
+    <link rel="stylesheet" href="../style.css">
     <style>
-        :root { --accent: #00ff41; --bg: #000; }
-        body { margin:0; overflow:hidden; background:var(--bg); font-family:'Courier New', monospace; color: white; }
-
-        /* --- LOGIN --- */
-        #login {
-            position:fixed; inset:0; display:flex; flex-direction:column;
-            justify-content:center; align-items:center; background:#000; z-index:9999;
-        }
-        #login input { 
-            background: #111; border: 1px solid var(--accent); color: var(--accent); 
-            padding: 10px; margin: 10px; width: 250px; outline: none; text-align: center;
-        }
-        #login button { 
-            background: var(--accent); color: black; border: none; 
-            padding: 10px 20px; cursor: pointer; font-weight: bold; 
+        :root {
+            --taskbar-bg: rgba(20, 20, 20, 0.85);
+            --win-bg: #f3f3f3;
+            --accent: #0078d4;
         }
 
-        /* --- OS UI --- */
-        #os { display:none; }
-        
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: url('https://wallpaperaccess.com/full/2565434.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        /* Desktop Icons Area */
+        #desktop {
+            height: calc(100vh - 48px);
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, 80px);
+            grid-template-rows: repeat(auto-fill, 90px);
+            grid-auto-flow: column;
+            gap: 10px;
+        }
+
+        .icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: white;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+        }
+
+        .icon:hover { background: rgba(255,255,255,0.2); }
+        .icon img { width: 40px; height: 40px; margin-bottom: 5px; }
+        .icon span { font-size: 12px; text-align: center; }
+
+        /* Window Styling */
+        .window {
+            position: absolute;
+            width: 500px;
+            height: 350px;
+            background: var(--win-bg);
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #ccc;
+        }
+
+        .title-bar {
+            padding: 10px;
+            background: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: move;
+            user-select: none;
+        }
+
+        .window-controls button {
+            border: none;
+            background: transparent;
+            padding: 5px 12px;
+            cursor: pointer;
+        }
+
+        .btn-close:hover { background: #e81123; color: white; }
+
+        .content { padding: 15px; flex-grow: 1; overflow: auto; }
+
+        /* Taskbar */
         #taskbar {
-            position: fixed; bottom: 0; left: 0; right: 0; height: 40px;
-            background: rgba(10, 10, 10, 0.8); border-top: 1px solid #333;
-            display: flex; align-items: center; padding: 0 10px; z-index: 100;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            height: 48px;
+            background: var(--taskbar-bg);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 9999;
         }
-        .start-btn { color: var(--accent); font-weight: bold; margin-right: 20px; cursor: pointer; }
-        .task-item { padding: 5px 15px; background: #222; margin-right: 5px; cursor: pointer; font-size: 12px; }
 
-        .appwindow {
-            position:absolute; width:400px; height:300px;
-            background:rgba(15,15,15,0.95); border:1px solid #444;
-            border-radius:5px; overflow:hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        .titlebar {
-            height:30px; background:rgba(255,255,255,0.05);
-            display:flex; justify-content:space-between; align-items:center;
-            padding:0 10px; cursor:move; font-size: 12px; border-bottom: 1px solid #333;
-        }
-        .content { padding:15px; height: calc(100% - 60px); overflow: auto; }
-        .hidden { display:none; }
+        .taskbar-left { display: flex; align-items: center; height: 100%; }
+        .start-btn { padding: 0 15px; height: 100%; display: flex; align-items: center; cursor: pointer; }
+        .start-btn:hover { background: rgba(255,255,255,0.1); }
 
-        #log {
-            position:fixed; top:10px; right:10px; width:250px;
-            background:rgba(0,0,0,0.7); color:var(--accent);
-            font-size:10px; padding:10px; border-left: 2px solid var(--accent);
+        .taskbar-right {
+            color: white;
+            padding-right: 15px;
+            font-size: 12px;
+            text-align: right;
         }
-        video { width: 100%; background: #000; border-radius: 5px; margin-top: 10px; }
     </style>
 </head>
-
 <body>
 
-<div id="login">
-    <h2 style="color:var(--accent)">REPLICA_OS_BOOT</h2>
-    <input id="keyInput" placeholder="ENTER ACCESS KEY">
-    <button onclick="validateKey()">DECRYPT & START</button>
-</div>
-
-<div id="os">
-    <div id="log"></div>
-
-    <div id="taskbar">
-        <div class="start-btn">REPLICA_OS</div>
-        <div class="task-item" onclick="openWindow('calc')">CALC</div>
-        <div class="task-item" onclick="openWindow('notes')">NOTES</div>
-        <div class="task-item" onclick="openWindow('call')">COMMS</div>
-    </div>
-
-    <div id="calc" class="appwindow hidden" style="top:50px; left:50px;">
-        <div class="titlebar"><span>Calculator</span> <button onclick="closeWindow('calc')">X</button></div>
-        <div class="content">Arithmetic Module Offline.</div>
-    </div>
-
-    <div id="notes" class="appwindow hidden" style="top:100px; left:100px;">
-        <div class="titlebar"><span>Encrypted Notes</span> <button onclick="closeWindow('notes')">X</button></div>
-        <div class="content"><textarea style="width:100%; height:90%; background:transparent; color:white; border:none; outline:none;" placeholder="Type logs..."></textarea></div>
-    </div>
-
-    <div id="call" class="appwindow hidden" style="top:150px; left:150px;">
-        <div class="titlebar"><span>P2P Communication</span> <button onclick="Call.end()">X</button></div>
-        <div class="content">
-            <input id="targetUID" placeholder="Target Peer UID" style="width:70%; background:#111; color:white; border:1px solid #444; padding:5px;">
-            <button onclick="Call.start()" style="padding:5px;">CALL</button>
-            <div id="callStatus" style="margin-top:10px; color:var(--accent);">Status: Idle</div>
-            <video id="remoteVideo" autoplay playsinline></video>
+    <div id="desktop">
+        <!-- Desktop Icons -->
+        <div class="icon" onclick="openWindow('win-browser')">
+            <img src="https://cdn-icons-png.flaticon.com/512/888/888846.png" alt="Edge">
+            <span>Browser</span>
+        </div>
+        <div class="icon" onclick="openWindow('win-about')">
+            <img src="https://cdn-icons-png.flaticon.com/512/1828/1828940.png" alt="About">
+            <span>About</span>
         </div>
     </div>
-</div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, getDoc, updateDoc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    <!-- Browser Window -->
+    <div id="win-browser" class="window" style="top: 100px; left: 100px;">
+        <div class="title-bar" onmousedown="dragWindow(this)">
+            <span>Internet Browser</span>
+            <div class="window-controls">
+                <button onclick="closeWindow('win-browser')">─</button>
+                <button class="btn-close" onclick="closeWindow('win-browser')">✕</button>
+            </div>
+        </div>
+        <div class="content" style="padding:0;">
+            <iframe src="https://www.bing.com" style="width:100%; height:100%; border:none;"></iframe>
+        </div>
+    </div>
 
-const firebaseConfig = {
-    apiKey: "AIzaSyC9P1pSA8sVyaQEGaA5sA8ThPYgmVAFab8",
-    authDomain: "replicaos.firebaseapp.com",
-    projectId: "replicaos",
-    storageBucket: "replicaos.firebasestorage.app",
-    messagingSenderId: "34115825829",
-    appId: "1:34115825829:web:246973f8280df47f221d4c"
-};
+    <!-- About Window -->
+    <div id="win-about" class="window" style="top: 150px; left: 200px;">
+        <div class="title-bar" onmousedown="dragWindow(this)">
+            <span>About ReplicaOS</span>
+            <div class="window-controls">
+                <button class="btn-close" onclick="closeWindow('win-about')">✕</button>
+            </div>
+        </div>
+        <div class="content">
+            <h3>ReplicaOS 28201</h3>
+            <p>Version 1.0.4 (Stable Build)</p>
+            <p>Developed by ReplicaOS Team.</p>
+            <hr>
+            <p id="visitor-count">Tracking visits...</p>
+        </div>
+    </div>
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+    <!-- Taskbar -->
+    <div id="taskbar">
+        <div class="taskbar-left">
+            <div class="start-btn">
+                <img src="https://cdn-icons-png.flaticon.com/512/732/732221.png" width="24" alt="Start">
+            </div>
+        </div>
+        <div class="taskbar-right">
+            <div id="clock-time">12:00 PM</div>
+            <div id="clock-date">01/01/2026</div>
+        </div>
+    </div>
 
-// Initialize Anonymous Session
-signInAnonymously(auth);
+    <script>
+        // --- Window Management ---
+        let highestZ = 100;
 
-/* --- KEY VALIDATION (ADMIN INTEGRATION) --- */
-window.validateKey = async function () {
-    const enteredKey = document.getElementById("keyInput").value.trim(); // Added .trim()
-    console.log("Attempting login with key:", enteredKey);
-
-    try {
-        const q = query(collection(db, "session_keys"), where("key", "==", enteredKey));
-        const querySnapshot = await getDocs(q);
-
-        if (querySnapshot.empty) {
-            console.error("Query returned no documents for key:", enteredKey);
-            return alert("ACCESS_DENIED: Invalid Key");
+        function openWindow(id) {
+            const win = document.getElementById(id);
+            win.style.display = 'flex';
+            focusWindow(id);
         }
 
-        const keyDoc = querySnapshot.docs[0];
-        const data = keyDoc.data();
-        const now = Date.now();
-
-        console.log("Key found. Data:", data);
-        console.log("Current time:", now, "Expires at:", data.expiresAt);
-
-        if (data.status === 'unused' && data.expiresAt < now) {
-            return alert("ACCESS_DENIED: Key Expired");
+        function closeWindow(id) {
+            document.getElementById(id).style.display = 'none';
         }
 
-        if (data.status === 'banned') return alert("ACCESS_DENIED: Key Revoked");
+        function focusWindow(id) {
+            highestZ++;
+            document.getElementById(id).style.zIndex = highestZ;
+        }
 
-        // Success - Update Firestore
-        await updateDoc(doc(db, "session_keys", keyDoc.id), {
-            status: "connected",
-            expiresAt: null,
-            linkedDevice: auth.currentUser.uid
-        });
+        // --- Draggable Logic ---
+        function dragWindow(elmnt) {
+            const win = elmnt.parentElement;
+            focusWindow(win.id);
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            
+            elmnt.onmousedown = function(e) {
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = () => {
+                    document.onmouseup = null;
+                    document.onmousemove = null;
+                };
+                document.onmousemove = function(e) {
+                    e.preventDefault();
+                    pos1 = pos3 - e.clientX;
+                    pos2 = pos4 - e.clientY;
+                    pos3 = e.clientX;
+                    pos4 = e.clientY;
+                    win.style.top = (win.offsetTop - pos2) + "px";
+                    win.style.left = (win.offsetLeft - pos1) + "px";
+                };
+            };
+        }
 
-        unlockOS();
-    } catch (error) {
-        console.error("Auth Error:", error);
-        alert("SYSTEM_ERROR: " + error.message);
-    }
-};
-async function reportIntelligence() {
-    const user = auth.currentUser;
-    const battery = await navigator.getBattery?.() || { level: 1 };
-    
-    // Report to the 'devices' collection for the Admin panel
-    await setDoc(doc(db, "devices", user.uid), {
-        os: navigator.platform,
-        battery: Math.round(battery.level * 100),
-        lastSeen: Date.now(),
-        ip: "REDACTED", 
-        banned: false,
-        model: navigator.userAgent.split(' ')[0]
-    }, { merge: true });
+        // --- Clock Logic ---
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock-time').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            document.getElementById('clock-date').innerText = now.toLocaleDateString();
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
 
-    log("INTELLIGENCE_PULSE_SENT");
-}
-
-function unlockOS() {
-    document.getElementById("login").style.display = "none";
-    document.getElementById("os").style.display = "block";
-    startOS();
-    reportIntelligence();
-    Call.init();
-    setInterval(reportIntelligence, 60000); // Pulse every minute
-}
-
-/* --- WINDOW SYSTEM --- */
-window.openWindow = (id) => document.getElementById(id).classList.remove("hidden");
-window.closeWindow = (id) => document.getElementById(id).classList.add("hidden");
-
-// Simple Dragging Logic
-document.querySelectorAll('.titlebar').forEach(bar => {
-    bar.onmousedown = (e) => {
-        let win = bar.parentElement;
-        let shiftX = e.clientX - win.getBoundingClientRect().left;
-        let shiftY = e.clientY - win.getBoundingClientRect().top;
-        document.onmousemove = (e) => {
-            win.style.left = e.clientX - shiftX + 'px';
-            win.style.top = e.clientY - shiftY + 'px';
-        };
-        document.onmouseup = () => document.onmousemove = null;
-    };
-});
-
-function log(msg) {
-    const el = document.getElementById("log");
-    el.innerHTML = `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>` + el.innerHTML;
-}
-
-/* --- COMMS SYSTEM --- */
-window.Call = {
-    peer:null, current:null,
-    init() {
-        this.peer = new Peer(auth.currentUser.uid);
-        this.peer.on("call", (call) => {
-            if(confirm("Incoming Encrypted Stream. Accept?")) {
-                navigator.mediaDevices.getUserMedia({video:true, audio:true}).then(stream => {
-                    call.answer(stream);
-                    this.handleStream(call);
-                });
+        // --- Fix for Tracker.py (JS Replacement) ---
+        // Since Python won't run, we use a free API to track visits
+        async function getVisits() {
+            try {
+                // Example using CountAPI (replace 'replicaos' with your unique key)
+                const res = await fetch('https://api.countapi.xyz/hit/replicaos28201/visits');
+                const data = await res.json();
+                document.getElementById('visitor-count').innerText = `Total Site Visits: ${data.value}`;
+            } catch (e) {
+                document.getElementById('visitor-count').innerText = "Visitor tracking active.";
             }
-        });
-        log("PEER_ID: " + auth.currentUser.uid);
-    },
-    async start() {
-        const target = document.getElementById("targetUID").value;
-        const stream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
-        const call = this.peer.call(target, stream);
-        this.handleStream(call);
-        document.getElementById("callStatus").innerText = "Connecting...";
-    },
-    handleStream(call) {
-        this.current = call;
-        openWindow("call");
-        call.on("stream", (remoteStream) => {
-            document.getElementById("remoteVideo").srcObject = remoteStream;
-            document.getElementById("callStatus").innerText = "Stream Active";
-        });
-    },
-    end() { 
-        this.current?.close(); 
-        closeWindow("call"); 
-        document.getElementById("callStatus").innerText = "Idle";
-    }
-};
-
-/* --- THREE JS BACKGROUND --- */
-function startOS() {
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(innerWidth, innerHeight);
-    document.body.prepend(renderer.domElement);
-
-    const points = [];
-    for(let i=0; i<3000; i++) points.push((Math.random()-0.5)*20, (Math.random()-0.5)*20, (Math.random()-0.5)*20);
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
-    const mat = new THREE.PointsMaterial({ size: 0.015, color: 0x00ff41 });
-    const cloud = new THREE.Points(geo, mat);
-    scene.add(cloud);
-    camera.position.z = 5;
-
-    function animate() {
-        requestAnimationFrame(animate);
-        cloud.rotation.y += 0.001;
-        renderer.render(scene, camera);
-    }
-    animate();
-    window.onresize = () => {
-        camera.aspect = innerWidth/innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(innerWidth, innerHeight);
-    };
-}
-</script>
+        }
+        getVisits();
+    </script>
 </body>
 </html>
