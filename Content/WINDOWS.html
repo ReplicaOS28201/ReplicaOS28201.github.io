@@ -6,7 +6,7 @@
 <meta name="viewport"
 content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-<title>ReplicaOS Ultimate</title>
+<title>ReplicaOS Firebase Edition</title>
 
 <style>
 
@@ -15,8 +15,6 @@ content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable
     --win-bg:#f3f3f3;
     --accent:#0078d4;
 }
-
-/* ================= GLOBAL ================= */
 
 *{
     box-sizing:border-box;
@@ -102,10 +100,6 @@ body{
     z-index:999999;
 }
 
-.taskBtn{
-    cursor:pointer;
-}
-
 /* ================= START MENU ================= */
 
 #startMenu{
@@ -149,8 +143,8 @@ body{
 .window{
     position:fixed;
 
-    width:min(500px,95vw);
-    height:min(600px,88vh);
+    width:min(520px,95vw);
+    height:min(620px,88vh);
 
     background:var(--win-bg);
 
@@ -167,8 +161,6 @@ body{
 
     left:0;
     top:0;
-
-    will-change:transform;
 
     animation:openAnim .16s ease;
 }
@@ -200,8 +192,6 @@ body{
     cursor:move;
 
     user-select:none;
-
-    touch-action:none;
 }
 
 .windowBtns{
@@ -210,8 +200,8 @@ body{
 }
 
 .windowBtns button{
-    width:28px;
-    height:28px;
+    width:30px;
+    height:30px;
 
     border:none;
 
@@ -232,10 +222,77 @@ body{
 
 .windowContent{
     flex:1;
+    overflow:auto;
+    padding:16px;
+}
+
+/* ================= FRIENDS ================= */
+
+.friendCard{
+    background:#e5e5e5;
+    border-radius:14px;
+    padding:14px;
+    margin-bottom:12px;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+}
+
+.friendActions{
+    display:flex;
+    gap:8px;
+}
+
+.friendActions button{
+    border:none;
+    border-radius:10px;
+    padding:10px 14px;
+    cursor:pointer;
+    background:#0078d4;
+    color:white;
+}
+
+.status{
+    font-size:13px;
+    margin-top:4px;
+}
+
+.online{
+    color:#00aa44;
+}
+
+/* ================= CHAT ================= */
+
+#chatMessages{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+
+    height:400px;
 
     overflow:auto;
 
-    padding:16px;
+    margin-bottom:12px;
+}
+
+.chatBubble{
+    background:#0078d4;
+    color:white;
+
+    padding:12px;
+
+    border-radius:14px;
+
+    max-width:80%;
+
+    align-self:flex-end;
+}
+
+.systemBubble{
+    background:#ddd;
+    color:black;
+    align-self:flex-start;
 }
 
 /* ================= CALL ================= */
@@ -280,8 +337,6 @@ video{
 
     display:flex;
     gap:10px;
-
-    z-index:100;
 }
 
 #callControls button{
@@ -332,19 +387,6 @@ video{
     box-shadow:0 15px 40px rgba(0,0,0,0.45);
 }
 
-/* ================= GALLERY ================= */
-
-.galleryGrid{
-    display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
-    gap:10px;
-}
-
-.galleryGrid img{
-    width:100%;
-    border-radius:12px;
-}
-
 /* ================= MOBILE ================= */
 
 @media (max-width:700px){
@@ -362,10 +404,6 @@ video{
     #localVideo{
         width:90px;
         height:130px;
-    }
-
-    .notification{
-        width:calc(100vw - 30px);
     }
 
 }
@@ -398,31 +436,6 @@ video{
         <div>Call</div>
     </div>
 
-    <div class="icon" onclick="openWindow('browser')">
-        <img src="https://cdn-icons-png.flaticon.com/512/300/300221.png">
-        <div>Browser</div>
-    </div>
-
-    <div class="icon" onclick="openWindow('music')">
-        <img src="https://cdn-icons-png.flaticon.com/512/727/727245.png">
-        <div>Music</div>
-    </div>
-
-    <div class="icon" onclick="openWindow('notes')">
-        <img src="https://cdn-icons-png.flaticon.com/512/281/281760.png">
-        <div>Notes</div>
-    </div>
-
-    <div class="icon" onclick="openWindow('gallery')">
-        <img src="https://cdn-icons-png.flaticon.com/512/1375/1375106.png">
-        <div>Gallery</div>
-    </div>
-
-    <div class="icon" onclick="openWindow('terminal')">
-        <img src="https://cdn-icons-png.flaticon.com/512/4248/4248443.png">
-        <div>Terminal</div>
-    </div>
-
 </div>
 
 <!-- ================= FRIENDS ================= -->
@@ -436,18 +449,20 @@ video{
         <div class="windowBtns">
 
             <button class="minBtn"
-            onclick="this.closest('.window').style.display='none'">—</button>
+            onclick="this.closest('.window').style.display='none'">
+                —
+            </button>
 
             <button class="closeBtn"
-            onclick="closeWindow('friends')">✕</button>
+            onclick="closeWindow('friends')">
+                ✕
+            </button>
 
         </div>
 
     </div>
 
     <div class="windowContent">
-
-        <h2>Online Friends</h2>
 
         <div id="friendsList"></div>
 
@@ -466,10 +481,14 @@ video{
         <div class="windowBtns">
 
             <button class="minBtn"
-            onclick="this.closest('.window').style.display='none'">—</button>
+            onclick="this.closest('.window').style.display='none'">
+                —
+            </button>
 
             <button class="closeBtn"
-            onclick="closeWindow('chat')">✕</button>
+            onclick="closeWindow('chat')">
+                ✕
+            </button>
 
         </div>
 
@@ -479,17 +498,31 @@ video{
 
         <div id="chatMessages"></div>
 
-        <br>
+        <div style="display:flex;gap:10px;">
 
-        <input id="msgInput"
-        placeholder="Type message..."
-        style="
-            width:100%;
-            padding:12px;
-            border:none;
-            border-radius:10px;
-            background:#ddd;
-        ">
+            <input id="msgInput"
+            placeholder="Type message..."
+            style="
+                flex:1;
+                padding:12px;
+                border:none;
+                border-radius:10px;
+                background:#ddd;
+            ">
+
+            <button onclick="sendMessage()"
+            style="
+                border:none;
+                border-radius:10px;
+                padding:12px 18px;
+                background:#0078d4;
+                color:white;
+                cursor:pointer;
+            ">
+                Send
+            </button>
+
+        </div>
 
     </div>
 
@@ -506,13 +539,19 @@ video{
         <div class="windowBtns">
 
             <button id="muteBtn"
-            style="background:#444;">🔇</button>
+            style="background:#444;">
+                🔇
+            </button>
 
             <button id="cameraBtn"
-            style="background:#1976d2;">📷</button>
+            style="background:#1976d2;">
+                📷
+            </button>
 
             <button class="closeBtn"
-            onclick="endCall()">✕</button>
+            onclick="endCall()">
+                ✕
+            </button>
 
         </div>
 
@@ -549,216 +588,6 @@ video{
 
 </div>
 
-<!-- ================= BROWSER ================= -->
-
-<div id="browser" class="window">
-
-    <div class="titlebar">
-
-        <span>Browser</span>
-
-        <div class="windowBtns">
-
-            <button class="minBtn"
-            onclick="this.closest('.window').style.display='none'">—</button>
-
-            <button class="closeBtn"
-            onclick="closeWindow('browser')">✕</button>
-
-        </div>
-
-    </div>
-
-    <div class="windowContent">
-
-        <div style="display:flex;gap:10px;">
-
-            <input id="browserUrl"
-            placeholder="https://google.com"
-            style="
-                flex:1;
-                padding:12px;
-                border:none;
-                border-radius:10px;
-                background:#ddd;
-            ">
-
-            <button onclick="openWebsite()">
-                Go
-            </button>
-
-        </div>
-
-        <br>
-
-        <iframe id="browserFrame"
-        style="
-            width:100%;
-            height:90%;
-            border:none;
-            border-radius:12px;
-            background:white;
-        "></iframe>
-
-    </div>
-
-</div>
-
-<!-- ================= MUSIC ================= -->
-
-<div id="music" class="window">
-
-    <div class="titlebar">
-
-        <span>Music</span>
-
-        <div class="windowBtns">
-
-            <button class="minBtn"
-            onclick="this.closest('.window').style.display='none'">—</button>
-
-            <button class="closeBtn"
-            onclick="closeWindow('music')">✕</button>
-
-        </div>
-
-    </div>
-
-    <div class="windowContent">
-
-        <audio id="musicPlayer"
-        controls
-        style="width:100%;"></audio>
-
-        <br><br>
-
-        <button onclick="playDemoSong()">
-            ▶ Play Song
-        </button>
-
-    </div>
-
-</div>
-
-<!-- ================= NOTES ================= -->
-
-<div id="notes" class="window">
-
-    <div class="titlebar">
-
-        <span>Notes</span>
-
-        <div class="windowBtns">
-
-            <button class="minBtn"
-            onclick="this.closest('.window').style.display='none'">—</button>
-
-            <button class="closeBtn"
-            onclick="closeWindow('notes')">✕</button>
-
-        </div>
-
-    </div>
-
-    <div class="windowContent">
-
-        <textarea id="notesArea"
-        style="
-            width:100%;
-            height:100%;
-            border:none;
-            resize:none;
-            border-radius:12px;
-            padding:14px;
-            background:#ddd;
-        "></textarea>
-
-    </div>
-
-</div>
-
-<!-- ================= GALLERY ================= -->
-
-<div id="gallery" class="window">
-
-    <div class="titlebar">
-
-        <span>Gallery</span>
-
-        <div class="windowBtns">
-
-            <button class="minBtn"
-            onclick="this.closest('.window').style.display='none'">—</button>
-
-            <button class="closeBtn"
-            onclick="closeWindow('gallery')">✕</button>
-
-        </div>
-
-    </div>
-
-    <div class="windowContent">
-
-        <div class="galleryGrid">
-
-            <img src="https://picsum.photos/300/200?1">
-            <img src="https://picsum.photos/300/200?2">
-            <img src="https://picsum.photos/300/200?3">
-            <img src="https://picsum.photos/300/200?4">
-
-        </div>
-
-    </div>
-
-</div>
-
-<!-- ================= TERMINAL ================= -->
-
-<div id="terminal" class="window">
-
-    <div class="titlebar">
-
-        <span>Terminal</span>
-
-        <div class="windowBtns">
-
-            <button class="minBtn"
-            onclick="this.closest('.window').style.display='none'">—</button>
-
-            <button class="closeBtn"
-            onclick="closeWindow('terminal')">✕</button>
-
-        </div>
-
-    </div>
-
-    <div class="windowContent"
-    style="
-        background:black;
-        color:#00ff66;
-        font-family:monospace;
-    ">
-
-        <div id="terminalOutput">
-            ReplicaOS Terminal v1.0
-        </div>
-
-        <br>
-
-        <input id="terminalInput"
-        placeholder="Command..."
-        style="
-            width:100%;
-            padding:10px;
-            background:#111;
-            border:none;
-            color:#00ff66;
-        ">
-
-    </div>
-
-</div>
-
 <!-- ================= START MENU ================= -->
 
 <div id="startMenu">
@@ -773,24 +602,14 @@ video{
         Chat
     </div>
 
-    <div class="startItem"
-    onclick="openWindow('browser')">
-        Browser
-    </div>
-
-    <div class="startItem"
-    onclick="openWindow('terminal')">
-        Terminal
-    </div>
-
 </div>
 
 <!-- ================= TASKBAR ================= -->
 
 <div id="taskbar">
 
-    <div class="taskBtn"
-    onclick="toggleStart()">
+    <div onclick="toggleStart()"
+    style="cursor:pointer;">
         🪟 Start
     </div>
 
@@ -798,7 +617,116 @@ video{
 
 </div>
 
-<script>
+<!-- ================= FIREBASE ================= -->
+
+<script type="module">
+
+/* ================= FIREBASE ================= */
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+    getAuth,
+    signInAnonymously,
+    onAuthStateChanged
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import {
+    getFirestore,
+    doc,
+    setDoc,
+    collection,
+    addDoc,
+    onSnapshot,
+    query,
+    orderBy,
+    serverTimestamp
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* ================= CONFIG ================= */
+
+const firebaseConfig = {
+
+    apiKey: "YOUR_API_KEY",
+
+    authDomain:
+    "YOUR_PROJECT.firebaseapp.com",
+
+    projectId:
+    "YOUR_PROJECT",
+
+    storageBucket:
+    "YOUR_PROJECT.appspot.com",
+
+    messagingSenderId:
+    "123456789",
+
+    appId:
+    "YOUR_APP_ID"
+
+};
+
+/* ================= INIT ================= */
+
+const app =
+initializeApp(firebaseConfig);
+
+const auth =
+getAuth(app);
+
+const db =
+getFirestore(app);
+
+/* ================= GLOBALS ================= */
+
+let currentUser = null;
+let currentChatFriend = "global";
+let localStream = null;
+
+window.currentChatFriend =
+currentChatFriend;
+
+/* ================= AUTH ================= */
+
+signInAnonymously(auth);
+
+onAuthStateChanged(auth,
+async user => {
+
+    if(!user) return;
+
+    currentUser = user;
+
+    await setDoc(
+        doc(db,"users",user.uid),
+        {
+            uid:user.uid,
+
+            username:
+            "User-" +
+            user.uid.substring(0,5),
+
+            online:true,
+
+            createdAt:
+            Date.now()
+        },
+        { merge:true }
+    );
+
+    notifySystem(
+        "Firebase",
+        "Connected"
+    );
+
+    loadFriends();
+
+    listenMessages();
+
+});
 
 /* ================= WINDOW SYSTEM ================= */
 
@@ -904,174 +832,289 @@ updateClock();
 
 setInterval(updateClock,1000);
 
-/* ================= BROWSER ================= */
+/* ================= FRIENDS ================= */
 
-window.openWebsite = () => {
+function loadFriends(){
 
-    let url =
-    document.getElementById("browserUrl")
-    .value;
+    onSnapshot(
+        collection(db,"users"),
+        snap => {
 
-    if(!url.startsWith("https://")){
-        url = "https://" + url;
-    }
+            const list =
+            document.getElementById(
+                "friendsList"
+            );
 
-    document.getElementById(
-        "browserFrame"
-    ).src = url;
+            list.innerHTML = "";
 
-};
+            snap.forEach(docSnap => {
 
-/* ================= MUSIC ================= */
+                const data =
+                docSnap.data();
 
-window.playDemoSong = () => {
+                if(
+                    data.uid ===
+                    currentUser.uid
+                ) return;
 
-    const player =
-    document.getElementById(
-        "musicPlayer"
+                const div =
+                document.createElement("div");
+
+                div.className =
+                "friendCard";
+
+                div.innerHTML = `
+                    <div>
+                        <b>
+                            ${data.username}
+                        </b>
+
+                        <div class="
+                        status online
+                        ">
+                            ● Online
+                        </div>
+                    </div>
+
+                    <div class="
+                    friendActions
+                    ">
+
+                        <button
+                        onclick="
+                        startFriendCall(
+                        '${data.username}'
+                        )">
+                            📞 Call
+                        </button>
+
+                        <button
+                        onclick="
+                        openFriendChat(
+                        '${data.username}'
+                        )">
+                            💬 Chat
+                        </button>
+
+                    </div>
+                `;
+
+                list.appendChild(div);
+
+            });
+
+        }
     );
 
-    player.src =
-    "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+}
 
-    player.play();
+/* ================= CHAT ================= */
 
-};
+window.openFriendChat =
+(friend) => {
 
-/* ================= NOTES ================= */
+    currentChatFriend =
+    friend;
 
-const notesArea =
-document.getElementById("notesArea");
-
-notesArea.value =
-localStorage.replicaNotes || "";
-
-notesArea.oninput = () => {
-
-    localStorage.replicaNotes =
-    notesArea.value;
+    openWindow("chat");
 
 };
 
-/* ================= TERMINAL ================= */
+window.sendMessage =
+async () => {
 
-const terminalInput =
-document.getElementById("terminalInput");
+    const input =
+    document.getElementById(
+        "msgInput"
+    );
 
-const terminalOutput =
-document.getElementById("terminalOutput");
+    const text =
+    input.value.trim();
 
-terminalInput.addEventListener(
+    if(!text) return;
+
+    await addDoc(
+        collection(db,"messages"),
+        {
+            text,
+
+            friend:
+            currentChatFriend,
+
+            sender:
+            currentUser.uid,
+
+            createdAt:
+            serverTimestamp()
+        }
+    );
+
+    input.value = "";
+
+};
+
+document.getElementById(
+"msgInput"
+).addEventListener(
 "keydown",
 e => {
 
-    if(e.key !== "Enter") return;
-
-    const cmd =
-    terminalInput.value.trim();
-
-    terminalOutput.innerHTML += `
-        <br><br>> ${cmd}
-    `;
-
-    if(cmd === "help"){
-
-        terminalOutput.innerHTML += `
-            <br>
-            help, clear, date
-        `;
-
+    if(e.key === "Enter"){
+        sendMessage();
     }
-
-    else if(cmd === "clear"){
-
-        terminalOutput.innerHTML =
-        "ReplicaOS Terminal v1.0";
-
-    }
-
-    else if(cmd === "date"){
-
-        terminalOutput.innerHTML += `
-            <br>
-            ${new Date()}
-        `;
-
-    }
-
-    else{
-
-        terminalOutput.innerHTML += `
-            <br>
-            Unknown command
-        `;
-
-    }
-
-    terminalInput.value = "";
 
 });
 
-/* ================= CALL CONTROLS ================= */
+function listenMessages(){
 
-let micMuted = false;
-let camDisabled = false;
+    const q =
+    query(
+        collection(db,"messages"),
+        orderBy(
+            "createdAt",
+            "asc"
+        )
+    );
 
-document.getElementById("toggleMic")
-.onclick = () => {
+    onSnapshot(q,snap => {
 
-    micMuted = !micMuted;
+        const chat =
+        document.getElementById(
+            "chatMessages"
+        );
+
+        chat.innerHTML = "";
+
+        snap.forEach(msg => {
+
+            const data =
+            msg.data();
+
+            if(
+                data.friend !==
+                currentChatFriend
+            ) return;
+
+            const bubble =
+            document.createElement(
+                "div"
+            );
+
+            bubble.className =
+            data.sender ===
+            currentUser.uid
+            ? "chatBubble"
+            : "chatBubble systemBubble";
+
+            bubble.innerText =
+            data.text;
+
+            chat.appendChild(
+                bubble
+            );
+
+        });
+
+        chat.scrollTop =
+        chat.scrollHeight;
+
+    });
+
+}
+
+/* ================= CALL ================= */
+
+window.startFriendCall =
+async friend => {
+
+    openWindow("call");
+
+    notifySystem(
+        "Calling...",
+        "Calling " + friend
+    );
+
+    localStream =
+    await navigator
+    .mediaDevices
+    .getUserMedia({
+        video:true,
+        audio:true
+    });
 
     document.getElementById(
-        "toggleMic"
-    ).innerText =
-    micMuted
-    ? "🔇 Unmute"
-    : "🎤 Mute";
-
-};
-
-document.getElementById("toggleCam")
-.onclick = () => {
-
-    camDisabled = !camDisabled;
-
-    document.getElementById(
-        "toggleCam"
-    ).innerText =
-    camDisabled
-    ? "📷 Enable"
-    : "📷 Camera";
-
-};
-
-document.getElementById("muteBtn")
-.onclick = () => {
-
-    document.getElementById(
-        "toggleMic"
-    ).click();
-
-};
-
-document.getElementById("cameraBtn")
-.onclick = () => {
-
-    document.getElementById(
-        "toggleCam"
-    ).click();
+        "localVideo"
+    ).srcObject =
+    localStream;
 
 };
 
 window.endCall = () => {
 
+    if(localStream){
+
+        localStream
+        .getTracks()
+        .forEach(track => {
+
+            track.stop();
+
+        });
+
+    }
+
     closeWindow("call");
+
+    notifySystem(
+        "Call Ended",
+        "Disconnected"
+    );
+
+};
+
+let micMuted = false;
+let camDisabled = false;
+
+document.getElementById(
+"toggleMic"
+).onclick = () => {
+
+    micMuted = !micMuted;
+
+    localStream
+    ?.getAudioTracks()
+    .forEach(track => {
+
+        track.enabled =
+        !micMuted;
+
+    });
+
+};
+
+document.getElementById(
+"toggleCam"
+).onclick = () => {
+
+    camDisabled = !camDisabled;
+
+    localStream
+    ?.getVideoTracks()
+    .forEach(track => {
+
+        track.enabled =
+        !camDisabled;
+
+    });
 
 };
 
 /* ================= NOTIFICATIONS ================= */
 
-function notifySystem(title,text){
+function notifySystem(
+title,
+text
+){
 
     const holder =
     document.getElementById(
@@ -1081,7 +1124,8 @@ function notifySystem(title,text){
     const n =
     document.createElement("div");
 
-    n.className = "notification";
+    n.className =
+    "notification";
 
     n.innerHTML = `
         <b>${title}</b>
@@ -1093,26 +1137,40 @@ function notifySystem(title,text){
 
     setTimeout(() => {
 
-        if(n.parentNode){
-            n.remove();
-        }
+        n.remove();
 
     },5000);
 
 }
 
-/* ================= BOOT ================= */
+/* ================= STATUS ================= */
 
 window.addEventListener(
-"load",
-() => {
+"beforeunload",
+async () => {
 
-    notifySystem(
-        "ReplicaOS",
-        "System boot completed"
+    if(!currentUser) return;
+
+    await setDoc(
+        doc(
+            db,
+            "users",
+            currentUser.uid
+        ),
+        {
+            online:false
+        },
+        { merge:true }
     );
 
 });
+
+/* ================= BOOT ================= */
+
+notifySystem(
+    "ReplicaOS",
+    "Boot completed"
+);
 
 </script>
 
