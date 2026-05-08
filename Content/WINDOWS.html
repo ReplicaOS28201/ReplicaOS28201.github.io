@@ -329,189 +329,666 @@
 </div>
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue, push, update, onDisconnect, onChildAdded } 
-    from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyCnJPv3cclaIArwUPKEq5of0NyafJ7d4QI",
-        authDomain: "replicanewos3030.firebaseapp.com",
-        projectId: "replicanewos3030",
-        storageBucket: "replicanewos3030.firebasestorage.app",
-        messagingSenderId: "60780972584",
-        appId: "1:60780972584:web:db097a4cda968fec80831d"
-    };
+/* ================= FIREBASE ================= */
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 
-    // Identity
-    const myId = "User_" + Math.random().toString(36).substring(2, 7);
-    const presenceRef = ref(db, "presence/" + myId);
-    set(presenceRef, true);
-    onDisconnect(presenceRef).remove();
+import {
+    getDatabase,
+    ref,
+    set,
+    onValue,
+    push,
+    update,
+    remove,
+    onDisconnect,
+    get
+}
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    /* ================= CHAT LOGIC ================= */
-    const msgInput = document.getElementById("msgInput");
-    const sendBtn = document.getElementById("sendBtn");
-    const chatContainer = document.getElementById("chatMessages");
+/* ================= CONFIG ================= */
 
-    function sendMessage() {
-        const text = msgInput.value.trim();
-        if(!text) return;
-        push(ref(db, "globalChat"), {
-            sender: myId,
-            text: text,
-            time: Date.now()
-        });
-        msgInput.value = "";
-    }
+const firebaseConfig = {
 
-    sendBtn.onclick = sendMessage;
-    msgInput.onkeydown = (e) => { if(e.key === "Enter") sendMessage(); };
+    apiKey: "YOUR_KEY",
+    authDomain: "YOUR_DOMAIN",
+    projectId: "YOUR_PROJECT",
+    storageBucket: "YOUR_BUCKET",
+    messagingSenderId: "YOUR_SENDER",
+    appId: "YOUR_APP_ID",
+    databaseURL: "YOUR_DATABASE_URL"
 
-    onChildAdded(ref(db, "globalChat"), (snap) => {
-        const data = snap.val();
-        const div = document.createElement("div");
-        const isMe = data.sender === myId;
-        div.style.alignSelf = isMe ? "flex-end" : "flex-start";
-        div.style.background = isMe ? "#0078d4" : "#fff";
-        div.style.color = isMe ? "white" : "black";
-        div.style.padding = "8px 12px";
-        div.style.borderRadius = "10px";
-        div.style.maxWidth = "80%";
-        div.style.fontSize = "14px";
-        div.innerHTML = `<b style="font-size:10px; display:block; opacity:0.8">${data.sender}</b>${data.text}`;
-        chatContainer.appendChild(div);
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-    });
+};
 
-    /* ================= FRIENDS & PRESENCE ================= */
-    onValue(ref(db, "presence"), snap => {
-        const list = document.getElementById("friendsList");
-        list.innerHTML = "";
-        const data = snap.val() || {};
-        Object.keys(data).forEach(id => {
-            if(id === myId) return;
-            const item = document.createElement("div");
-            item.style = "background:#fff; margin-bottom:8px; padding:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center";
-            item.innerHTML = `<span>${id}</span> <button onclick="makeCall('${id}')" style="background:#4CAF50; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer">Call</button>`;
-            list.appendChild(item);
-        });
-    });
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-    /* ================= WEBRTC CALLING ================= */
-    const pc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
-    let localStream;
+/* ================= USER ================= */
 
-    pc.ontrack = e => { document.getElementById("remoteVideo").srcObject = e.streams[0]; };
+const myId =
+localStorage.replicaUserId ||
+Math.random().toString(36).substring(2,10);
 
-    async function startMedia() {
-        if (localStream) return;
-        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        document.getElementById("localVideo").srcObject = localStream;
-        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-    }
+localStorage.replicaUserId = myId;
 
-    window.makeCall = async (targetId) => {
-        await startMedia();
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        const callRef = push(ref(db, "calls"));
-        await set(callRef, { from: myId, to: targetId, offer: { type: offer.type, sdp: offer.sdp }, status: "pending" });
-        
-        onValue(ref(db, `calls/${callRef.key}/answer`), async snap => {
-            const answer = snap.val();
-            if (answer && !pc.currentRemoteDescription) {
-                await pc.setRemoteDescription(new RTCSessionDescription(answer));
-                openWindow("call");
-            }
-        });
-    };
+console.log("USER:", myId);
 
-    onValue(ref(db, "calls"), async snap => {
-        const data = snap.val();
-        if (!data) return;
-        Object.keys(data).forEach(async id => {
-            const c = data[id];
-            if (c.to === myId && c.offer && !pc.currentRemoteDescription) {
-                notifySystem("Incoming Call", `${c.from} is calling...`, [
-                    { label: "Accept", type: "accept", action: async (n) => {
-                        await startMedia();
-                        await pc.setRemoteDescription(new RTCSessionDescription(c.offer));
-                        const ans = await pc.createAnswer();
-                        await pc.setLocalDescription(ans);
-                        update(ref(db, `calls/${id}`), { answer: { type: ans.type, sdp: ans.sdp }, status: "active" });
-                        openWindow("call");
-                        n.remove();
-                    }},
-                    { label: "Ignore", type: "decline", action: (n) => n.remove() }
-                ]);
-            }
-        });
-    });
+/* ================= PRESENCE ================= */
 
-    /* ================= UI HELPERS ================= */
-    let highestZ = 5000;
-    window.openWindow = id => {
-        const win = document.getElementById(id);
-        win.style.display = "flex";
-        win.style.zIndex = ++highestZ;
-        if (window.innerWidth > 700) {
-            win.style.left = "50%"; win.style.top = "50%";
-            win.style.transform = "translate(-50%, -50%)";
+const presenceRef = ref(db, "presence/" + myId);
+
+await set(presenceRef,{
+    online:true,
+    lastSeen:Date.now()
+});
+
+onDisconnect(presenceRef).remove();
+
+/* ================= GLOBALS ================= */
+
+let highestZ = 6000;
+
+let currentCallId = null;
+
+let pc = null;
+
+let localStream = null;
+
+let remoteStream = null;
+
+let currentTarget = null;
+
+const activeNotifications = new Set();
+
+/* ================= RTC CONFIG ================= */
+
+const rtcConfig = {
+
+    iceServers:[
+        {
+            urls:[
+                "stun:stun.l.google.com:19302",
+                "stun:stun1.l.google.com:19302"
+            ]
         }
-    };
+    ]
 
-    window.closeWindow = id => { document.getElementById(id).style.display = "none"; };
-    
-    window.toggleStart = () => {
-        const m = document.getElementById("startMenu");
-        m.style.display = (m.style.display === "flex") ? "none" : "flex";
-    };
+};
 
-    function notifySystem(title, text, actions) {
-        const h = document.getElementById("systemNotifications");
-        const n = document.createElement("div");
-        n.className = "notification";
-        n.innerHTML = `<b>${title}</b><p style="margin:5px 0">${text}</p>`;
-        const row = document.createElement("div");
-        row.className = "notif-actions";
-        actions.forEach(a => {
-            const b = document.createElement("button");
-            b.innerText = a.label; b.className = a.type;
-            b.onclick = () => a.action(n);
-            row.appendChild(b);
-        });
-        n.appendChild(row);
-        h.appendChild(n);
+/* ================= WINDOW SYSTEM ================= */
+
+window.openWindow = id => {
+
+    const win = document.getElementById(id);
+
+    win.style.display = "flex";
+
+    highestZ++;
+
+    win.style.zIndex = highestZ;
+
+    if(window.innerWidth > 700){
+
+        if(!win.dataset.positioned){
+
+            win.style.left = "0px";
+            win.style.top = "0px";
+
+            win.dataset.positioned = "true";
+
+        }
+
+        win.style.transform = "none";
+
     }
 
-    /* ================= DRAGGING ================= */
-    document.querySelectorAll(".window").forEach(win => {
-        const bar = win.querySelector(".titlebar");
-        let drag = false, ox, oy;
-        const start = (e) => {
-            if (window.innerWidth <= 700) return;
-            drag = true; win.style.zIndex = ++highestZ;
-            win.style.transform = "none";
-            const t = e.touches ? e.touches[0] : e;
-            ox = t.clientX - win.offsetLeft; oy = t.clientY - win.offsetTop;
-        };
-        const move = (e) => {
-            if (!drag) return;
-            const t = e.touches ? e.touches[0] : e;
-            win.style.left = (t.clientX - ox) + "px"; win.style.top = (t.clientY - oy) + "px";
-        };
-        bar.onmousedown = bar.ontouchstart = start;
-        window.onmousemove = window.ontouchmove = move;
-        window.onmouseup = window.ontouchend = () => drag = false;
+};
+
+window.closeWindow = id => {
+
+    document.getElementById(id)
+    .style.display = "none";
+
+};
+
+window.toggleStart = () => {
+
+    const menu =
+    document.getElementById("startMenu");
+
+    menu.style.display =
+    menu.style.display === "flex"
+    ? "none"
+    : "flex";
+
+};
+
+/* ================= DRAGGING ================= */
+
+document.querySelectorAll(".window")
+.forEach(win => {
+
+    const bar = win.querySelector(".titlebar");
+
+    let dragging = false;
+
+    let startX = 0;
+    let startY = 0;
+
+    bar.addEventListener("pointerdown", e => {
+
+        if(window.innerWidth <= 700) return;
+
+        dragging = true;
+
+        highestZ++;
+
+        win.style.zIndex = highestZ;
+
+        startX = e.clientX - win.offsetLeft;
+        startY = e.clientY - win.offsetTop;
+
+        bar.setPointerCapture(e.pointerId);
+
     });
 
-    setInterval(() => {
-        document.getElementById("clock").innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }, 1000);
-</script>
+    window.addEventListener("pointermove", e => {
 
+        if(!dragging) return;
+
+        win.style.left =
+        (e.clientX - startX) + "px";
+
+        win.style.top =
+        (e.clientY - startY) + "px";
+
+    });
+
+    window.addEventListener("pointerup", () => {
+        dragging = false;
+    });
+
+});
+
+/* ================= FRIENDS ================= */
+
+const friendsList =
+document.getElementById("friendsList");
+
+onValue(ref(db,"presence"), snap => {
+
+    const users = snap.val() || {};
+
+    friendsList.innerHTML = "";
+
+    Object.entries(users)
+    .forEach(([id,data]) => {
+
+        if(id === myId) return;
+
+        const card =
+        document.createElement("div");
+
+        card.style.cssText = `
+            background:#ddd;
+            padding:12px;
+            border-radius:12px;
+            margin-bottom:10px;
+        `;
+
+        const name =
+        document.createElement("div");
+
+        name.innerHTML = `
+            <b>${id}</b>
+        `;
+
+        const btn =
+        document.createElement("button");
+
+        btn.innerText = "Call";
+
+        btn.style.marginTop = "10px";
+
+        btn.onclick = () => makeCall(id);
+
+        card.appendChild(name);
+        card.appendChild(btn);
+
+        friendsList.appendChild(card);
+
+    });
+
+});
+
+/* ================= WEBRTC ================= */
+
+async function createPeer(){
+
+    pc = new RTCPeerConnection(rtcConfig);
+
+    remoteStream = new MediaStream();
+
+    document.getElementById("remoteVideo")
+    .srcObject = remoteStream;
+
+    pc.ontrack = e => {
+
+        e.streams[0]
+        .getTracks()
+        .forEach(track => {
+
+            remoteStream.addTrack(track);
+
+        });
+
+    };
+
+    pc.onicecandidate = async e => {
+
+        if(!e.candidate || !currentCallId)
+        return;
+
+        await push(
+            ref(db,
+            `calls/${currentCallId}/candidates`)
+        ,{
+            from:myId,
+            candidate:e.candidate.toJSON()
+        });
+
+    };
+
+    pc.onconnectionstatechange = () => {
+
+        console.log(
+            "STATE:",
+            pc.connectionState
+        );
+
+        if(
+            pc.connectionState === "disconnected" ||
+            pc.connectionState === "failed" ||
+            pc.connectionState === "closed"
+        ){
+            endCall();
+        }
+
+    };
+
+}
+
+/* ================= MEDIA ================= */
+
+async function startMedia(){
+
+    if(localStream) return;
+
+    localStream =
+    await navigator.mediaDevices
+    .getUserMedia({
+        video:true,
+        audio:true
+    });
+
+    document.getElementById("localVideo")
+    .srcObject = localStream;
+
+}
+
+/* ================= ADD TRACKS ================= */
+
+async function attachTracks(){
+
+    localStream
+    .getTracks()
+    .forEach(track => {
+
+        pc.addTrack(track, localStream);
+
+    });
+
+}
+
+/* ================= CALL USER ================= */
+
+window.makeCall = async targetId => {
+
+    currentTarget = targetId;
+
+    openWindow("call");
+
+    await createPeer();
+
+    await startMedia();
+
+    await attachTracks();
+
+    const offer =
+    await pc.createOffer();
+
+    await pc.setLocalDescription(offer);
+
+    const callRef =
+    push(ref(db,"calls"));
+
+    currentCallId = callRef.key;
+
+    await set(callRef,{
+
+        from:myId,
+        to:targetId,
+
+        offer:{
+            type:offer.type,
+            sdp:offer.sdp
+        },
+
+        created:Date.now()
+
+    });
+
+    listenForAnswer();
+
+    listenForCandidates();
+
+};
+
+/* ================= ANSWER ================= */
+
+async function listenForAnswer(){
+
+    onValue(
+        ref(db,`calls/${currentCallId}/answer`),
+        async snap => {
+
+            const answer = snap.val();
+
+            if(
+                answer &&
+                !pc.currentRemoteDescription
+            ){
+
+                await pc.setRemoteDescription(
+                    new RTCSessionDescription(answer)
+                );
+
+            }
+
+        });
+
+}
+
+/* ================= ICE ================= */
+
+function listenForCandidates(){
+
+    onValue(
+        ref(db,
+        `calls/${currentCallId}/candidates`)
+    , snap => {
+
+        const data = snap.val();
+
+        if(!data) return;
+
+        Object.values(data)
+        .forEach(async c => {
+
+            if(c.from === myId) return;
+
+            try{
+
+                await pc.addIceCandidate(
+                    new RTCIceCandidate(
+                        c.candidate
+                    )
+                );
+
+            }catch(err){
+                console.error(err);
+            }
+
+        });
+
+    });
+
+}
+
+/* ================= INCOMING ================= */
+
+onValue(ref(db,"calls"), async snap => {
+
+    const calls = snap.val();
+
+    if(!calls) return;
+
+    Object.entries(calls)
+    .forEach(async ([id,call]) => {
+
+        if(call.to !== myId) return;
+
+        if(call.answer) return;
+
+        if(activeNotifications.has(id))
+        return;
+
+        activeNotifications.add(id);
+
+        notifySystem(
+            "Incoming Call",
+            `${call.from} is calling`,
+            [
+
+                {
+                    label:"Accept",
+                    type:"accept",
+
+                    action:async notif => {
+
+                        notif.remove();
+
+                        currentCallId = id;
+
+                        await createPeer();
+
+                        await startMedia();
+
+                        await attachTracks();
+
+                        await pc.setRemoteDescription(
+                            new RTCSessionDescription(
+                                call.offer
+                            )
+                        );
+
+                        const answer =
+                        await pc.createAnswer();
+
+                        await pc.setLocalDescription(
+                            answer
+                        );
+
+                        await update(
+                            ref(db,`calls/${id}`),
+                            {
+                                answer:{
+                                    type:answer.type,
+                                    sdp:answer.sdp
+                                }
+                            }
+                        );
+
+                        listenForCandidates();
+
+                        openWindow("call");
+
+                    }
+
+                },
+
+                {
+                    label:"Decline",
+                    type:"decline",
+
+                    action:async notif => {
+
+                        notif.remove();
+
+                        await remove(
+                            ref(db,`calls/${id}`)
+                        );
+
+                    }
+
+                }
+
+            ]
+        );
+
+    });
+
+});
+
+/* ================= END CALL ================= */
+
+async function endCall(){
+
+    if(pc){
+
+        pc.close();
+
+        pc = null;
+
+    }
+
+    if(localStream){
+
+        localStream
+        .getTracks()
+        .forEach(t => t.stop());
+
+        localStream = null;
+
+    }
+
+    document.getElementById("localVideo")
+    .srcObject = null;
+
+    document.getElementById("remoteVideo")
+    .srcObject = null;
+
+    if(currentCallId){
+
+        try{
+            await remove(
+                ref(db,
+                `calls/${currentCallId}`)
+            );
+        }catch(e){}
+
+    }
+
+    currentCallId = null;
+
+    closeWindow("call");
+
+}
+
+/* ================= END BUTTON ================= */
+
+document.querySelector("#call .closeBtn")
+.onclick = endCall;
+
+/* ================= NOTIFICATIONS ================= */
+
+function notifySystem(
+    title,
+    text,
+    actions=[]
+){
+
+    const holder =
+    document.getElementById(
+        "systemNotifications"
+    );
+
+    const n =
+    document.createElement("div");
+
+    n.className = "notification";
+
+    const h =
+    document.createElement("h3");
+
+    h.innerText = title;
+
+    const p =
+    document.createElement("p");
+
+    p.innerText = text;
+
+    n.appendChild(h);
+    n.appendChild(p);
+
+    if(actions.length){
+
+        const row =
+        document.createElement("div");
+
+        row.className = "notif-actions";
+
+        actions.forEach(a => {
+
+            const btn =
+            document.createElement("button");
+
+            btn.className = a.type;
+
+            btn.innerText = a.label;
+
+            btn.onclick =
+            () => a.action(n);
+
+            row.appendChild(btn);
+
+        });
+
+        n.appendChild(row);
+
+    }
+
+    holder.appendChild(n);
+
+    setTimeout(() => {
+
+        if(n.parentNode){
+            n.remove();
+        }
+
+    },15000);
+
+}
+
+/* ================= CLOCK ================= */
+
+function updateClock(){
+
+    document.getElementById("clock")
+    .innerText =
+    new Date().toLocaleTimeString([],{
+        hour:"2-digit",
+        minute:"2-digit"
+    });
+
+}
+
+updateClock();
+
+setInterval(updateClock,1000);
+
+</script>
 </body>
 </html>
