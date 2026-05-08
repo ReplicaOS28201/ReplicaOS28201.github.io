@@ -1,448 +1,819 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ReplicaOS - System Edition</title>
-    <style>
-        :root {
-            --taskbar-bg: rgba(20, 20, 20, 0.85);
-            --win-bg: #f3f3f3;
-            --accent: #0078d4;
-            --accent-hover: #005a9e;
-        }
+<meta charset="UTF-8">
 
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-        html, body {
-            margin: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: black;
-        }
+<title>ReplicaOS Ultimate</title>
 
-        body {
-            background: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat fixed;
-        }
+<style>
 
-        /* ================= DESKTOP ================= */
-        #desktop {
-            position: fixed;
-            inset: 0;
-            padding: 20px;
-            padding-bottom: 70px;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, 90px);
-            gap: 18px;
-            align-content: start;
-            z-index: 1;
-        }
+:root{
+    --taskbar-bg:rgba(20,20,20,0.86);
+    --win-bg:#f3f3f3;
+    --accent:#0078d4;
+}
 
-        .icon {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: white;
-            text-align: center;
-            cursor: pointer;
-            user-select: none;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-        }
+/* ================= GLOBAL ================= */
 
-        .icon img {
-            width: 52px;
-            height: 52px;
-            object-fit: contain;
-            margin-bottom: 6px;
-            transition: transform 0.2s;
-        }
+*{
+    box-sizing:border-box;
+    -webkit-tap-highlight-color:transparent;
+}
 
-        .icon:hover img { transform: scale(1.1); }
+html,body{
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    font-family:system-ui;
+}
 
-        /* ================= TASKBAR ================= */
-        #taskbar {
-            position: fixed;
-            left: 0; right: 0; bottom: 0;
-            height: 52px;
-            background: var(--taskbar-bg);
-            backdrop-filter: blur(12px);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 14px;
-            color: white;
-            z-index: 99999;
-        }
+body{
+    background:url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1920&q=80')
+    center/cover no-repeat fixed;
+}
 
-        .taskBtn {
-            cursor: pointer;
-            padding: 8px 15px;
-            border-radius: 5px;
-            transition: background 0.2s;
-        }
+/* ================= DESKTOP ================= */
 
-        .taskBtn:hover { background: rgba(255,255,255,0.1); }
+#desktop{
+    position:fixed;
+    inset:0;
 
-        /* ================= WINDOW SYSTEM ================= */
-        .window {
-            position: fixed;
-            width: min(450px, 95vw);
-            height: min(550px, 85vh);
-            background: var(--win-bg);
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 25px 60px rgba(0,0,0,0.45);
-            display: none;
-            flex-direction: column;
-            z-index: 5000;
-            transform: translate(-50%, -50%);
-            touch-action: none;
-        }
+    padding:18px;
+    padding-bottom:75px;
 
-        .titlebar {
-            height: 40px;
-            background: #1f1f1f;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 12px;
-            cursor: move;
-            user-select: none;
-            flex-shrink: 0;
-        }
+    display:grid;
+    grid-template-columns:repeat(auto-fill,90px);
 
-        .windowBtns button {
-            border: none;
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
-            color: white;
-            cursor: pointer;
-            margin-left: 5px;
-        }
+    gap:18px;
 
-        .closeBtn { background: #e53935; }
-        .closeBtn:hover { background: #b71c1c; }
-        .minBtn { background: #555; }
+    align-content:start;
+}
 
-        .windowContent {
-            flex: 1;
-            overflow: auto;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-        }
+.icon{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
 
-        /* ================= CHAT UI ================= */
-        #chatMessages {
-            flex: 1;
-            background: #e5e5e5;
-            border-radius: 8px;
-            padding: 10px;
-            margin-bottom: 10px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
+    text-align:center;
 
-        .chat-input-area {
-            display: flex;
-            gap: 8px;
-        }
+    color:white;
 
-        #msgInput {
-            flex: 1;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            outline: none;
-        }
+    cursor:pointer;
 
-        #sendBtn {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 0 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-        }
+    user-select:none;
+}
 
-        #sendBtn:hover { background: var(--accent-hover); }
+.icon img{
+    width:54px;
+    height:54px;
 
-        /* ================= CALL UI ================= */
-        #call { background: black; }
-        #remoteVideo { width: 100%; height: 100%; object-fit: cover; }
-        #localVideo {
-            position: absolute;
-            width: 120px; height: 170px;
-            bottom: 15px; right: 15px;
-            border-radius: 12px;
-            border: 2px solid white;
-            object-fit: cover;
-            background: #222;
-        }
+    object-fit:contain;
 
-        /* ================= START MENU ================= */
-        #startMenu {
-            position: fixed;
-            left: 10px; bottom: 62px;
-            width: 260px;
-            background: rgba(25, 25, 25, 0.95);
-            backdrop-filter: blur(15px);
-            border-radius: 12px;
-            padding: 10px;
-            display: none;
-            flex-direction: column;
-            gap: 8px;
-            z-index: 999999;
-        }
+    margin-bottom:6px;
+}
 
-        .startItem {
-            padding: 12px;
-            color: white;
-            cursor: pointer;
-            border-radius: 8px;
-            transition: background 0.2s;
-        }
+/* ================= TASKBAR ================= */
 
-        .startItem:hover { background: rgba(255,255,255,0.1); }
+#taskbar{
+    position:fixed;
 
-        /* ================= NOTIFICATIONS ================= */
-        #systemNotifications {
-            position: fixed; top: 15px; right: 15px;
-            display: flex; flex-direction: column; gap: 10px;
-            z-index: 9999999;
-        }
+    left:0;
+    right:0;
+    bottom:0;
 
-        .notification {
-            width: 300px;
-            background: rgba(30, 30, 30, 0.98);
-            color: white;
-            border-radius: 12px;
-            padding: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            animation: slideIn 0.3s ease;
-        }
+    height:55px;
 
-        .notif-actions { display: flex; gap: 10px; margin-top: 10px; }
-        .notif-actions button {
-            flex: 1; padding: 8px; border: none; border-radius: 6px; cursor: pointer; color: white;
-        }
-        .accept { background: #4CAF50; }
-        .decline { background: #f44336; }
+    background:var(--taskbar-bg);
 
-        @keyframes slideIn {
-            from { transform: translateX(120%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
+    backdrop-filter:blur(12px);
 
-        /* MOBILE OVERRIDES */
-        @media (max-width: 700px) {
-            .window {
-                width: 100vw !important;
-                height: calc(100vh - 52px) !important;
-                left: 0 !important; top: 0 !important;
-                transform: none !important;
-                border-radius: 0;
-            }
-        }
-    </style>
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    padding:0 14px;
+
+    color:white;
+
+    z-index:999999;
+}
+
+.taskBtn{
+    cursor:pointer;
+}
+
+/* ================= START MENU ================= */
+
+#startMenu{
+    position:fixed;
+
+    left:10px;
+    bottom:65px;
+
+    width:280px;
+
+    background:rgba(25,25,25,0.96);
+
+    backdrop-filter:blur(15px);
+
+    border-radius:16px;
+
+    padding:14px;
+
+    display:none;
+    flex-direction:column;
+
+    gap:10px;
+
+    z-index:999999;
+}
+
+.startItem{
+    background:rgba(255,255,255,0.08);
+
+    color:white;
+
+    padding:12px;
+
+    border-radius:10px;
+
+    cursor:pointer;
+}
+
+/* ================= WINDOWS ================= */
+
+.window{
+    position:fixed;
+
+    width:min(500px,95vw);
+    height:min(600px,88vh);
+
+    background:var(--win-bg);
+
+    border-radius:16px;
+
+    overflow:hidden;
+
+    display:none;
+    flex-direction:column;
+
+    box-shadow:0 25px 60px rgba(0,0,0,0.45);
+
+    z-index:5000;
+
+    left:0;
+    top:0;
+
+    will-change:transform;
+
+    animation:openAnim .16s ease;
+}
+
+@keyframes openAnim{
+    from{
+        transform:scale(.95);
+        opacity:0;
+    }
+    to{
+        transform:scale(1);
+        opacity:1;
+    }
+}
+
+.titlebar{
+    height:46px;
+
+    background:#1f1f1f;
+
+    color:white;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    padding:0 12px;
+
+    cursor:move;
+
+    user-select:none;
+
+    touch-action:none;
+}
+
+.windowBtns{
+    display:flex;
+    gap:8px;
+}
+
+.windowBtns button{
+    width:28px;
+    height:28px;
+
+    border:none;
+
+    border-radius:8px;
+
+    color:white;
+
+    cursor:pointer;
+}
+
+.minBtn{
+    background:#555;
+}
+
+.closeBtn{
+    background:#e53935;
+}
+
+.windowContent{
+    flex:1;
+
+    overflow:auto;
+
+    padding:16px;
+}
+
+/* ================= CALL ================= */
+
+#call{
+    background:black;
+}
+
+video{
+    background:black;
+}
+
+#remoteVideo{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+#localVideo{
+    position:absolute;
+
+    width:120px;
+    height:170px;
+
+    right:15px;
+    bottom:90px;
+
+    border-radius:12px;
+
+    border:2px solid white;
+
+    object-fit:cover;
+}
+
+#callControls{
+    position:absolute;
+
+    left:50%;
+    bottom:16px;
+
+    transform:translateX(-50%);
+
+    display:flex;
+    gap:10px;
+
+    z-index:100;
+}
+
+#callControls button{
+    border:none;
+
+    padding:12px 16px;
+
+    border-radius:12px;
+
+    background:rgba(20,20,20,0.9);
+
+    color:white;
+
+    cursor:pointer;
+}
+
+#hangupBtn{
+    background:#d32f2f !important;
+}
+
+/* ================= NOTIFICATIONS ================= */
+
+#systemNotifications{
+    position:fixed;
+
+    top:15px;
+    right:15px;
+
+    display:flex;
+    flex-direction:column;
+
+    gap:10px;
+
+    z-index:9999999;
+}
+
+.notification{
+    width:290px;
+
+    background:rgba(20,20,20,0.96);
+
+    color:white;
+
+    padding:14px;
+
+    border-radius:14px;
+
+    box-shadow:0 15px 40px rgba(0,0,0,0.45);
+}
+
+/* ================= GALLERY ================= */
+
+.galleryGrid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+    gap:10px;
+}
+
+.galleryGrid img{
+    width:100%;
+    border-radius:12px;
+}
+
+/* ================= MOBILE ================= */
+
+@media (max-width:700px){
+
+    .window{
+        width:100vw !important;
+        height:calc(100vh - 55px) !important;
+
+        left:0 !important;
+        top:0 !important;
+
+        border-radius:0;
+    }
+
+    #localVideo{
+        width:90px;
+        height:130px;
+    }
+
+    .notification{
+        width:calc(100vw - 30px);
+    }
+
+}
+
+</style>
 </head>
+
 <body>
+
+<!-- ================= NOTIFICATIONS ================= -->
 
 <div id="systemNotifications"></div>
 
+<!-- ================= DESKTOP ================= -->
+
 <div id="desktop">
+
     <div class="icon" onclick="openWindow('friends')">
         <img src="https://cdn-icons-png.flaticon.com/512/1077/1077012.png">
         <div>Friends</div>
     </div>
+
     <div class="icon" onclick="openWindow('chat')">
         <img src="https://cdn-icons-png.flaticon.com/512/733/733585.png">
         <div>Chat</div>
     </div>
+
     <div class="icon" onclick="openWindow('call')">
         <img src="https://cdn-icons-png.flaticon.com/512/3059/3059502.png">
         <div>Call</div>
     </div>
+
+    <div class="icon" onclick="openWindow('browser')">
+        <img src="https://cdn-icons-png.flaticon.com/512/300/300221.png">
+        <div>Browser</div>
+    </div>
+
+    <div class="icon" onclick="openWindow('music')">
+        <img src="https://cdn-icons-png.flaticon.com/512/727/727245.png">
+        <div>Music</div>
+    </div>
+
+    <div class="icon" onclick="openWindow('notes')">
+        <img src="https://cdn-icons-png.flaticon.com/512/281/281760.png">
+        <div>Notes</div>
+    </div>
+
+    <div class="icon" onclick="openWindow('gallery')">
+        <img src="https://cdn-icons-png.flaticon.com/512/1375/1375106.png">
+        <div>Gallery</div>
+    </div>
+
+    <div class="icon" onclick="openWindow('terminal')">
+        <img src="https://cdn-icons-png.flaticon.com/512/4248/4248443.png">
+        <div>Terminal</div>
+    </div>
+
 </div>
+
+<!-- ================= FRIENDS ================= -->
 
 <div id="friends" class="window">
+
     <div class="titlebar">
-        <span>Friends List</span>
+
+        <span>Friends</span>
+
         <div class="windowBtns">
-            <button class="minBtn">—</button>
-            <button class="closeBtn" onclick="closeWindow('friends')">✕</button>
+
+            <button class="minBtn"
+            onclick="this.closest('.window').style.display='none'">—</button>
+
+            <button class="closeBtn"
+            onclick="closeWindow('friends')">✕</button>
+
         </div>
+
     </div>
+
     <div class="windowContent">
-        <h3 style="margin-top:0">Online Now</h3>
+
+        <h2>Online Friends</h2>
+
         <div id="friendsList"></div>
+
     </div>
+
 </div>
+
+<!-- ================= CHAT ================= -->
 
 <div id="chat" class="window">
+
     <div class="titlebar">
-        <span>Global Chat</span>
+
+        <span>Chat</span>
+
         <div class="windowBtns">
-            <button class="minBtn">—</button>
-            <button class="closeBtn" onclick="closeWindow('chat')">✕</button>
+
+            <button class="minBtn"
+            onclick="this.closest('.window').style.display='none'">—</button>
+
+            <button class="closeBtn"
+            onclick="closeWindow('chat')">✕</button>
+
         </div>
+
     </div>
+
     <div class="windowContent">
+
         <div id="chatMessages"></div>
-        <div class="chat-input-area">
-            <input id="msgInput" placeholder="Type a message...">
-            <button id="sendBtn">Send</button>
-        </div>
+
+        <br>
+
+        <input id="msgInput"
+        placeholder="Type message..."
+        style="
+            width:100%;
+            padding:12px;
+            border:none;
+            border-radius:10px;
+            background:#ddd;
+        ">
+
     </div>
+
 </div>
+
+<!-- ================= CALL ================= -->
 
 <div id="call" class="window">
+
     <div class="titlebar">
-        <span>Active Call</span>
+
+        <span>Call</span>
+
         <div class="windowBtns">
-            <button class="closeBtn" onclick="closeWindow('call')">✕</button>
+
+            <button id="muteBtn"
+            style="background:#444;">🔇</button>
+
+            <button id="cameraBtn"
+            style="background:#1976d2;">📷</button>
+
+            <button class="closeBtn"
+            onclick="endCall()">✕</button>
+
         </div>
+
     </div>
-    <video id="remoteVideo" autoplay playsinline></video>
-    <video id="localVideo" autoplay muted playsinline></video>
+
+    <div style="position:relative;flex:1;">
+
+        <video id="remoteVideo"
+        autoplay
+        playsinline></video>
+
+        <video id="localVideo"
+        autoplay
+        muted
+        playsinline></video>
+
+        <div id="callControls">
+
+            <button id="toggleMic">
+                🎤 Mute
+            </button>
+
+            <button id="toggleCam">
+                📷 Camera
+            </button>
+
+            <button id="hangupBtn">
+                📞 End
+            </button>
+
+        </div>
+
+    </div>
+
 </div>
+
+<!-- ================= BROWSER ================= -->
+
+<div id="browser" class="window">
+
+    <div class="titlebar">
+
+        <span>Browser</span>
+
+        <div class="windowBtns">
+
+            <button class="minBtn"
+            onclick="this.closest('.window').style.display='none'">—</button>
+
+            <button class="closeBtn"
+            onclick="closeWindow('browser')">✕</button>
+
+        </div>
+
+    </div>
+
+    <div class="windowContent">
+
+        <div style="display:flex;gap:10px;">
+
+            <input id="browserUrl"
+            placeholder="https://google.com"
+            style="
+                flex:1;
+                padding:12px;
+                border:none;
+                border-radius:10px;
+                background:#ddd;
+            ">
+
+            <button onclick="openWebsite()">
+                Go
+            </button>
+
+        </div>
+
+        <br>
+
+        <iframe id="browserFrame"
+        style="
+            width:100%;
+            height:90%;
+            border:none;
+            border-radius:12px;
+            background:white;
+        "></iframe>
+
+    </div>
+
+</div>
+
+<!-- ================= MUSIC ================= -->
+
+<div id="music" class="window">
+
+    <div class="titlebar">
+
+        <span>Music</span>
+
+        <div class="windowBtns">
+
+            <button class="minBtn"
+            onclick="this.closest('.window').style.display='none'">—</button>
+
+            <button class="closeBtn"
+            onclick="closeWindow('music')">✕</button>
+
+        </div>
+
+    </div>
+
+    <div class="windowContent">
+
+        <audio id="musicPlayer"
+        controls
+        style="width:100%;"></audio>
+
+        <br><br>
+
+        <button onclick="playDemoSong()">
+            ▶ Play Song
+        </button>
+
+    </div>
+
+</div>
+
+<!-- ================= NOTES ================= -->
+
+<div id="notes" class="window">
+
+    <div class="titlebar">
+
+        <span>Notes</span>
+
+        <div class="windowBtns">
+
+            <button class="minBtn"
+            onclick="this.closest('.window').style.display='none'">—</button>
+
+            <button class="closeBtn"
+            onclick="closeWindow('notes')">✕</button>
+
+        </div>
+
+    </div>
+
+    <div class="windowContent">
+
+        <textarea id="notesArea"
+        style="
+            width:100%;
+            height:100%;
+            border:none;
+            resize:none;
+            border-radius:12px;
+            padding:14px;
+            background:#ddd;
+        "></textarea>
+
+    </div>
+
+</div>
+
+<!-- ================= GALLERY ================= -->
+
+<div id="gallery" class="window">
+
+    <div class="titlebar">
+
+        <span>Gallery</span>
+
+        <div class="windowBtns">
+
+            <button class="minBtn"
+            onclick="this.closest('.window').style.display='none'">—</button>
+
+            <button class="closeBtn"
+            onclick="closeWindow('gallery')">✕</button>
+
+        </div>
+
+    </div>
+
+    <div class="windowContent">
+
+        <div class="galleryGrid">
+
+            <img src="https://picsum.photos/300/200?1">
+            <img src="https://picsum.photos/300/200?2">
+            <img src="https://picsum.photos/300/200?3">
+            <img src="https://picsum.photos/300/200?4">
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ================= TERMINAL ================= -->
+
+<div id="terminal" class="window">
+
+    <div class="titlebar">
+
+        <span>Terminal</span>
+
+        <div class="windowBtns">
+
+            <button class="minBtn"
+            onclick="this.closest('.window').style.display='none'">—</button>
+
+            <button class="closeBtn"
+            onclick="closeWindow('terminal')">✕</button>
+
+        </div>
+
+    </div>
+
+    <div class="windowContent"
+    style="
+        background:black;
+        color:#00ff66;
+        font-family:monospace;
+    ">
+
+        <div id="terminalOutput">
+            ReplicaOS Terminal v1.0
+        </div>
+
+        <br>
+
+        <input id="terminalInput"
+        placeholder="Command..."
+        style="
+            width:100%;
+            padding:10px;
+            background:#111;
+            border:none;
+            color:#00ff66;
+        ">
+
+    </div>
+
+</div>
+
+<!-- ================= START MENU ================= -->
 
 <div id="startMenu">
-    <div class="startItem" onclick="openWindow('friends')">👥 Friends</div>
-    <div class="startItem" onclick="openWindow('chat')">💬 Global Chat</div>
-    <div class="startItem" onclick="openWindow('call')">📞 Video Call</div>
+
+    <div class="startItem"
+    onclick="openWindow('friends')">
+        Friends
+    </div>
+
+    <div class="startItem"
+    onclick="openWindow('chat')">
+        Chat
+    </div>
+
+    <div class="startItem"
+    onclick="openWindow('browser')">
+        Browser
+    </div>
+
+    <div class="startItem"
+    onclick="openWindow('terminal')">
+        Terminal
+    </div>
+
 </div>
+
+<!-- ================= TASKBAR ================= -->
 
 <div id="taskbar">
-    <div class="taskBtn" onclick="toggleStart()">🪟 Start</div>
-    <div id="clock">00:00</div>
+
+    <div class="taskBtn"
+    onclick="toggleStart()">
+        🪟 Start
+    </div>
+
+    <div id="clock"></div>
+
 </div>
 
-<script type="module">
-
-/* ================= FIREBASE ================= */
-
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-
-import {
-    getDatabase,
-    ref,
-    set,
-    onValue,
-    push,
-    update,
-    remove,
-    onDisconnect,
-    get
-}
-from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-/* ================= CONFIG ================= */
-
-const firebaseConfig = {
-
-    apiKey: "YOUR_KEY",
-    authDomain: "YOUR_DOMAIN",
-    projectId: "YOUR_PROJECT",
-    storageBucket: "YOUR_BUCKET",
-    messagingSenderId: "YOUR_SENDER",
-    appId: "YOUR_APP_ID",
-    databaseURL: "YOUR_DATABASE_URL"
-
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-
-/* ================= USER ================= */
-
-const myId =
-localStorage.replicaUserId ||
-Math.random().toString(36).substring(2,10);
-
-localStorage.replicaUserId = myId;
-
-console.log("USER:", myId);
-
-/* ================= PRESENCE ================= */
-
-const presenceRef = ref(db, "presence/" + myId);
-
-await set(presenceRef,{
-    online:true,
-    lastSeen:Date.now()
-});
-
-onDisconnect(presenceRef).remove();
-
-/* ================= GLOBALS ================= */
-
-let highestZ = 6000;
-
-let currentCallId = null;
-
-let pc = null;
-
-let localStream = null;
-
-let remoteStream = null;
-
-let currentTarget = null;
-
-const activeNotifications = new Set();
-
-/* ================= RTC CONFIG ================= */
-
-const rtcConfig = {
-
-    iceServers:[
-        {
-            urls:[
-                "stun:stun.l.google.com:19302",
-                "stun:stun1.l.google.com:19302"
-            ]
-        }
-    ]
-
-};
+<script>
 
 /* ================= WINDOW SYSTEM ================= */
 
+let highestZ = 5000;
+
 window.openWindow = id => {
 
-    const win = document.getElementById(id);
+    const win =
+    document.getElementById(id);
 
     win.style.display = "flex";
 
     highestZ++;
 
     win.style.zIndex = highestZ;
-
-    if(window.innerWidth > 700){
-
-        if(!win.dataset.positioned){
-
-            win.style.left = "0px";
-            win.style.top = "0px";
-
-            win.dataset.positioned = "true";
-
-        }
-
-        win.style.transform = "none";
-
-    }
 
 };
 
@@ -470,507 +841,51 @@ window.toggleStart = () => {
 document.querySelectorAll(".window")
 .forEach(win => {
 
-    const bar = win.querySelector(".titlebar");
+    const bar =
+    win.querySelector(".titlebar");
 
     let dragging = false;
 
-    let startX = 0;
-    let startY = 0;
+    let offsetX = 0;
+    let offsetY = 0;
 
-    bar.addEventListener("pointerdown", e => {
+    bar.addEventListener(
+    "pointerdown",
+    e => {
 
-        if(window.innerWidth <= 700) return;
+        if(window.innerWidth <= 700)
+        return;
 
         dragging = true;
 
-        highestZ++;
+        offsetX =
+        e.clientX - win.offsetLeft;
 
-        win.style.zIndex = highestZ;
-
-        startX = e.clientX - win.offsetLeft;
-        startY = e.clientY - win.offsetTop;
-
-        bar.setPointerCapture(e.pointerId);
+        offsetY =
+        e.clientY - win.offsetTop;
 
     });
 
-    window.addEventListener("pointermove", e => {
+    window.addEventListener(
+    "pointermove",
+    e => {
 
         if(!dragging) return;
 
         win.style.left =
-        (e.clientX - startX) + "px";
+        (e.clientX - offsetX) + "px";
 
         win.style.top =
-        (e.clientY - startY) + "px";
+        (e.clientY - offsetY) + "px";
 
     });
 
-    window.addEventListener("pointerup", () => {
-        dragging = false;
-    });
-
-});
-
-/* ================= FRIENDS ================= */
-
-const friendsList =
-document.getElementById("friendsList");
-
-onValue(ref(db,"presence"), snap => {
-
-    const users = snap.val() || {};
-
-    friendsList.innerHTML = "";
-
-    Object.entries(users)
-    .forEach(([id,data]) => {
-
-        if(id === myId) return;
-
-        const card =
-        document.createElement("div");
-
-        card.style.cssText = `
-            background:#ddd;
-            padding:12px;
-            border-radius:12px;
-            margin-bottom:10px;
-        `;
-
-        const name =
-        document.createElement("div");
-
-        name.innerHTML = `
-            <b>${id}</b>
-        `;
-
-        const btn =
-        document.createElement("button");
-
-        btn.innerText = "Call";
-
-        btn.style.marginTop = "10px";
-
-        btn.onclick = () => makeCall(id);
-
-        card.appendChild(name);
-        card.appendChild(btn);
-
-        friendsList.appendChild(card);
-
-    });
-
-});
-
-/* ================= WEBRTC ================= */
-
-async function createPeer(){
-
-    pc = new RTCPeerConnection(rtcConfig);
-
-    remoteStream = new MediaStream();
-
-    document.getElementById("remoteVideo")
-    .srcObject = remoteStream;
-
-    pc.ontrack = e => {
-
-        e.streams[0]
-        .getTracks()
-        .forEach(track => {
-
-            remoteStream.addTrack(track);
-
-        });
-
-    };
-
-    pc.onicecandidate = async e => {
-
-        if(!e.candidate || !currentCallId)
-        return;
-
-        await push(
-            ref(db,
-            `calls/${currentCallId}/candidates`)
-        ,{
-            from:myId,
-            candidate:e.candidate.toJSON()
-        });
-
-    };
-
-    pc.onconnectionstatechange = () => {
-
-        console.log(
-            "STATE:",
-            pc.connectionState
-        );
-
-        if(
-            pc.connectionState === "disconnected" ||
-            pc.connectionState === "failed" ||
-            pc.connectionState === "closed"
-        ){
-            endCall();
-        }
-
-    };
-
-}
-
-/* ================= MEDIA ================= */
-
-async function startMedia(){
-
-    if(localStream) return;
-
-    localStream =
-    await navigator.mediaDevices
-    .getUserMedia({
-        video:true,
-        audio:true
-    });
-
-    document.getElementById("localVideo")
-    .srcObject = localStream;
-
-}
-
-/* ================= ADD TRACKS ================= */
-
-async function attachTracks(){
-
-    localStream
-    .getTracks()
-    .forEach(track => {
-
-        pc.addTrack(track, localStream);
-
-    });
-
-}
-
-/* ================= CALL USER ================= */
-
-window.makeCall = async targetId => {
-
-    currentTarget = targetId;
-
-    openWindow("call");
-
-    await createPeer();
-
-    await startMedia();
-
-    await attachTracks();
-
-    const offer =
-    await pc.createOffer();
-
-    await pc.setLocalDescription(offer);
-
-    const callRef =
-    push(ref(db,"calls"));
-
-    currentCallId = callRef.key;
-
-    await set(callRef,{
-
-        from:myId,
-        to:targetId,
-
-        offer:{
-            type:offer.type,
-            sdp:offer.sdp
-        },
-
-        created:Date.now()
-
-    });
-
-    listenForAnswer();
-
-    listenForCandidates();
-
-};
-
-/* ================= ANSWER ================= */
-
-async function listenForAnswer(){
-
-    onValue(
-        ref(db,`calls/${currentCallId}/answer`),
-        async snap => {
-
-            const answer = snap.val();
-
-            if(
-                answer &&
-                !pc.currentRemoteDescription
-            ){
-
-                await pc.setRemoteDescription(
-                    new RTCSessionDescription(answer)
-                );
-
-            }
-
-        });
-
-}
-
-/* ================= ICE ================= */
-
-function listenForCandidates(){
-
-    onValue(
-        ref(db,
-        `calls/${currentCallId}/candidates`)
-    , snap => {
-
-        const data = snap.val();
-
-        if(!data) return;
-
-        Object.values(data)
-        .forEach(async c => {
-
-            if(c.from === myId) return;
-
-            try{
-
-                await pc.addIceCandidate(
-                    new RTCIceCandidate(
-                        c.candidate
-                    )
-                );
-
-            }catch(err){
-                console.error(err);
-            }
-
-        });
-
-    });
-
-}
-
-/* ================= INCOMING ================= */
-
-onValue(ref(db,"calls"), async snap => {
-
-    const calls = snap.val();
-
-    if(!calls) return;
-
-    Object.entries(calls)
-    .forEach(async ([id,call]) => {
-
-        if(call.to !== myId) return;
-
-        if(call.answer) return;
-
-        if(activeNotifications.has(id))
-        return;
-
-        activeNotifications.add(id);
-
-        notifySystem(
-            "Incoming Call",
-            `${call.from} is calling`,
-            [
-
-                {
-                    label:"Accept",
-                    type:"accept",
-
-                    action:async notif => {
-
-                        notif.remove();
-
-                        currentCallId = id;
-
-                        await createPeer();
-
-                        await startMedia();
-
-                        await attachTracks();
-
-                        await pc.setRemoteDescription(
-                            new RTCSessionDescription(
-                                call.offer
-                            )
-                        );
-
-                        const answer =
-                        await pc.createAnswer();
-
-                        await pc.setLocalDescription(
-                            answer
-                        );
-
-                        await update(
-                            ref(db,`calls/${id}`),
-                            {
-                                answer:{
-                                    type:answer.type,
-                                    sdp:answer.sdp
-                                }
-                            }
-                        );
-
-                        listenForCandidates();
-
-                        openWindow("call");
-
-                    }
-
-                },
-
-                {
-                    label:"Decline",
-                    type:"decline",
-
-                    action:async notif => {
-
-                        notif.remove();
-
-                        await remove(
-                            ref(db,`calls/${id}`)
-                        );
-
-                    }
-
-                }
-
-            ]
-        );
-
-    });
-
-});
-
-/* ================= END CALL ================= */
-
-async function endCall(){
-
-    if(pc){
-
-        pc.close();
-
-        pc = null;
-
-    }
-
-    if(localStream){
-
-        localStream
-        .getTracks()
-        .forEach(t => t.stop());
-
-        localStream = null;
-
-    }
-
-    document.getElementById("localVideo")
-    .srcObject = null;
-
-    document.getElementById("remoteVideo")
-    .srcObject = null;
-
-    if(currentCallId){
-
-        try{
-            await remove(
-                ref(db,
-                `calls/${currentCallId}`)
-            );
-        }catch(e){}
-
-    }
-
-    currentCallId = null;
-
-    closeWindow("call");
-
-}
-
-/* ================= END BUTTON ================= */
-
-document.querySelector("#call .closeBtn")
-.onclick = endCall;
-
-/* ================= NOTIFICATIONS ================= */
-
-function notifySystem(
-    title,
-    text,
-    actions=[]
-){
-
-    const holder =
-    document.getElementById(
-        "systemNotifications"
+    window.addEventListener(
+    "pointerup",
+    () => dragging = false
     );
 
-    const n =
-    document.createElement("div");
-
-    n.className = "notification";
-
-    const h =
-    document.createElement("h3");
-
-    h.innerText = title;
-
-    const p =
-    document.createElement("p");
-
-    p.innerText = text;
-
-    n.appendChild(h);
-    n.appendChild(p);
-
-    if(actions.length){
-
-        const row =
-        document.createElement("div");
-
-        row.className = "notif-actions";
-
-        actions.forEach(a => {
-
-            const btn =
-            document.createElement("button");
-
-            btn.className = a.type;
-
-            btn.innerText = a.label;
-
-            btn.onclick =
-            () => a.action(n);
-
-            row.appendChild(btn);
-
-        });
-
-        n.appendChild(row);
-
-    }
-
-    holder.appendChild(n);
-
-    setTimeout(() => {
-
-        if(n.parentNode){
-            n.remove();
-        }
-
-    },15000);
-
-}
+});
 
 /* ================= CLOCK ================= */
 
@@ -989,6 +904,217 @@ updateClock();
 
 setInterval(updateClock,1000);
 
+/* ================= BROWSER ================= */
+
+window.openWebsite = () => {
+
+    let url =
+    document.getElementById("browserUrl")
+    .value;
+
+    if(!url.startsWith("https://")){
+        url = "https://" + url;
+    }
+
+    document.getElementById(
+        "browserFrame"
+    ).src = url;
+
+};
+
+/* ================= MUSIC ================= */
+
+window.playDemoSong = () => {
+
+    const player =
+    document.getElementById(
+        "musicPlayer"
+    );
+
+    player.src =
+    "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+
+    player.play();
+
+};
+
+/* ================= NOTES ================= */
+
+const notesArea =
+document.getElementById("notesArea");
+
+notesArea.value =
+localStorage.replicaNotes || "";
+
+notesArea.oninput = () => {
+
+    localStorage.replicaNotes =
+    notesArea.value;
+
+};
+
+/* ================= TERMINAL ================= */
+
+const terminalInput =
+document.getElementById("terminalInput");
+
+const terminalOutput =
+document.getElementById("terminalOutput");
+
+terminalInput.addEventListener(
+"keydown",
+e => {
+
+    if(e.key !== "Enter") return;
+
+    const cmd =
+    terminalInput.value.trim();
+
+    terminalOutput.innerHTML += `
+        <br><br>> ${cmd}
+    `;
+
+    if(cmd === "help"){
+
+        terminalOutput.innerHTML += `
+            <br>
+            help, clear, date
+        `;
+
+    }
+
+    else if(cmd === "clear"){
+
+        terminalOutput.innerHTML =
+        "ReplicaOS Terminal v1.0";
+
+    }
+
+    else if(cmd === "date"){
+
+        terminalOutput.innerHTML += `
+            <br>
+            ${new Date()}
+        `;
+
+    }
+
+    else{
+
+        terminalOutput.innerHTML += `
+            <br>
+            Unknown command
+        `;
+
+    }
+
+    terminalInput.value = "";
+
+});
+
+/* ================= CALL CONTROLS ================= */
+
+let micMuted = false;
+let camDisabled = false;
+
+document.getElementById("toggleMic")
+.onclick = () => {
+
+    micMuted = !micMuted;
+
+    document.getElementById(
+        "toggleMic"
+    ).innerText =
+    micMuted
+    ? "🔇 Unmute"
+    : "🎤 Mute";
+
+};
+
+document.getElementById("toggleCam")
+.onclick = () => {
+
+    camDisabled = !camDisabled;
+
+    document.getElementById(
+        "toggleCam"
+    ).innerText =
+    camDisabled
+    ? "📷 Enable"
+    : "📷 Camera";
+
+};
+
+document.getElementById("muteBtn")
+.onclick = () => {
+
+    document.getElementById(
+        "toggleMic"
+    ).click();
+
+};
+
+document.getElementById("cameraBtn")
+.onclick = () => {
+
+    document.getElementById(
+        "toggleCam"
+    ).click();
+
+};
+
+window.endCall = () => {
+
+    closeWindow("call");
+
+};
+
+/* ================= NOTIFICATIONS ================= */
+
+function notifySystem(title,text){
+
+    const holder =
+    document.getElementById(
+        "systemNotifications"
+    );
+
+    const n =
+    document.createElement("div");
+
+    n.className = "notification";
+
+    n.innerHTML = `
+        <b>${title}</b>
+        <br><br>
+        ${text}
+    `;
+
+    holder.appendChild(n);
+
+    setTimeout(() => {
+
+        if(n.parentNode){
+            n.remove();
+        }
+
+    },5000);
+
+}
+
+/* ================= BOOT ================= */
+
+window.addEventListener(
+"load",
+() => {
+
+    notifySystem(
+        "ReplicaOS",
+        "System boot completed"
+    );
+
+});
+
 </script>
+
 </body>
 </html>
