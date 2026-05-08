@@ -3,493 +3,247 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ReplicaOS Pro Call System</title>
+<title>ReplicaOS - Discord Windows UI</title>
 
 <style>
+body{margin:0;font-family:system-ui;background:#0b0c10;color:#fff;overflow:hidden}
 
-/* ================= UI ================= */
-
-body{
-    margin:0;
-    font-family:system-ui;
-    background:#111;
-    color:white;
-}
-
+/* ===== AUTH ===== */
 #auth{
-    position:fixed;
-    inset:0;
-    background:black;
-    display:flex;
-    justify-content:center;
-    align-items:center;
+position:fixed;inset:0;display:flex;justify-content:center;align-items:center;background:#000;
+z-index:9999;
 }
+.box{background:#1c1c1f;padding:20px;border-radius:12px;width:300px;display:flex;flex-direction:column;gap:10px}
+input,button{padding:10px;border:none;border-radius:8px}
+button{background:#5865f2;color:white;cursor:pointer}
 
-.box{
-    background:#222;
-    padding:20px;
-    border-radius:12px;
-    width:300px;
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-}
-
-input,button{
-    padding:10px;
-    border:none;
-    border-radius:8px;
-}
-
-button{
-    cursor:pointer;
-    background:#0078d4;
-    color:white;
-}
-
-/* ================= DESKTOP ================= */
-
+/* ===== DESKTOP ===== */
 #desktop{
-    display:none;
-    padding:20px;
+display:none;
+width:100vw;height:100vh;
+position:relative;
 }
 
-.icon{
-    display:inline-block;
-    margin:10px;
-    padding:10px;
-    background:#222;
-    border-radius:10px;
-    cursor:pointer;
+/* ===== TASKBAR ===== */
+#taskbar{
+position:absolute;bottom:0;left:0;right:0;height:45px;
+background:#111;
+display:flex;align-items:center;padding:5px;gap:10px
 }
+.taskbtn{background:#222;padding:6px 10px;border-radius:6px;cursor:pointer}
 
-/* ================= WINDOWS ================= */
-
+/* ===== WINDOW SYSTEM ===== */
 .window{
-    display:none;
-    position:fixed;
-    top:50px;
-    left:50px;
-    width:400px;
-    height:500px;
-    background:#222;
-    border-radius:12px;
-    overflow:hidden;
-    flex-direction:column;
+position:absolute;
+width:800px;
+height:500px;
+background:#1a1b1e;
+border-radius:10px;
+overflow:hidden;
+display:none;
+flex-direction:column;
+box-shadow:0 10px 30px rgba(0,0,0,0.6);
 }
 
-.title{
-    background:#111;
-    padding:10px;
+.titlebar{
+height:35px;
+background:#111;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:0 10px;
+cursor:move;
+}
+
+.close{
+background:red;
+border-radius:6px;
+padding:3px 8px;
+cursor:pointer;
 }
 
 .content{
-    flex:1;
-    padding:10px;
-    overflow:auto;
+flex:1;
+display:flex;
 }
 
-/* ================= CHAT ================= */
-
-.msg{
-    background:#0078d4;
-    margin:5px;
-    padding:8px;
-    border-radius:8px;
+/* ===== DISCORD UI ===== */
+#sidebar{
+width:70px;
+background:#0f0f10;
+display:flex;
+flex-direction:column;
+align-items:center;
+padding:10px;
+gap:10px;
+}
+.server{
+width:45px;height:45px;border-radius:50%;background:#2b2d31;
+display:flex;align-items:center;justify-content:center;cursor:pointer
 }
 
-/* ================= CALL ================= */
-
-video{
-    width:100%;
-    height:200px;
-    background:black;
+#panel{
+width:220px;background:#15161a;padding:10px
 }
+.channel{padding:6px;border-radius:6px;cursor:pointer}
+.channel:hover{background:#2b2d31}
+
+#chat{
+flex:1;display:flex;flex-direction:column
+}
+#messages{
+flex:1;overflow:auto;padding:10px
+}
+.msg{margin:5px 0;background:#2b2d31;padding:5px;border-radius:6px}
+
+#input{display:flex}
+#input input{flex:1}
 
 </style>
 </head>
-
 <body>
 
-<!-- ================= AUTH ================= -->
-
+<!-- AUTH -->
 <div id="auth">
 <div class="box">
-
-<h2>Login</h2>
-
-<input id="email" placeholder="Email">
-<input id="password" type="password" placeholder="Password">
-
+<h3>ReplicaOS Login</h3>
+<input id="email" placeholder="email">
+<input id="pass" type="password" placeholder="password">
 <button onclick="login()">Login</button>
 <button onclick="register()">Register</button>
-
 </div>
 </div>
 
-<!-- ================= DESKTOP ================= -->
-
+<!-- DESKTOP -->
 <div id="desktop">
 
-<div class="icon" onclick="openWin('friends')">Friends</div>
-<div class="icon" onclick="openWin('chat')">Chat</div>
-<div class="icon" onclick="openWin('call')">Call</div>
-
+<!-- TASKBAR -->
+<div id="taskbar">
+<div class="taskbtn" onclick="openWindow('discordWin')">Discord</div>
 </div>
 
-<!-- ================= FRIENDS ================= -->
+<!-- DISCORD WINDOW -->
+<div id="discordWin" class="window">
 
-<div id="friends" class="window">
-<div class="title">Friends</div>
-<div class="content" id="friendsList"></div>
+<div class="titlebar" onmousedown="dragStart(event,this.parentNode)">
+<span>ReplicaOS Discord</span>
+<div class="close" onclick="closeWin('discordWin')">X</div>
 </div>
 
-<!-- ================= CHAT ================= -->
-
-<div id="chat" class="window">
-<div class="title">Chat</div>
 <div class="content">
 
+<div id="sidebar"></div>
+<div id="panel"></div>
+<div id="chat">
 <div id="messages"></div>
-
-<input id="msgInput" placeholder="message">
-<button onclick="sendMsg()">Send</button>
+<div id="input">
+<input id="msg">
+<button onclick="send()">Send</button>
+</div>
+</div>
 
 </div>
 </div>
 
-<!-- ================= CALL ================= -->
-
-<div id="call" class="window">
-<div class="title">Call</div>
-<div class="content">
-
-<video id="local" autoplay muted></video>
-<video id="remote" autoplay></video>
-
-<button onclick="endCall()">End Call</button>
-
 </div>
-</div>
-
-<!-- ================= FIREBASE ================= -->
 
 <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, setDoc, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-import {
-initializeApp
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+const firebaseConfig={apiKey:"X",authDomain:"X",projectId:"X"};
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
 
-import {
-getAuth,
-createUserWithEmailAndPassword,
-signInWithEmailAndPassword,
-onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+let user,currentServer,currentChannel;
 
-import {
-getFirestore,
-doc,
-setDoc,
-collection,
-addDoc,
-onSnapshot,
-query,
-serverTimestamp,
-getDoc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-/* ================= CONFIG ================= */
-
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyCnJPv3cclaIArwUPKEq5of0NyafJ7d4QI",
-  authDomain: "replicanewos3030.firebaseapp.com",
-  databaseURL: "https://replicanewos3030-default-rtdb.firebaseio.com",
-  projectId: "replicanewos3030",
-  storageBucket: "replicanewos3030.firebasestorage.app",
-  messagingSenderId: "60780972584",
-  appId: "1:60780972584:web:db097a4cda968fec80831d",
-  measurementId: "G-HBTY5EYH29"
+/* ===== AUTH ===== */
+window.register=async()=>{
+const c=await createUserWithEmailAndPassword(auth,email.value,pass.value);
+await setDoc(doc(db,"users",c.user.uid),{uid:c.user.uid,email:c.user.email});
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-/* ================= GLOBAL ================= */
-
-let user = null;
-let peer;
-let localStream;
-
-/* ================= AUTH ================= */
-
-window.register = async () => {
-
-await createUserWithEmailAndPassword(
-auth,
-email.value,
-password.value
-);
-
+window.login=async()=>{
+await signInWithEmailAndPassword(auth,email.value,pass.value);
 };
 
-window.login = async () => {
-
-await signInWithEmailAndPassword(
-auth,
-email.value,
-password.value
-);
-
-};
-
-onAuthStateChanged(auth, async u => {
-
-if(!u) return;
-
-user = u;
+onAuthStateChanged(auth,u=>{
+if(!u)return;
+user=u;
 
 auth.style.display="none";
 desktop.style.display="block";
-
-/* save user */
-
-await setDoc(doc(db,"users",u.uid),{
-uid:u.uid,
-email:u.email
-},{merge:true});
-
-loadFriends();
-listenCalls();
-
+openWindow('discordWin');
+loadServers();
 });
 
-/* ================= FRIENDS ================= */
+/* ===== WINDOWS SYSTEM ===== */
+window.openWindow=(id)=>{
+document.getElementById(id).style.display="flex";
+};
+window.closeWin=(id)=>{
+document.getElementById(id).style.display="none";
+};
 
-function loadFriends(){
+/* DRAG */
+let drag=false,offsetX,offsetY;
+window.dragStart=(e,win)=>{
+drag=true;
+offsetX=e.clientX-win.offsetLeft;
+offsetY=e.clientY-win.offsetTop;
+document.onmousemove=e=>{
+if(drag){
+win.style.left=(e.clientX-offsetX)+"px";
+win.style.top=(e.clientY-offsetY)+"px";
+}
+};
+document.onmouseup=()=>drag=false;
+};
 
-onSnapshot(collection(db,"users"),snap=>{
+/* ===== DISCORD CORE ===== */
+window.createServer=async()=>{
+const r=doc(collection(db,"servers"));
+await setDoc(r,{name:"Server",members:[user.uid]});
+};
 
-friendsList.innerHTML="";
-
-snap.forEach(d=>{
-
-if(d.id===user.uid) return;
-
-friendsList.innerHTML+=`
-<div>
-${d.data().email}
-<button onclick="startCall('${d.id}')">Call</button>
-</div>
-`;
-
+function loadServers(){
+onSnapshot(collection(db,"servers"),snap=>{
+sidebar.innerHTML="";
+snap.forEach(s=>{
+sidebar.innerHTML+=`<div class='server' onclick="openServer('${s.id}')">S</div>`;
 });
-
 });
-
 }
 
-/* ================= CHAT ================= */
+window.openServer=(id)=>{
+currentServer=id;
+onSnapshot(collection(db,"servers",id,"channels"),snap=>{
+panel.innerHTML="";
+snap.forEach(c=>{
+panel.innerHTML+=`<div class='channel' onclick="openChannel('${c.id}')">#${c.data().name}</div>`;
+});
+});
+};
 
-window.sendMsg = async () => {
+window.openChannel=(id)=>{
+currentChannel=id;
+onSnapshot(collection(db,"servers",currentServer,"channels",id,"messages"),snap=>{
+messages.innerHTML="";
+snap.forEach(m=>{
+messages.innerHTML+=`<div class='msg'><b>${m.data().username}</b>: ${m.data().text}</div>`;
+});
+});
+};
 
-await addDoc(collection(db,"messages"),{
-text:msgInput.value,
-uid:user.uid,
+window.send=async()=>{
+await addDoc(collection(db,"servers",currentServer,"channels",currentChannel,"messages"),{
+text:msg.value,
+username:user.email,
 time:serverTimestamp()
 });
-
-msgInput.value="";
-
-};
-
-onSnapshot(collection(db,"messages"),snap=>{
-
-messages.innerHTML="";
-
-snap.forEach(m=>{
-
-messages.innerHTML+=`
-<div class="msg">${m.data().text}</div>
-`;
-
-});
-
-});
-
-/* ================= WEBRTC CALL ================= */
-
-const servers = {
-iceServers:[
-{urls:"stun:stun.l.google.com:19302"}
-]
-};
-
-window.startCall = async (to) => {
-
-const callRef = doc(collection(db,"calls"));
-
-peer = new RTCPeerConnection(servers);
-
-localStream = await navigator.mediaDevices.getUserMedia({
-video:true,audio:true
-});
-
-local.srcObject = localStream;
-
-localStream.getTracks().forEach(t=>{
-peer.addTrack(t,localStream);
-});
-
-const remoteStream = new MediaStream();
-remote.srcObject = remoteStream;
-
-peer.ontrack = e=>{
-e.streams[0].getTracks().forEach(t=>{
-remoteStream.addTrack(t);
-});
-};
-
-const offer = await peer.createOffer();
-await peer.setLocalDescription(offer);
-
-await setDoc(callRef,{
-caller:user.uid,
-callee:to,
-offer:JSON.stringify(offer)
-});
-
-/* listen answer */
-
-onSnapshot(callRef,snap=>{
-
-const data = snap.data();
-
-if(data.answer && !peer.currentRemoteDescription){
-
-peer.setRemoteDescription(
-new RTCSessionDescription(
-JSON.parse(data.answer)
-)
-);
-
-}
-
-});
-
-peer.onicecandidate = e=>{
-
-if(e.candidate){
-
-setDoc(callRef,{
-candidate:JSON.stringify(e.candidate)
-},{merge:true});
-
-}
-
-};
-
-};
-
-/* ================= LISTEN CALLS ================= */
-
-function listenCalls(){
-
-onSnapshot(collection(db,"calls"),snap=>{
-
-snap.forEach(async c=>{
-
-const d = c.data();
-
-if(d.callee === user.uid && d.answer){
-
-peer.setRemoteDescription(
-new RTCSessionDescription(
-JSON.parse(d.answer)
-)
-);
-
-}
-
-if(d.callee===user.uid && !peer){
-
-if(confirm("Incoming call")){
-
-window.startAnswer(c.id);
-
-}
-
-}
-
-});
-
-});
-
-}
-
-/* ================= ANSWER ================= */
-
-window.startAnswer = async (id)=>{
-
-const ref = doc(db,"calls",id);
-
-peer = new RTCPeerConnection(servers);
-
-localStream = await navigator.mediaDevices.getUserMedia({
-video:true,audio:true
-});
-
-local.srcObject = localStream;
-
-localStream.getTracks().forEach(t=>{
-peer.addTrack(t,localStream);
-});
-
-const remoteStream = new MediaStream();
-remote.srcObject = remoteStream;
-
-peer.ontrack = e=>{
-e.streams[0].getTracks().forEach(t=>{
-remoteStream.addTrack(t);
-});
-};
-
-const callData = (await getDoc(ref)).data();
-
-await peer.setRemoteDescription(
-new RTCSessionDescription(
-JSON.parse(callData.offer)
-)
-);
-
-const answer = await peer.createAnswer();
-await peer.setLocalDescription(answer);
-
-await setDoc(ref,{
-answer:JSON.stringify(answer)
-},{merge:true});
-
-};
-
-/* ================= END CALL ================= */
-
-window.endCall = () => {
-
-peer?.close();
-localStream?.getTracks().forEach(t=>t.stop());
-
-call.style.display="none";
-
-};
-
-/* ================= UI ================= */
-
-window.openWin = id=>{
-
-document.getElementById(id).style.display="flex";
-
+msg.value="";
 };
 
 </script>
