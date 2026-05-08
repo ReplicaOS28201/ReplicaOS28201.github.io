@@ -2,410 +2,108 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-<title>ReplicaOS Firebase Edition</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReplicaOS Pro Call System</title>
 
 <style>
 
-:root{
-    --taskbar-bg:rgba(20,20,20,0.86);
-    --win-bg:#f3f3f3;
-    --accent:#0078d4;
-}
-
-*{
-    box-sizing:border-box;
-    -webkit-tap-highlight-color:transparent;
-}
-
-html,body{
-    margin:0;
-    width:100%;
-    height:100%;
-    overflow:hidden;
-    font-family:system-ui;
-}
+/* ================= UI ================= */
 
 body{
-    background:url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1920&q=80')
-    center/cover no-repeat fixed;
+    margin:0;
+    font-family:system-ui;
+    background:#111;
+    color:white;
+}
+
+#auth{
+    position:fixed;
+    inset:0;
+    background:black;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.box{
+    background:#222;
+    padding:20px;
+    border-radius:12px;
+    width:300px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+input,button{
+    padding:10px;
+    border:none;
+    border-radius:8px;
+}
+
+button{
+    cursor:pointer;
+    background:#0078d4;
+    color:white;
 }
 
 /* ================= DESKTOP ================= */
 
 #desktop{
-    position:fixed;
-    inset:0;
-
-    padding:18px;
-    padding-bottom:75px;
-
-    display:grid;
-    grid-template-columns:repeat(auto-fill,90px);
-
-    gap:18px;
-
-    align-content:start;
+    display:none;
+    padding:20px;
 }
 
 .icon{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-
-    text-align:center;
-
-    color:white;
-
-    cursor:pointer;
-
-    user-select:none;
-}
-
-.icon img{
-    width:54px;
-    height:54px;
-
-    object-fit:contain;
-
-    margin-bottom:6px;
-}
-
-/* ================= TASKBAR ================= */
-
-#taskbar{
-    position:fixed;
-
-    left:0;
-    right:0;
-    bottom:0;
-
-    height:55px;
-
-    background:var(--taskbar-bg);
-
-    backdrop-filter:blur(12px);
-
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-
-    padding:0 14px;
-
-    color:white;
-
-    z-index:999999;
-}
-
-/* ================= START MENU ================= */
-
-#startMenu{
-    position:fixed;
-
-    left:10px;
-    bottom:65px;
-
-    width:280px;
-
-    background:rgba(25,25,25,0.96);
-
-    backdrop-filter:blur(15px);
-
-    border-radius:16px;
-
-    padding:14px;
-
-    display:none;
-    flex-direction:column;
-
-    gap:10px;
-
-    z-index:999999;
-}
-
-.startItem{
-    background:rgba(255,255,255,0.08);
-
-    color:white;
-
-    padding:12px;
-
+    display:inline-block;
+    margin:10px;
+    padding:10px;
+    background:#222;
     border-radius:10px;
-
     cursor:pointer;
 }
 
 /* ================= WINDOWS ================= */
 
 .window{
-    position:fixed;
-
-    width:min(520px,95vw);
-    height:min(620px,88vh);
-
-    background:var(--win-bg);
-
-    border-radius:16px;
-
-    overflow:hidden;
-
     display:none;
+    position:fixed;
+    top:50px;
+    left:50px;
+    width:400px;
+    height:500px;
+    background:#222;
+    border-radius:12px;
+    overflow:hidden;
     flex-direction:column;
-
-    box-shadow:0 25px 60px rgba(0,0,0,0.45);
-
-    z-index:5000;
-
-    left:0;
-    top:0;
-
-    animation:openAnim .16s ease;
 }
 
-@keyframes openAnim{
-    from{
-        transform:scale(.95);
-        opacity:0;
-    }
-    to{
-        transform:scale(1);
-        opacity:1;
-    }
+.title{
+    background:#111;
+    padding:10px;
 }
 
-.titlebar{
-    height:46px;
-
-    background:#1f1f1f;
-
-    color:white;
-
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-
-    padding:0 12px;
-
-    cursor:move;
-
-    user-select:none;
-}
-
-.windowBtns{
-    display:flex;
-    gap:8px;
-}
-
-.windowBtns button{
-    width:30px;
-    height:30px;
-
-    border:none;
-
-    border-radius:8px;
-
-    color:white;
-
-    cursor:pointer;
-}
-
-.minBtn{
-    background:#555;
-}
-
-.closeBtn{
-    background:#e53935;
-}
-
-.windowContent{
+.content{
     flex:1;
+    padding:10px;
     overflow:auto;
-    padding:16px;
-}
-
-/* ================= FRIENDS ================= */
-
-.friendCard{
-    background:#e5e5e5;
-    border-radius:14px;
-    padding:14px;
-    margin-bottom:12px;
-
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-}
-
-.friendActions{
-    display:flex;
-    gap:8px;
-}
-
-.friendActions button{
-    border:none;
-    border-radius:10px;
-    padding:10px 14px;
-    cursor:pointer;
-    background:#0078d4;
-    color:white;
-}
-
-.status{
-    font-size:13px;
-    margin-top:4px;
-}
-
-.online{
-    color:#00aa44;
 }
 
 /* ================= CHAT ================= */
 
-#chatMessages{
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-
-    height:400px;
-
-    overflow:auto;
-
-    margin-bottom:12px;
-}
-
-.chatBubble{
+.msg{
     background:#0078d4;
-    color:white;
-
-    padding:12px;
-
-    border-radius:14px;
-
-    max-width:80%;
-
-    align-self:flex-end;
-}
-
-.systemBubble{
-    background:#ddd;
-    color:black;
-    align-self:flex-start;
+    margin:5px;
+    padding:8px;
+    border-radius:8px;
 }
 
 /* ================= CALL ================= */
 
-#call{
-    background:black;
-}
-
 video{
-    background:black;
-}
-
-#remoteVideo{
     width:100%;
-    height:100%;
-    object-fit:cover;
-}
-
-#localVideo{
-    position:absolute;
-
-    width:120px;
-    height:170px;
-
-    right:15px;
-    bottom:90px;
-
-    border-radius:12px;
-
-    border:2px solid white;
-
-    object-fit:cover;
-}
-
-#callControls{
-    position:absolute;
-
-    left:50%;
-    bottom:16px;
-
-    transform:translateX(-50%);
-
-    display:flex;
-    gap:10px;
-}
-
-#callControls button{
-    border:none;
-
-    padding:12px 16px;
-
-    border-radius:12px;
-
-    background:rgba(20,20,20,0.9);
-
-    color:white;
-
-    cursor:pointer;
-}
-
-#hangupBtn{
-    background:#d32f2f !important;
-}
-
-/* ================= NOTIFICATIONS ================= */
-
-#systemNotifications{
-    position:fixed;
-
-    top:15px;
-    right:15px;
-
-    display:flex;
-    flex-direction:column;
-
-    gap:10px;
-
-    z-index:9999999;
-}
-
-.notification{
-    width:290px;
-
-    background:rgba(20,20,20,0.96);
-
-    color:white;
-
-    padding:14px;
-
-    border-radius:14px;
-
-    box-shadow:0 15px 40px rgba(0,0,0,0.45);
-}
-
-/* ================= MOBILE ================= */
-
-@media (max-width:700px){
-
-    .window{
-        width:100vw !important;
-        height:calc(100vh - 55px) !important;
-
-        left:0 !important;
-        top:0 !important;
-
-        border-radius:0;
-    }
-
-    #localVideo{
-        width:90px;
-        height:130px;
-    }
-
+    height:200px;
+    background:black;
 }
 
 </style>
@@ -413,764 +111,381 @@ video{
 
 <body>
 
-<!-- ================= NOTIFICATIONS ================= -->
+<!-- ================= AUTH ================= -->
 
-<div id="systemNotifications"></div>
+<div id="auth">
+<div class="box">
+
+<h2>Login</h2>
+
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+
+<button onclick="login()">Login</button>
+<button onclick="register()">Register</button>
+
+</div>
+</div>
 
 <!-- ================= DESKTOP ================= -->
 
 <div id="desktop">
 
-    <div class="icon" onclick="openWindow('friends')">
-        <img src="https://cdn-icons-png.flaticon.com/512/1077/1077012.png">
-        <div>Friends</div>
-    </div>
-
-    <div class="icon" onclick="openWindow('chat')">
-        <img src="https://cdn-icons-png.flaticon.com/512/733/733585.png">
-        <div>Chat</div>
-    </div>
-
-    <div class="icon" onclick="openWindow('call')">
-        <img src="https://cdn-icons-png.flaticon.com/512/3059/3059502.png">
-        <div>Call</div>
-    </div>
+<div class="icon" onclick="openWin('friends')">Friends</div>
+<div class="icon" onclick="openWin('chat')">Chat</div>
+<div class="icon" onclick="openWin('call')">Call</div>
 
 </div>
 
 <!-- ================= FRIENDS ================= -->
 
 <div id="friends" class="window">
-
-    <div class="titlebar">
-
-        <span>Friends</span>
-
-        <div class="windowBtns">
-
-            <button class="minBtn"
-            onclick="this.closest('.window').style.display='none'">
-                —
-            </button>
-
-            <button class="closeBtn"
-            onclick="closeWindow('friends')">
-                ✕
-            </button>
-
-        </div>
-
-    </div>
-
-    <div class="windowContent">
-
-        <div id="friendsList"></div>
-
-    </div>
-
+<div class="title">Friends</div>
+<div class="content" id="friendsList"></div>
 </div>
 
 <!-- ================= CHAT ================= -->
 
 <div id="chat" class="window">
+<div class="title">Chat</div>
+<div class="content">
 
-    <div class="titlebar">
+<div id="messages"></div>
 
-        <span>Chat</span>
+<input id="msgInput" placeholder="message">
+<button onclick="sendMsg()">Send</button>
 
-        <div class="windowBtns">
-
-            <button class="minBtn"
-            onclick="this.closest('.window').style.display='none'">
-                —
-            </button>
-
-            <button class="closeBtn"
-            onclick="closeWindow('chat')">
-                ✕
-            </button>
-
-        </div>
-
-    </div>
-
-    <div class="windowContent">
-
-        <div id="chatMessages"></div>
-
-        <div style="display:flex;gap:10px;">
-
-            <input id="msgInput"
-            placeholder="Type message..."
-            style="
-                flex:1;
-                padding:12px;
-                border:none;
-                border-radius:10px;
-                background:#ddd;
-            ">
-
-            <button onclick="sendMessage()"
-            style="
-                border:none;
-                border-radius:10px;
-                padding:12px 18px;
-                background:#0078d4;
-                color:white;
-                cursor:pointer;
-            ">
-                Send
-            </button>
-
-        </div>
-
-    </div>
-
+</div>
 </div>
 
 <!-- ================= CALL ================= -->
 
 <div id="call" class="window">
+<div class="title">Call</div>
+<div class="content">
 
-    <div class="titlebar">
+<video id="local" autoplay muted></video>
+<video id="remote" autoplay></video>
 
-        <span>Call</span>
-
-        <div class="windowBtns">
-
-            <button id="muteBtn"
-            style="background:#444;">
-                🔇
-            </button>
-
-            <button id="cameraBtn"
-            style="background:#1976d2;">
-                📷
-            </button>
-
-            <button class="closeBtn"
-            onclick="endCall()">
-                ✕
-            </button>
-
-        </div>
-
-    </div>
-
-    <div style="position:relative;flex:1;">
-
-        <video id="remoteVideo"
-        autoplay
-        playsinline></video>
-
-        <video id="localVideo"
-        autoplay
-        muted
-        playsinline></video>
-
-        <div id="callControls">
-
-            <button id="toggleMic">
-                🎤 Mute
-            </button>
-
-            <button id="toggleCam">
-                📷 Camera
-            </button>
-
-            <button id="hangupBtn">
-                📞 End
-            </button>
-
-        </div>
-
-    </div>
+<button onclick="endCall()">End Call</button>
 
 </div>
-
-<!-- ================= START MENU ================= -->
-
-<div id="startMenu">
-
-    <div class="startItem"
-    onclick="openWindow('friends')">
-        Friends
-    </div>
-
-    <div class="startItem"
-    onclick="openWindow('chat')">
-        Chat
-    </div>
-
-</div>
-
-<!-- ================= TASKBAR ================= -->
-
-<div id="taskbar">
-
-    <div onclick="toggleStart()"
-    style="cursor:pointer;">
-        🪟 Start
-    </div>
-
-    <div id="clock"></div>
-
 </div>
 
 <!-- ================= FIREBASE ================= -->
 
 <script type="module">
 
-/* ================= FIREBASE ================= */
-
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+initializeApp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
-    getAuth,
-    signInAnonymously,
-    onAuthStateChanged
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+getAuth,
+createUserWithEmailAndPassword,
+signInWithEmailAndPassword,
+onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
-    getFirestore,
-    doc,
-    setDoc,
-    collection,
-    addDoc,
-    onSnapshot,
-    query,
-    orderBy,
-    serverTimestamp
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+getFirestore,
+doc,
+setDoc,
+collection,
+addDoc,
+onSnapshot,
+query,
+serverTimestamp,
+getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 /* ================= CONFIG ================= */
 
 const firebaseConfig = {
-
-    apiKey: "YOUR_API_KEY",
-
-    authDomain:
-    "YOUR_PROJECT.firebaseapp.com",
-
-    projectId:
-    "YOUR_PROJECT",
-
-    storageBucket:
-    "YOUR_PROJECT.appspot.com",
-
-    messagingSenderId:
-    "123456789",
-
-    appId:
-    "YOUR_APP_ID"
-
+apiKey:"YOUR_KEY",
+authDomain:"YOUR_DOMAIN",
+projectId:"YOUR_ID",
+appId:"YOUR_APP"
 };
 
-/* ================= INIT ================= */
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-const app =
-initializeApp(firebaseConfig);
+/* ================= GLOBAL ================= */
 
-const auth =
-getAuth(app);
-
-const db =
-getFirestore(app);
-
-/* ================= GLOBALS ================= */
-
-let currentUser = null;
-let currentChatFriend = "global";
-let localStream = null;
-
-window.currentChatFriend =
-currentChatFriend;
+let user = null;
+let peer;
+let localStream;
 
 /* ================= AUTH ================= */
 
-signInAnonymously(auth);
+window.register = async () => {
 
-onAuthStateChanged(auth,
-async user => {
+await createUserWithEmailAndPassword(
+auth,
+email.value,
+password.value
+);
 
-    if(!user) return;
+};
 
-    currentUser = user;
+window.login = async () => {
 
-    await setDoc(
-        doc(db,"users",user.uid),
-        {
-            uid:user.uid,
+await signInWithEmailAndPassword(
+auth,
+email.value,
+password.value
+);
 
-            username:
-            "User-" +
-            user.uid.substring(0,5),
+};
 
-            online:true,
+onAuthStateChanged(auth, async u => {
 
-            createdAt:
-            Date.now()
-        },
-        { merge:true }
-    );
+if(!u) return;
 
-    notifySystem(
-        "Firebase",
-        "Connected"
-    );
+user = u;
 
-    loadFriends();
+auth.style.display="none";
+desktop.style.display="block";
 
-    listenMessages();
+/* save user */
+
+await setDoc(doc(db,"users",u.uid),{
+uid:u.uid,
+email:u.email
+},{merge:true});
+
+loadFriends();
+listenCalls();
 
 });
-
-/* ================= WINDOW SYSTEM ================= */
-
-let highestZ = 5000;
-
-window.openWindow = id => {
-
-    const win =
-    document.getElementById(id);
-
-    win.style.display = "flex";
-
-    highestZ++;
-
-    win.style.zIndex = highestZ;
-
-};
-
-window.closeWindow = id => {
-
-    document.getElementById(id)
-    .style.display = "none";
-
-};
-
-window.toggleStart = () => {
-
-    const menu =
-    document.getElementById("startMenu");
-
-    menu.style.display =
-    menu.style.display === "flex"
-    ? "none"
-    : "flex";
-
-};
-
-/* ================= DRAGGING ================= */
-
-document.querySelectorAll(".window")
-.forEach(win => {
-
-    const bar =
-    win.querySelector(".titlebar");
-
-    let dragging = false;
-
-    let offsetX = 0;
-    let offsetY = 0;
-
-    bar.addEventListener(
-    "pointerdown",
-    e => {
-
-        if(window.innerWidth <= 700)
-        return;
-
-        dragging = true;
-
-        offsetX =
-        e.clientX - win.offsetLeft;
-
-        offsetY =
-        e.clientY - win.offsetTop;
-
-    });
-
-    window.addEventListener(
-    "pointermove",
-    e => {
-
-        if(!dragging) return;
-
-        win.style.left =
-        (e.clientX - offsetX) + "px";
-
-        win.style.top =
-        (e.clientY - offsetY) + "px";
-
-    });
-
-    window.addEventListener(
-    "pointerup",
-    () => dragging = false
-    );
-
-});
-
-/* ================= CLOCK ================= */
-
-function updateClock(){
-
-    document.getElementById("clock")
-    .innerText =
-    new Date().toLocaleTimeString([],{
-        hour:"2-digit",
-        minute:"2-digit"
-    });
-
-}
-
-updateClock();
-
-setInterval(updateClock,1000);
 
 /* ================= FRIENDS ================= */
 
 function loadFriends(){
 
-    onSnapshot(
-        collection(db,"users"),
-        snap => {
+onSnapshot(collection(db,"users"),snap=>{
 
-            const list =
-            document.getElementById(
-                "friendsList"
-            );
+friendsList.innerHTML="";
 
-            list.innerHTML = "";
+snap.forEach(d=>{
 
-            snap.forEach(docSnap => {
+if(d.id===user.uid) return;
 
-                const data =
-                docSnap.data();
+friendsList.innerHTML+=`
+<div>
+${d.data().email}
+<button onclick="startCall('${d.id}')">Call</button>
+</div>
+`;
 
-                if(
-                    data.uid ===
-                    currentUser.uid
-                ) return;
+});
 
-                const div =
-                document.createElement("div");
-
-                div.className =
-                "friendCard";
-
-                div.innerHTML = `
-                    <div>
-                        <b>
-                            ${data.username}
-                        </b>
-
-                        <div class="
-                        status online
-                        ">
-                            ● Online
-                        </div>
-                    </div>
-
-                    <div class="
-                    friendActions
-                    ">
-
-                        <button
-                        onclick="
-                        startFriendCall(
-                        '${data.username}'
-                        )">
-                            📞 Call
-                        </button>
-
-                        <button
-                        onclick="
-                        openFriendChat(
-                        '${data.username}'
-                        )">
-                            💬 Chat
-                        </button>
-
-                    </div>
-                `;
-
-                list.appendChild(div);
-
-            });
-
-        }
-    );
+});
 
 }
 
 /* ================= CHAT ================= */
 
-window.openFriendChat =
-(friend) => {
+window.sendMsg = async () => {
 
-    currentChatFriend =
-    friend;
+await addDoc(collection(db,"messages"),{
+text:msgInput.value,
+uid:user.uid,
+time:serverTimestamp()
+});
 
-    openWindow("chat");
-
-};
-
-window.sendMessage =
-async () => {
-
-    const input =
-    document.getElementById(
-        "msgInput"
-    );
-
-    const text =
-    input.value.trim();
-
-    if(!text) return;
-
-    await addDoc(
-        collection(db,"messages"),
-        {
-            text,
-
-            friend:
-            currentChatFriend,
-
-            sender:
-            currentUser.uid,
-
-            createdAt:
-            serverTimestamp()
-        }
-    );
-
-    input.value = "";
+msgInput.value="";
 
 };
 
-document.getElementById(
-"msgInput"
-).addEventListener(
-"keydown",
-e => {
+onSnapshot(collection(db,"messages"),snap=>{
 
-    if(e.key === "Enter"){
-        sendMessage();
-    }
+messages.innerHTML="";
+
+snap.forEach(m=>{
+
+messages.innerHTML+=`
+<div class="msg">${m.data().text}</div>
+`;
 
 });
 
-function listenMessages(){
+});
 
-    const q =
-    query(
-        collection(db,"messages"),
-        orderBy(
-            "createdAt",
-            "asc"
-        )
-    );
+/* ================= WEBRTC CALL ================= */
 
-    onSnapshot(q,snap => {
+const servers = {
+iceServers:[
+{urls:"stun:stun.l.google.com:19302"}
+]
+};
 
-        const chat =
-        document.getElementById(
-            "chatMessages"
-        );
+window.startCall = async (to) => {
 
-        chat.innerHTML = "";
+const callRef = doc(collection(db,"calls"));
 
-        snap.forEach(msg => {
+peer = new RTCPeerConnection(servers);
 
-            const data =
-            msg.data();
+localStream = await navigator.mediaDevices.getUserMedia({
+video:true,audio:true
+});
 
-            if(
-                data.friend !==
-                currentChatFriend
-            ) return;
+local.srcObject = localStream;
 
-            const bubble =
-            document.createElement(
-                "div"
-            );
+localStream.getTracks().forEach(t=>{
+peer.addTrack(t,localStream);
+});
 
-            bubble.className =
-            data.sender ===
-            currentUser.uid
-            ? "chatBubble"
-            : "chatBubble systemBubble";
+const remoteStream = new MediaStream();
+remote.srcObject = remoteStream;
 
-            bubble.innerText =
-            data.text;
+peer.ontrack = e=>{
+e.streams[0].getTracks().forEach(t=>{
+remoteStream.addTrack(t);
+});
+};
 
-            chat.appendChild(
-                bubble
-            );
+const offer = await peer.createOffer();
+await peer.setLocalDescription(offer);
 
-        });
+await setDoc(callRef,{
+caller:user.uid,
+callee:to,
+offer:JSON.stringify(offer)
+});
 
-        chat.scrollTop =
-        chat.scrollHeight;
+/* listen answer */
 
-    });
+onSnapshot(callRef,snap=>{
+
+const data = snap.data();
+
+if(data.answer && !peer.currentRemoteDescription){
+
+peer.setRemoteDescription(
+new RTCSessionDescription(
+JSON.parse(data.answer)
+)
+);
 
 }
 
-/* ================= CALL ================= */
+});
 
-window.startFriendCall =
-async friend => {
+peer.onicecandidate = e=>{
 
-    openWindow("call");
+if(e.candidate){
 
-    notifySystem(
-        "Calling...",
-        "Calling " + friend
-    );
+setDoc(callRef,{
+candidate:JSON.stringify(e.candidate)
+},{merge:true});
 
-    localStream =
-    await navigator
-    .mediaDevices
-    .getUserMedia({
-        video:true,
-        audio:true
-    });
-
-    document.getElementById(
-        "localVideo"
-    ).srcObject =
-    localStream;
+}
 
 };
+
+};
+
+/* ================= LISTEN CALLS ================= */
+
+function listenCalls(){
+
+onSnapshot(collection(db,"calls"),snap=>{
+
+snap.forEach(async c=>{
+
+const d = c.data();
+
+if(d.callee === user.uid && d.answer){
+
+peer.setRemoteDescription(
+new RTCSessionDescription(
+JSON.parse(d.answer)
+)
+);
+
+}
+
+if(d.callee===user.uid && !peer){
+
+if(confirm("Incoming call")){
+
+window.startAnswer(c.id);
+
+}
+
+}
+
+});
+
+});
+
+}
+
+/* ================= ANSWER ================= */
+
+window.startAnswer = async (id)=>{
+
+const ref = doc(db,"calls",id);
+
+peer = new RTCPeerConnection(servers);
+
+localStream = await navigator.mediaDevices.getUserMedia({
+video:true,audio:true
+});
+
+local.srcObject = localStream;
+
+localStream.getTracks().forEach(t=>{
+peer.addTrack(t,localStream);
+});
+
+const remoteStream = new MediaStream();
+remote.srcObject = remoteStream;
+
+peer.ontrack = e=>{
+e.streams[0].getTracks().forEach(t=>{
+remoteStream.addTrack(t);
+});
+};
+
+const callData = (await getDoc(ref)).data();
+
+await peer.setRemoteDescription(
+new RTCSessionDescription(
+JSON.parse(callData.offer)
+)
+);
+
+const answer = await peer.createAnswer();
+await peer.setLocalDescription(answer);
+
+await setDoc(ref,{
+answer:JSON.stringify(answer)
+},{merge:true});
+
+};
+
+/* ================= END CALL ================= */
 
 window.endCall = () => {
 
-    if(localStream){
+peer?.close();
+localStream?.getTracks().forEach(t=>t.stop());
 
-        localStream
-        .getTracks()
-        .forEach(track => {
-
-            track.stop();
-
-        });
-
-    }
-
-    closeWindow("call");
-
-    notifySystem(
-        "Call Ended",
-        "Disconnected"
-    );
+call.style.display="none";
 
 };
 
-let micMuted = false;
-let camDisabled = false;
+/* ================= UI ================= */
 
-document.getElementById(
-"toggleMic"
-).onclick = () => {
+window.openWin = id=>{
 
-    micMuted = !micMuted;
-
-    localStream
-    ?.getAudioTracks()
-    .forEach(track => {
-
-        track.enabled =
-        !micMuted;
-
-    });
+document.getElementById(id).style.display="flex";
 
 };
-
-document.getElementById(
-"toggleCam"
-).onclick = () => {
-
-    camDisabled = !camDisabled;
-
-    localStream
-    ?.getVideoTracks()
-    .forEach(track => {
-
-        track.enabled =
-        !camDisabled;
-
-    });
-
-};
-
-/* ================= NOTIFICATIONS ================= */
-
-function notifySystem(
-title,
-text
-){
-
-    const holder =
-    document.getElementById(
-        "systemNotifications"
-    );
-
-    const n =
-    document.createElement("div");
-
-    n.className =
-    "notification";
-
-    n.innerHTML = `
-        <b>${title}</b>
-        <br><br>
-        ${text}
-    `;
-
-    holder.appendChild(n);
-
-    setTimeout(() => {
-
-        n.remove();
-
-    },5000);
-
-}
-
-/* ================= STATUS ================= */
-
-window.addEventListener(
-"beforeunload",
-async () => {
-
-    if(!currentUser) return;
-
-    await setDoc(
-        doc(
-            db,
-            "users",
-            currentUser.uid
-        ),
-        {
-            online:false
-        },
-        { merge:true }
-    );
-
-});
-
-/* ================= BOOT ================= */
-
-notifySystem(
-    "ReplicaOS",
-    "Boot completed"
-);
 
 </script>
 
