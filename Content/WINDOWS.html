@@ -1,335 +1,304 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>ReplicaOS - System Edition</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ReplicaOS Pro - v2.0</title>
+    <style>
+        :root {
+            --taskbar-bg: rgba(25, 25, 25, 0.8);
+            --win-bg: rgba(245, 245, 245, 0.95);
+            --accent: #0078d4;
+            --glass: blur(12px) saturate(180%);
+        }
 
-<style>
-:root {
-    --taskbar-bg: rgba(20,20,20,0.85);
-    --win-bg: #f3f3f3;
-    --accent: #0078d4;
-}
+        body, html {
+            margin: 0; padding: 0; height: 100%; overflow: hidden;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: url('https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1920&q=80') center/cover;
+        }
 
-/* GLOBAL */
-* {
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
-}
+        /* DESKTOP GRID */
+        #desktop {
+            height: calc(100vh - 48px);
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, 80px);
+            grid-template-rows: repeat(auto-fill, 100px);
+            grid-auto-flow: column;
+            gap: 10px;
+        }
 
-body,html {
-    margin:0;
-    height:100%;
-    overflow:hidden;
-    font-family:system-ui;
-    background:url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1920&q=80') center/cover;
-}
+        .icon {
+            width: 80px; height: 90px;
+            display: flex; flex-direction: column; align-items: center;
+            color: white; font-size: 12px; text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+            cursor: pointer; transition: background 0.2s; border-radius: 4px;
+            padding-top: 10px;
+        }
+        .icon:hover { background: rgba(255,255,255,0.1); }
+        .icon img { width: 42px; margin-bottom: 5px; pointer-events: none; }
 
-/* DESKTOP */
-#desktop{
-    height:calc(100vh - 48px);
-    padding:20px;
-    display:grid;
-    grid-template-columns:repeat(auto-fill,90px);
-    gap:15px;
-}
+        /* ADVANCED WINDOW SYSTEM */
+        .window {
+            position: absolute;
+            min-width: 300px; min-height: 200px;
+            background: var(--win-bg);
+            border-radius: 8px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            display: none; flex-direction: column;
+            backdrop-filter: var(--glass);
+            border: 1px solid rgba(255,255,255,0.3);
+            overflow: hidden;
+        }
 
-.icon{color:white;text-align:center;cursor:pointer;}
-.icon img{width:45px;}
+        .win-header {
+            height: 35px; background: rgba(255,255,255,0.5);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 10px; cursor: move; user-select: none;
+        }
 
-/* WINDOW */
-.window{
-    position:absolute;
-    width:420px;
-    height:500px;
-    background:var(--win-bg);
-    border-radius:10px;
-    box-shadow:0 15px 40px rgba(0,0,0,.4);
-    display:none;
-    flex-direction:column;
-    left:0;
-    top:0;
-}
+        .win-controls { display: flex; gap: 8px; }
+        .win-btn { width: 12px; height: 12px; border-radius: 50%; cursor: pointer; }
+        .close { background: #ff5f56; }
+        .min { background: #ffbd2e; }
 
-/* TASKBAR */
-#taskbar{
-    position:fixed;
-    bottom:0;
-    width:100%;
-    height:48px;
-    background:var(--taskbar-bg);
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    color:white;
-    padding:0 15px;
-}
+        .win-content { flex: 1; padding: 15px; overflow-y: auto; }
 
-/* START MENU */
-#startMenu{
-    position:fixed;
-    bottom:55px;
-    left:10px;
-    width:220px;
-    background:rgba(30,30,30,0.95);
-    border-radius:10px;
-    display:none;
-    flex-direction:column;
-    padding:10px;
-    color:white;
-}
+        /* TASKBAR */
+        #taskbar {
+            position: fixed; bottom: 0; width: 100%; height: 48px;
+            background: var(--taskbar-bg); backdrop-filter: var(--glass);
+            display: flex; align-items: center; padding: 0 10px; z-index: 99999;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
 
-/* ================= SYSTEM NOTIFICATIONS (GLOBAL LAYER) ================= */
-#systemNotifications{
-    position:fixed;
-    top:15px;
-    right:15px;
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-    z-index:999999;
-}
+        #taskbar-icons { flex: 1; display: flex; justify-content: center; gap: 5px; }
+        .task-item { 
+            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+            border-radius: 4px; transition: 0.2s; cursor: pointer;
+        }
+        .task-item:hover { background: rgba(255,255,255,0.1); }
+        .task-item.active { border-bottom: 3px solid var(--accent); }
 
-.notification{
-    width:260px;
-    background:rgba(25,25,25,0.95);
-    color:white;
-    padding:12px;
-    border-radius:10px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.4);
-    animation:slideIn 0.25s ease;
-}
+        #clock { color: white; font-size: 12px; text-align: right; min-width: 80px; }
 
-@keyframes slideIn{
-    from{transform:translateX(120%);opacity:0;}
-    to{transform:translateX(0);opacity:1;}
-}
+        /* VIDEO CALL STYLING */
+        #call-ui { background: #000; position: relative; height: 100%; }
+        #remoteVideo { width: 100%; height: 100%; object-fit: cover; }
+        #localVideo { 
+            position: absolute; bottom: 10px; right: 10px; width: 100px; 
+            border-radius: 5px; border: 1px solid white; 
+        }
 
-.notif-actions{
-    display:flex;
-    gap:8px;
-    margin-top:10px;
-}
-
-.notif-actions button{
-    flex:1;
-    border:none;
-    padding:6px;
-    border-radius:6px;
-    cursor:pointer;
-}
-#call {
-    background: #000;
-    overflow: hidden;
-    position: relative;
-}
-
-#remoteVideo {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-#localVideo {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    width: 120px;
-    border: 2px solid white;
-    border-radius: 8px;
-}
-/* CALL COLORS */
-.accept{background:#4CAF50;color:white;}
-.decline{background:#e53935;color:white;}
-</style>
+        /* NOTIFICATIONS */
+        #notif-area { position: fixed; top: 20px; right: 20px; z-index: 1000000; }
+        .notif {
+            background: rgba(30,30,30,0.9); color: white; padding: 15px;
+            border-radius: 8px; margin-bottom: 10px; min-width: 250px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3); animation: slide 0.3s ease-out;
+        }
+        @keyframes slide { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    </style>
 </head>
-
 <body>
 
-<!-- SYSTEM NOTIFICATION LAYER (OUTSIDE OS) -->
-<div id="systemNotifications"></div>
-
-<!-- DESKTOP -->
 <div id="desktop">
-
-    <div class="icon" onclick="openWindow('friends')">
+    <div class="icon" onclick="WindowManager.open('friends')">
         <img src="https://cdn-icons-png.flaticon.com/512/1077/1077012.png">
-        <div>Friends</div>
+        <span>Friends</span>
     </div>
-
-    <div class="icon" onclick="openWindow('chat')">
+    <div class="icon" onclick="WindowManager.open('chat')">
         <img src="https://cdn-icons-png.flaticon.com/512/733/733585.png">
-        <div>Chat</div>
+        <span>Chat</span>
     </div>
-
-    <div class="icon" onclick="openWindow('call')">
+    <div class="icon" onclick="WindowManager.open('call')">
         <img src="https://cdn-icons-png.flaticon.com/512/3059/3059502.png">
-        <div>Call</div>
+        <span>Video Call</span>
     </div>
-
 </div>
 
-<!-- WINDOWS -->
-<div id="friends" class="window">
-    <h1>Friends Window</h1>
-</div>
-<div id="chat" class="window">
-    <h1>Chat Window</h1>
-</div>
-
-<div id="call" class="window">
-    <video id="remoteVideo" autoplay playsinline></video>
-    <video id="localVideo" autoplay muted playsinline></video>
+<div id="friends" class="window" style="width:300px; height:400px;">
+    <div class="win-header"><span>Friends</span><div class="win-controls"><div class="win-btn close" onclick="WindowManager.close('friends')"></div></div></div>
+    <div class="win-content">
+        <div id="user-id-display" style="font-size: 10px; color: #666; margin-bottom: 10px;"></div>
+        <p>Online Users:</p>
+        <ul id="user-list"></ul>
+    </div>
 </div>
 
-<!-- START MENU -->
-<div id="startMenu"></div>
+<div id="call" class="window" style="width:500px; height:350px;">
+    <div class="win-header"><span>Video Call</span><div class="win-controls"><div class="win-btn close" onclick="WindowManager.close('call')"></div></div></div>
+    <div class="win-content" id="call-ui">
+        <video id="remoteVideo" autoplay playsinline></video>
+        <video id="localVideo" autoplay muted playsinline></video>
+    </div>
+</div>
 
-<!-- TASKBAR -->
+<div id="notif-area"></div>
+
 <div id="taskbar">
-    <div onclick="toggleStart()">🪟 Start</div>
-    <div id="clock"></div>
+    <div style="cursor:pointer">🏁</div>
+    <div id="taskbar-icons"></div>
+    <div id="clock">12:00 PM</div>
 </div>
 
 <script type="module">
-//* ================= FIREBASE CONFIG ================= */
-// Make sure these are filled!
-const firebaseConfig = {
-  apiKey: "AIzaSyCnJPv3cclaIArwUPKEq5of0NyafJ7d4QI",
-  authDomain: "replicanewos3030.firebaseapp.com",
-  projectId: "replicanewos3030",
-  storageBucket: "replicanewos3030.firebasestorage.app",
-  messagingSenderId: "60780972584",
-  appId: "1:60780972584:web:db097a4cda968fec80831d",
-  measurementId: "G-HBTY5EYH29"
-};
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, onValue, push, onDisconnect, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, set, onValue, push, serverTimestamp, onDisconnect, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    // --- CONFIG & INIT ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyCnJPv3cclaIArwUPKEq5of0NyafJ7d4QI",
+        authDomain: "replicanewos3030.firebaseapp.com",
+        projectId: "replicanewos3030",
+        databaseURL: "https://replicanewos3030-default-rtdb.firebaseio.com" // Ensure this is correct
+    };
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const myId = "User_" + Math.random().toString(36).substring(2, 7);
+    document.getElementById('user-id-display').innerText = `Your ID: ${myId}`;
 
-/* ================= USER SETUP ================= */
-const myId = Math.random().toString(36).substring(2, 10);
-const presenceRef = ref(db, "presence/" + myId);
-set(presenceRef, true);
-onDisconnect(presenceRef).remove();
+    // --- WINDOW MANAGER (Advanced Draggable Logic) ---
+    window.WindowManager = {
+        highestZ: 1000,
+        open(id) {
+            const win = document.getElementById(id);
+            win.style.display = 'flex';
+            win.style.zIndex = ++this.highestZ;
+            this.updateTaskbar();
+        },
+        close(id) {
+            document.getElementById(id).style.display = 'none';
+            this.updateTaskbar();
+        },
+        updateTaskbar() {
+            const container = document.getElementById('taskbar-icons');
+            container.innerHTML = '';
+            document.querySelectorAll('.window').forEach(win => {
+                if(win.style.display === 'flex') {
+                    const item = document.createElement('div');
+                    item.className = 'task-item active';
+                    item.innerHTML = `<span>🔲</span>`;
+                    item.onclick = () => this.open(win.id);
+                    container.appendChild(item);
+                }
+            });
+        }
+    };
 
-/* ================= WEBRTC CORE ================= */
-const pc = new RTCPeerConnection({
-    iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
-});
+    // Make windows draggable
+    document.querySelectorAll('.win-header').forEach(header => {
+        let isDragging = false, x, y;
+        const win = header.parentElement;
+        header.onmousedown = (e) => {
+            isDragging = true;
+            x = e.clientX - win.offsetLeft;
+            y = e.clientY - win.offsetTop;
+            win.style.zIndex = ++WindowManager.highestZ;
+        };
+        window.onmousemove = (e) => {
+            if (!isDragging) return;
+            win.style.left = (e.clientX - x) + 'px';
+            win.style.top = (e.clientY - y) + 'px';
+            win.style.transform = 'none';
+        };
+        window.onmouseup = () => isDragging = false;
+    });
 
-let localStream;
+    // --- WEBRTC & SIGNALING ---
+    let pc;
+    let localStream;
+    const servers = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
-// 1. Handle incoming ICE candidates
-pc.onicecandidate = (e) => {
-    if (e.candidate) {
-        // You would typically push these to a 'candidates' collection in Firebase
-        // For a simple demo, we'll focus on the Offer/Answer flow
-    }
-};
-
-pc.ontrack = (e) => {
-    const remoteVid = document.getElementById("remoteVideo");
-    if (remoteVid) remoteVid.srcObject = e.streams[0];
-};
-
-async function startMedia() {
-    if (!localStream) {
+    async function initWebRTC(targetId, isCaller) {
+        pc = new RTCPeerConnection(servers);
         localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         document.getElementById("localVideo").srcObject = localStream;
-        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+        localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+
+        pc.ontrack = e => document.getElementById("remoteVideo").srcObject = e.streams[0];
+        
+        // ICE Candidate Handling (Crucial for connectivity)
+        pc.onicecandidate = e => {
+            if (e.candidate) {
+                const candRef = ref(db, `signals/${targetId}/candidates`);
+                push(candRef, e.candidate.toJSON());
+            }
+        };
     }
-}
 
-/* ================= CALLING LOGIC ================= */
+    // Call Action
+    window.startCall = async (targetId) => {
+        WindowManager.open('call');
+        await initWebRTC(targetId, true);
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
 
-// FUNCTION: Initiate a call
-window.makeCall = async (targetId) => {
-    await startMedia();
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
+        const callRef = ref(db, `signals/${targetId}`);
+        await set(callRef, { offer: { sdp: offer.sdp, type: offer.type }, from: myId });
 
-    const callRef = push(ref(db, "calls"));
-    const callId = callRef.key;
+        // Listen for Answer
+        onValue(ref(db, `signals/${myId}/answer`), async snap => {
+            if (snap.val() && !pc.currentRemoteDescription) {
+                await pc.setRemoteDescription(new RTCSessionDescription(snap.val()));
+            }
+        });
+    };
 
-    await set(callRef, {
-        from: myId,
-        to: targetId,
-        offer: { type: offer.type, sdp: offer.sdp },
-        status: "pending"
-    });
-
-    // Listen for the answer
-    onValue(ref(db, `calls/${callId}/answer`), async (snap) => {
-        const answer = snap.val();
-        if (answer && !pc.currentRemoteDescription) {
-            await pc.setRemoteDescription(new RTCSessionDescription(answer));
+    // Listen for Incoming
+    onValue(ref(db, `signals/${myId}`), async snap => {
+        const data = snap.val();
+        if (data && data.offer && !pc) {
+            showNotification(data.from, async () => {
+                WindowManager.open('call');
+                await initWebRTC(data.from, false);
+                await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
+                update(ref(db, `signals/${data.from}`), { answer: { sdp: answer.sdp, type: answer.type } });
+            });
+        }
+        // Listen for candidates
+        if (data && data.candidates && pc) {
+            Object.values(data.candidates).forEach(c => pc.addIceCandidate(new RTCIceCandidate(c)));
         }
     });
-};
 
-// LISTEN: Incoming Calls
-onValue(ref(db, "calls"), async (snap) => {
-    const data = snap.val();
-    if (!data) return;
+    // --- SYSTEM UTILS ---
+    function showNotification(from, onAccept) {
+        const div = document.createElement('div');
+        div.className = 'notif';
+        div.innerHTML = `<strong>Incoming Call</strong><br>${from}<br>
+            <button onclick="this.parentElement.remove()">Ignore</button>
+            <button id="accept-btn" style="background:var(--accent); color:white; border:none; padding:5px 10px; border-radius:4px;">Accept</button>`;
+        div.querySelector('#accept-btn').onclick = () => { onAccept(); div.remove(); };
+        document.getElementById('notif-area').appendChild(div);
+    }
 
-    Object.keys(data).forEach(async (id) => {
-        const c = data[id];
-        if (c.to === myId && c.offer && !pc.currentRemoteDescription) {
-            notifySystem("Incoming Call", `User ${c.from} is calling`, [
-                {
-                    label: "Accept",
-                    type: "accept",
-                    action: async (notif) => {
-                        await startMedia();
-                        await pc.setRemoteDescription(new RTCSessionDescription(c.offer));
-                        const ans = await pc.createAnswer();
-                        await pc.setLocalDescription(ans);
-                        
-                        update(ref(db, `calls/${id}`), { 
-                            answer: { type: ans.type, sdp: ans.sdp },
-                            status: "active" 
-                        });
-                        
-                        openWindow("call");
-                        notif.remove();
-                    }
-                },
-                {
-                    label: "Decline",
-                    type: "decline",
-                    action: (notif) => notif.remove()
-                }
-            ]);
+    // Presence & User List
+    const userListRef = ref(db, 'presence');
+    set(ref(db, `presence/${myId}`), { name: myId, status: 'online' });
+    onDisconnect(ref(db, `presence/${myId}`)).remove();
+
+    onValue(userListRef, snap => {
+        const list = document.getElementById('user-list');
+        list.innerHTML = '';
+        const users = snap.val();
+        for (let id in users) {
+            if (id !== myId) {
+                const li = document.createElement('li');
+                li.innerHTML = `${id} <button onclick="startCall('${id}')">Call</button>`;
+                list.appendChild(li);
+            }
         }
     });
-});
 
-/* ================= WINDOW MANAGEMENT ================= */
-let highestZ = 1000;
-window.openWindow = (id) => {
-    const el = document.getElementById(id);
-    el.style.display = "flex";
-    el.style.zIndex = ++highestZ;
-    // Center the window
-    el.style.left = "50%";
-    el.style.top = "50%";
-    el.style.transform = "translate(-50%, -50%)";
-};
+    setInterval(() => {
+        document.getElementById("clock").innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }, 1000);
 
-window.toggleStart = () => {
-    const s = document.getElementById("startMenu");
-    s.style.display = s.style.display === "flex" ? "none" : "flex";
-};
-
-setInterval(() => {
-    document.getElementById("clock").innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}, 1000);
 </script>
-
 </body>
 </html>
