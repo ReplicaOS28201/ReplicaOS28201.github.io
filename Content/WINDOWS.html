@@ -96,148 +96,141 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore, doc, setDoc, collection, addDoc, onSnapshot, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, setDoc, collection, addDoc, onSnapshot, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
 const firebaseConfig = {
-  apiKey: "AIzaSyCnJPv3cclaIArwUPKEq5of0NyafJ7d4QI",
-  authDomain: "replicanewos3030.firebaseapp.com",
-  databaseURL: "https://replicanewos3030-default-rtdb.firebaseio.com",
-  projectId: "replicanewos3030",
-  storageBucket: "replicanewos3030.firebasestorage.app",
-  messagingSenderId: "60780972584",
-  appId: "1:60780972584:web:db097a4cda968fec80831d",
-  measurementId: "G-HBTY5EYH29"
+    apiKey: "AIzaSyCnJPv3cclaIArwUPKEq5of0NyafJ7d4QI",
+    authDomain: "replicanewos3030.firebaseapp.com",
+    projectId: "replicanewos3030",
+    storageBucket: "replicanewos3030.firebasestorage.app",
+    messagingSenderId: "60780972584",
+    appId: "1:60780972584:web:db097a4cda968fec80831d"
 };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-    let currentUser = null;
-    let currentServer = null;
-    let currentChannel = null;
+// Force persistence to Local (Browser survives refresh/close)
+setPersistence(auth, browserLocalPersistence);
 
-    /* ===== AUTH LOGIC ===== */
-    const emailField = document.getElementById('auth_email');
-    const passField = document.getElementById('auth_pass');
+let currentUser = null;
+let currentServer = null;
+let currentChannel = null;
 
-    document.getElementById('btnReg').onclick = async () => {
-        try {
-            const res = await createUserWithEmailAndPassword(auth, emailField.value, passField.value);
-            await setDoc(doc(db, "users", res.user.uid), { uid: res.user.uid, email: res.user.email });
-            alert("Account Created!");
-        } catch (err) { alert(err.message); }
-    };
+/* ===== AUTH LOGIC ===== */
+const authScreen = document.getElementById('auth');
+const desktopScreen = document.getElementById('desktop');
+const emailField = document.getElementById('auth_email');
+const passField = document.getElementById('auth_pass');
 
-    document.getElementById('btnLogin').onclick = async () => {
-        try {
-            await signInWithEmailAndPassword(auth, emailField.value, passField.value);
-        } catch (err) { alert(err.message); }
-    };
+// Registration
+document.getElementById('btnReg').onclick = async () => {
+    try {
+        const res = await createUserWithEmailAndPassword(auth, emailField.value, passField.value);
+        await setDoc(doc(db, "users", res.user.uid), { uid: res.user.uid, email: res.user.email });
+    } catch (err) { alert(err.message); }
+};
 
-    onAuthStateChanged(auth, u => {
-        if (u) {
-            currentUser = u;
-            document.getElementById('auth').style.display = "none";
-            document.getElementById('desktop').style.display = "block";
-            openWindow('discordWin');
-            loadServers();
-        } else {
-            document.getElementById('auth').style.display = "flex";
-            document.getElementById('desktop').style.display = "none";
-        }
-    });
+// Manual Login
+document.getElementById('btnLogin').onclick = async () => {
+    try {
+        await signInWithEmailAndPassword(auth, emailField.value, passField.value);
+    } catch (err) { alert(err.message); }
+};
 
-    /* ===== WINDOWS SYSTEM ===== */
-    window.openWindow = (id) => {
-        document.getElementById(id).style.display = "flex";
-    };
-    window.closeWin = (id) => {
-        document.getElementById(id).style.display = "none";
-    };
-
-    // Drag Logic
-    const win = document.getElementById('discordWin');
-    const dragZone = document.getElementById('dragZone');
-    let isDragging = false, offset = { x: 0, y: 0 };
-
-    dragZone.onmousedown = (e) => {
-        isDragging = true;
-        offset.x = e.clientX - win.offsetLeft;
-        offset.y = e.clientY - win.offsetTop;
-    };
-
-    document.onmousemove = (e) => {
-        if (!isDragging) return;
-        win.style.left = (e.clientX - offset.x) + "px";
-        win.style.top = (e.clientY - offset.y) + "px";
-    };
-
-    document.onmouseup = () => isDragging = false;
-
-    /* ===== DISCORD CORE ===== */
-    window.createServer = async () => {
-        const name = prompt("Server Name?");
-        if (!name) return;
-        const sRef = doc(collection(db, "servers"));
-        await setDoc(sRef, { name: name, members: [currentUser.uid] });
-        // Create default channel
-        await addDoc(collection(db, "servers", sRef.id, "channels"), { name: "general" });
-    };
-
-    function loadServers() {
-        onSnapshot(collection(db, "servers"), snap => {
-            const sb = document.getElementById('sidebar');
-            sb.innerHTML = `<div class="server" onclick="createServer()">+</div>`;
-            snap.forEach(s => {
-                const div = document.createElement('div');
-                div.className = 'server';
-                div.innerText = s.data().name.charAt(0).toUpperCase();
-                div.onclick = () => openServer(s.id);
-                sb.appendChild(div);
-            });
-        });
+/* ===== AUTO SIGN-IN OBSERVER ===== */
+// This runs automatically as soon as the app starts
+onAuthStateChanged(auth, user => {
+    if (user) {
+        // USER IS LOGGED IN (Auto-detected)
+        currentUser = user;
+        authScreen.style.display = "none";
+        desktopScreen.style.display = "block";
+        loadServers();
+    } else {
+        // NO USER (Show login box)
+        currentUser = null;
+        authScreen.style.display = "flex";
+        desktopScreen.style.display = "none";
     }
+});
 
-    window.openServer = (id) => {
-        currentServer = id;
-        onSnapshot(collection(db, "servers", id, "channels"), snap => {
-            const pn = document.getElementById('panel');
-            pn.innerHTML = `<div style="font-weight: bold; padding: 10px; color: white;">Text Channels</div>`;
-            snap.forEach(c => {
-                const div = document.createElement('div');
-                div.className = 'channel';
-                div.innerText = c.data().name;
-                div.onclick = () => openChannel(c.id);
-                pn.appendChild(div);
-            });
-        });
-    };
+/* ===== DISCORD SYSTEM FUNCTIONS ===== */
+window.openWindow = (id) => document.getElementById(id).style.display = "flex";
+window.closeWin = (id) => document.getElementById(id).style.display = "none";
 
-    window.openChannel = (id) => {
-        currentChannel = id;
-        const q = query(collection(db, "servers", currentServer, "channels", id, "messages"), orderBy("time", "asc"));
-        onSnapshot(q, snap => {
-            const msgBox = document.getElementById('messages');
-            msgBox.innerHTML = "";
-            snap.forEach(m => {
-                const data = m.data();
-                msgBox.innerHTML += `<div class='msg'><b>${data.username.split('@')[0]}</b><p>${data.text}</p></div>`;
-            });
-            msgBox.scrollTop = msgBox.scrollHeight;
-        });
-    };
+window.createServer = async () => {
+    const name = prompt("Server Name?");
+    if (!name) return;
+    const sRef = doc(collection(db, "servers"));
+    await setDoc(sRef, { name: name, owner: currentUser.uid });
+    await addDoc(collection(db, "servers", sRef.id, "channels"), { name: "general" });
+};
 
-    window.send = async () => {
-        const input = document.getElementById('msg');
-        if (!input.value || !currentChannel) return;
-        await addDoc(collection(db, "servers", currentServer, "channels", currentChannel, "messages"), {
-            text: input.value,
-            username: currentUser.email,
-            time: serverTimestamp()
+function loadServers() {
+    onSnapshot(collection(db, "servers"), snap => {
+        const sb = document.getElementById('sidebar');
+        sb.innerHTML = `<div class="server" onclick="createServer()">+</div>`;
+        snap.forEach(s => {
+            const div = document.createElement('div');
+            div.className = 'server';
+            div.innerText = s.data().name.charAt(0).toUpperCase();
+            div.onclick = () => openServer(s.id);
+            sb.appendChild(div);
         });
-        input.value = "";
-    };
+    });
+}
+
+window.openServer = (id) => {
+    currentServer = id;
+    onSnapshot(collection(db, "servers", id, "channels"), snap => {
+        const pn = document.getElementById('panel');
+        pn.innerHTML = `<div style="font-weight: bold; padding: 10px; color: white;">Channels</div>`;
+        snap.forEach(c => {
+            const div = document.createElement('div');
+            div.className = 'channel';
+            div.innerText = c.data().name;
+            div.onclick = () => openChannel(c.id);
+            pn.appendChild(div);
+        });
+    });
+};
+
+window.openChannel = (id) => {
+    currentChannel = id;
+    const q = query(collection(db, "servers", currentServer, "channels", id, "messages"), orderBy("time", "asc"));
+    onSnapshot(q, snap => {
+        const msgBox = document.getElementById('messages');
+        msgBox.innerHTML = "";
+        snap.forEach(m => {
+            const data = m.data();
+            const name = data.username ? data.username.split('@')[0] : "User";
+            msgBox.innerHTML += `<div class='msg'><b>${name}</b><p>${data.text}</p></div>`;
+        });
+        msgBox.scrollTop = msgBox.scrollHeight;
+    });
+};
+
+window.send = async () => {
+    const input = document.getElementById('msg');
+    if (!input.value || !currentChannel) return;
+    await addDoc(collection(db, "servers", currentServer, "channels", currentChannel, "messages"), {
+        text: input.value,
+        username: currentUser.email,
+        time: serverTimestamp()
+    });
+    input.value = "";
+};
+
+// Simple Draggable Logic
+const win = document.getElementById('discordWin');
+const dragZone = document.getElementById('dragZone');
+let isDragging = false, offset = { x: 0, y: 0 };
+dragZone.onmousedown = (e) => { isDragging = true; offset.x = e.clientX - win.offsetLeft; offset.y = e.clientY - win.offsetTop; };
+document.onmousemove = (e) => { if (!isDragging) return; win.style.left = (e.clientX - offset.x) + "px"; win.style.top = (e.clientY - offset.y) + "px"; };
+document.onmouseup = () => isDragging = false;
 
 </script>
 </body>
