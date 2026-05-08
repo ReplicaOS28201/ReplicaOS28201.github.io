@@ -1,237 +1,274 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ReplicaOS - Discord Windows UI</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReplicaOS - Discord Windows UI</title>
 
-    <style>
-        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0b0c10; color: #fff; overflow: hidden; }
+<style>
+body { margin: 0; font-family: system-ui; background: #0b0c10; color: white; overflow: hidden; }
 
-        /* ===== AUTH ===== */
-        #auth { position: fixed; inset: 0; display: flex; justify-content: center; align-items: center; background: #000; z-index: 9999; }
-        .box { background: #1c1c1f; padding: 30px; border-radius: 12px; width: 320px; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        input { padding: 12px; border: 1px solid #333; border-radius: 5px; background: #2b2d31; color: white; }
-        button { padding: 12px; border: none; border-radius: 5px; background: #5865f2; color: white; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        button:hover { background: #4752c4; }
-        .secondary-btn { background: #4f545c; }
-        .secondary-btn:hover { background: #3f4248; }
+/* AUTH */
+#auth { position: fixed; inset: 0; display:flex; justify-content:center; align-items:center; background:black; }
+.box { background:#1c1c1f; padding:30px; border-radius:12px; width:320px; display:flex; flex-direction:column; gap:10px; }
 
-        /* ===== DESKTOP ===== */
-        #desktop { display: none; width: 100vw; height: 100vh; position: relative; background: url('https://w.wallhaven.cc/full/85/wallhaven-85m8dy.jpg') center/cover; }
+/* DESKTOP */
+#desktop { display:none; width:100vw; height:100vh; background:#111; }
 
-        /* ===== TASKBAR ===== */
-        #taskbar { position: absolute; bottom: 0; left: 0; right: 0; height: 45px; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); display: flex; align-items: center; padding: 0 10px; gap: 10px; border-top: 1px solid #333; }
-        .taskbtn { background: #333; padding: 5px 15px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+/* TASKBAR */
+#taskbar { position:absolute; bottom:0; height:45px; width:100%; background:#0008; display:flex; align-items:center; padding:0 10px; }
 
-        /* ===== WINDOW SYSTEM ===== */
-        .window { position: absolute; width: 900px; height: 550px; background: #313338; border-radius: 8px; overflow: hidden; display: none; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.7); top: 50px; left: 100px; border: 1px solid #444; }
-        .titlebar { height: 30px; background: #1e1f22; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; cursor: move; user-select: none; }
-        .close { background: #ed4245; border-radius: 4px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 12px; }
-        .content { flex: 1; display: flex; overflow: hidden; }
+/* WINDOW */
+.window { position:absolute; width:900px; height:550px; background:#2b2d31; display:none; flex-direction:column; }
 
-        /* ===== DISCORD UI ===== */
-        #sidebar { width: 72px; background: #1e1f22; display: flex; flex-direction: column; align-items: center; padding-top: 12px; gap: 8px; }
-        .server { width: 48px; height: 48px; border-radius: 50%; background: #313338; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; color: #dbdee1; }
-        .server:hover { border-radius: 30%; background: #5865f2; color: white; }
+/* CHAT */
+#chat { flex:1; display:flex; flex-direction:column; }
+#messages { flex:1; overflow:auto; padding:10px; }
 
-        #panel { width: 240px; background: #2b2d31; padding: 10px; display: flex; flex-direction: column; gap: 2px; }
-        .channel { padding: 8px 10px; border-radius: 4px; cursor: pointer; color: #949ba4; display: flex; align-items: center; }
-        .channel:before { content: "# "; font-size: 18px; color: #6d6f78; margin-right: 5px; }
-        .channel:hover { background: #35373c; color: #dbdee1; }
+/* CALL UI */
+#callUI {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #111;
+    padding: 15px;
+    border-radius: 10px;
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 99999;
+}
 
-        #chat { flex: 1; display: flex; flex-direction: column; background: #313338; }
-        #messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-        .msg { background: transparent; transition: 0.1s; }
-        .msg b { color: #fff; margin-right: 8px; font-size: 15px; }
-        .msg p { margin: 2px 0; color: #dbdee1; font-size: 14px; }
+video {
+    width: 200px;
+    border-radius: 10px;
+}
 
-        #input-area { padding: 15px; background: #313338; }
-        #input-container { background: #383a40; border-radius: 8px; display: flex; padding: 5px 15px; align-items: center; }
-        #msg { flex: 1; background: transparent; border: none; outline: none; padding: 10px; color: #fff; }
-    </style>
+/* BUTTONS */
+button { cursor:pointer; }
+</style>
 </head>
+
 <body>
 
+<!-- AUTH -->
 <div id="auth">
     <div class="box">
-        <h3 style="text-align: center; margin-top: 0;">ReplicaOS Login</h3>
-        <input id="auth_email" type="email" placeholder="Email Address">
-        <input id="auth_pass" type="password" placeholder="Password">
-        <button id="btnLogin">Login</button>
-        <button id="btnReg" class="secondary-btn">Register</button>
+        <input id="email" placeholder="email">
+        <input id="pass" type="password" placeholder="password">
+        <button id="login">Login</button>
+        <button id="register">Register</button>
     </div>
 </div>
 
+<!-- DESKTOP -->
 <div id="desktop">
-    <div id="taskbar">
-        <div class="taskbtn" onclick="openWindow('discordWin')">Discord</div>
-    </div>
 
-    <div id="discordWin" class="window">
-        <div class="titlebar" id="dragZone">
-            <span style="font-size: 12px; font-weight: bold; color: #949ba4;">ReplicaOS Discord</span>
-            <div class="close" onclick="closeWin('discordWin')">✕</div>
-        </div>
+<div id="taskbar">
+    <button onclick="openWin()">Discord</button>
+</div>
 
-        <div class="content">
-            <div id="sidebar">
-                <div class="server" onclick="createServer()">+</div>
-                </div>
-            <div id="panel">
-                <div style="font-weight: bold; padding: 10px; color: white;">Text Channels</div>
-                </div>
-            <div id="chat">
-                <div id="messages"></div>
-                <div id="input-area">
-                    <div id="input-container">
-                        <input id="msg" placeholder="Message #channel">
-                        <button onclick="send()" style="padding: 5px 15px;">Send</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<!-- DISCORD WINDOW -->
+<div id="win" class="window">
+
+<div style="padding:10px; background:#1e1f22; display:flex; justify-content:space-between;">
+    <span>ReplicaOS Discord</span>
+
+    <!-- 🔥 CALL BUTTON -->
+    <button onclick="startCall()">📞 Call</button>
+
+    <button onclick="closeWin()">X</button>
+</div>
+
+<div id="chat">
+    <div id="messages"></div>
+    <input id="msg" placeholder="message">
+    <button onclick="send()">Send</button>
+</div>
+
+</div>
+</div>
+
+<!-- 🔥 CALL UI -->
+<div id="callUI">
+    <div>Call Active</div>
+
+    <video id="localVideo" autoplay muted></video>
+    <video id="remoteVideo" autoplay></video>
+
+    <button onclick="mute()">Mute</button>
+    <button onclick="hangup()">Hang Up</button>
 </div>
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, setDoc, collection, addDoc, onSnapshot, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-const firebaseConfig = {
-    apiKey: "AIzaSyCnJPv3cclaIArwUPKEq5of0NyafJ7d4QI",
-    authDomain: "replicanewos3030.firebaseapp.com",
-    projectId: "replicanewos3030",
-    storageBucket: "replicanewos3030.firebasestorage.app",
-    messagingSenderId: "60780972584",
-    appId: "1:60780972584:web:db097a4cda968fec80831d"
-};
+import {
+getFirestore, collection, addDoc, onSnapshot, doc, setDoc, getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const app = initializeApp(firebaseConfig);
+/* FIREBASE */
+const app = initializeApp({
+apiKey:"YOUR_KEY",
+authDomain:"YOUR_DOMAIN",
+projectId:"YOUR_ID"
+});
+
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Force persistence to Local (Browser survives refresh/close)
-setPersistence(auth, browserLocalPersistence);
+/* UI */
+const authDiv = document.getElementById("auth");
+const desktop = document.getElementById("desktop");
+const win = document.getElementById("win");
 
-let currentUser = null;
-let currentServer = null;
-let currentChannel = null;
+let currentUser;
 
-/* ===== AUTH LOGIC ===== */
-const authScreen = document.getElementById('auth');
-const desktopScreen = document.getElementById('desktop');
-const emailField = document.getElementById('auth_email');
-const passField = document.getElementById('auth_pass');
-
-// Registration
-document.getElementById('btnReg').onclick = async () => {
-    try {
-        const res = await createUserWithEmailAndPassword(auth, emailField.value, passField.value);
-        await setDoc(doc(db, "users", res.user.uid), { uid: res.user.uid, email: res.user.email });
-    } catch (err) { alert(err.message); }
+/* LOGIN */
+login.onclick = () => signInWithEmailAndPassword(auth,email.value,pass.value);
+register.onclick = async () => {
+const u = await createUserWithEmailAndPassword(auth,email.value,pass.value);
+currentUser = u.user;
 };
 
-// Manual Login
-document.getElementById('btnLogin').onclick = async () => {
-    try {
-        await signInWithEmailAndPassword(auth, emailField.value, passField.value);
-    } catch (err) { alert(err.message); }
-};
-
-/* ===== AUTO SIGN-IN OBSERVER ===== */
-// This runs automatically as soon as the app starts
-onAuthStateChanged(auth, user => {
-    if (user) {
-        // USER IS LOGGED IN (Auto-detected)
-        currentUser = user;
-        authScreen.style.display = "none";
-        desktopScreen.style.display = "block";
-        loadServers();
-    } else {
-        // NO USER (Show login box)
-        currentUser = null;
-        authScreen.style.display = "flex";
-        desktopScreen.style.display = "none";
-    }
+onAuthStateChanged(auth,u=>{
+if(u){
+currentUser=u;
+authDiv.style.display="none";
+desktop.style.display="block";
+}else{
+authDiv.style.display="flex";
+desktop.style.display="none";
+}
 });
 
-/* ===== DISCORD SYSTEM FUNCTIONS ===== */
-window.openWindow = (id) => document.getElementById(id).style.display = "flex";
-window.closeWin = (id) => document.getElementById(id).style.display = "none";
+/* WINDOW */
+window.openWin=()=>win.style.display="flex";
+window.closeWin=()=>win.style.display="none";
 
-window.createServer = async () => {
-    const name = prompt("Server Name?");
-    if (!name) return;
-    const sRef = doc(collection(db, "servers"));
-    await setDoc(sRef, { name: name, owner: currentUser.uid });
-    await addDoc(collection(db, "servers", sRef.id, "channels"), { name: "general" });
+/* CHAT */
+window.send=async()=>{
+await addDoc(collection(db,"messages"),{
+text:msg.value,
+user:currentUser.email
+});
+msg.value="";
 };
 
-function loadServers() {
-    onSnapshot(collection(db, "servers"), snap => {
-        const sb = document.getElementById('sidebar');
-        sb.innerHTML = `<div class="server" onclick="createServer()">+</div>`;
-        snap.forEach(s => {
-            const div = document.createElement('div');
-            div.className = 'server';
-            div.innerText = s.data().name.charAt(0).toUpperCase();
-            div.onclick = () => openServer(s.id);
-            sb.appendChild(div);
-        });
-    });
+onSnapshot(collection(db,"messages"),snap=>{
+messages.innerHTML="";
+snap.forEach(d=>{
+messages.innerHTML+=`<div><b>${d.data().user}</b>: ${d.data().text}</div>`;
+});
+});
+
+/* =========================
+   🔥 WEBRTC CALL SYSTEM
+========================= */
+
+let pc;
+let localStream;
+
+/* CONFIG */
+const servers = {
+iceServers:[
+{ urls:"stun:stun.l.google.com:19302" }
+]
+};
+
+/* START CALL */
+window.startCall = async () => {
+
+pc = new RTCPeerConnection(servers);
+
+localStream = await navigator.mediaDevices.getUserMedia({
+video:true,
+audio:true
+});
+
+localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
+
+localVideo.srcObject = localStream;
+
+/* remote stream */
+pc.ontrack = e => {
+remoteVideo.srcObject = e.streams[0];
+};
+
+const offer = await pc.createOffer();
+await pc.setLocalDescription(offer);
+
+/* save offer to firebase */
+await setDoc(doc(db,"calls","room1"),{
+offer: JSON.stringify(offer)
+});
+
+listenForAnswer();
+listenForIce();
+document.getElementById("callUI").style.display="flex";
+};
+
+/* ANSWER CALL */
+window.answerCall = async () => {
+
+pc = new RTCPeerConnection(servers);
+
+localStream = await navigator.mediaDevices.getUserMedia({
+video:true,
+audio:true
+});
+
+localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
+
+localVideo.srcObject = localStream;
+
+pc.ontrack = e=>{
+remoteVideo.srcObject = e.streams[0];
+};
+
+const callDoc = await getDoc(doc(db,"calls","room1"));
+const offer = JSON.parse(callDoc.data().offer);
+
+await pc.setRemoteDescription(offer);
+
+const answer = await pc.createAnswer();
+await pc.setLocalDescription(answer);
+
+await setDoc(doc(db,"calls","room1"),{
+answer: JSON.stringify(answer)
+});
+
+listenForIce();
+};
+
+/* ICE */
+function listenForIce(){
+onSnapshot(doc(db,"calls","room1"),snap=>{
+const data = snap.data();
+if(!data) return;
+
+if(data.answer && pc.signalingState !== "stable"){
+pc.setRemoteDescription(JSON.parse(data.answer));
+}
+});
 }
 
-window.openServer = (id) => {
-    currentServer = id;
-    onSnapshot(collection(db, "servers", id, "channels"), snap => {
-        const pn = document.getElementById('panel');
-        pn.innerHTML = `<div style="font-weight: bold; padding: 10px; color: white;">Channels</div>`;
-        snap.forEach(c => {
-            const div = document.createElement('div');
-            div.className = 'channel';
-            div.innerText = c.data().name;
-            div.onclick = () => openChannel(c.id);
-            pn.appendChild(div);
-        });
-    });
+/* MUTE */
+window.mute=()=>{
+localStream.getAudioTracks().forEach(t=>{
+t.enabled = !t.enabled;
+});
 };
 
-window.openChannel = (id) => {
-    currentChannel = id;
-    const q = query(collection(db, "servers", currentServer, "channels", id, "messages"), orderBy("time", "asc"));
-    onSnapshot(q, snap => {
-        const msgBox = document.getElementById('messages');
-        msgBox.innerHTML = "";
-        snap.forEach(m => {
-            const data = m.data();
-            const name = data.username ? data.username.split('@')[0] : "User";
-            msgBox.innerHTML += `<div class='msg'><b>${name}</b><p>${data.text}</p></div>`;
-        });
-        msgBox.scrollTop = msgBox.scrollHeight;
-    });
+/* HANGUP */
+window.hangup=()=>{
+pc.close();
+document.getElementById("callUI").style.display="none";
 };
-
-window.send = async () => {
-    const input = document.getElementById('msg');
-    if (!input.value || !currentChannel) return;
-    await addDoc(collection(db, "servers", currentServer, "channels", currentChannel, "messages"), {
-        text: input.value,
-        username: currentUser.email,
-        time: serverTimestamp()
-    });
-    input.value = "";
-};
-
-// Simple Draggable Logic
-const win = document.getElementById('discordWin');
-const dragZone = document.getElementById('dragZone');
-let isDragging = false, offset = { x: 0, y: 0 };
-dragZone.onmousedown = (e) => { isDragging = true; offset.x = e.clientX - win.offsetLeft; offset.y = e.clientY - win.offsetTop; };
-document.onmousemove = (e) => { if (!isDragging) return; win.style.left = (e.clientX - offset.x) + "px"; win.style.top = (e.clientY - offset.y) + "px"; };
-document.onmouseup = () => isDragging = false;
-
 </script>
+
 </body>
 </html>
