@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ReplicaOS Discord Module (Firebase Backend)</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Segoe UI,sans-serif;
+    background:#0f172a;
+    color:white;
+}
+
+#app{display:flex;height:100vh}
+
+#friends{
+    width:260px;
+    background:#111827;
+    padding:10px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+.friend{
+    padding:10px;
+    background:#1f2937;
+    border-radius:8px;
+    cursor:pointer;
+}
+.friend:hover{background:#374151}
+
+#chat{flex:1;display:flex;flex-direction:column}
+
+#messages{flex:1;padding:10px;overflow-y:auto}
+
+.msg{margin-bottom:10px}
+.msg b{color:#60a5fa}
+
+#input{display:flex;padding:10px;background:#111827}
+
+#msg{
+    flex:1;
+    padding:10px;
+    border:none;
+    border-radius:8px;
+    background:#1f2937;
+    color:white;
+}
+
+button{
+    margin-left:10px;
+    padding:10px 14px;
+    border:none;
+    border-radius:8px;
+    background:#2563eb;
+    color:white;
+    cursor:pointer;
+}
+
+#topbar{
+    height:45px;
+    background:#0b1220;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0 10px;
+}
+
+.status{font-size:12px;opacity:0.8}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+    <div>ReplicaOS Discord (Firebase)</div>
+    <div class="status" id="status">Offline</div>
+</div>
+
+<div id="app">
+
+<div id="friends"></div>
+
+<div id="chat">
+    <div id="messages"></div>
+    <div id="input">
+        <input id="msg" placeholder="Message..." />
+        <button onclick="sendMsg()">Send</button>
+    </div>
+</div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey:"AIzaSyCnJPv3cclaIArwUPKEq5of0NyafJ7d4QI",
+    authDomain:"replicanewos3030.firebaseapp.com",
+    projectId:"replicanewos3030"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let me = null;
+let currentDM = null;
+
+const friendsEl = document.getElementById("friends");
+const messagesEl = document.getElementById("messages");
+
+/* ================= AUTH ================= */
+onAuthStateChanged(auth, user => {
+    if(!user){ status.innerText="Offline"; return; }
+
+    me = user;
+    status.innerText = "Online";
+
+    loadFriends();
+});
+
+/* ================= FRIEND SYSTEM ================= */
+async function loadFriends(){
+    friendsEl.innerHTML = "<b>Friends</b>";
+
+    const snap = await getDocs(collection(db,"users"));
+
+    snap.forEach(u => {
+        if(u.id === me.uid) return;
+
+        const div = document.createElement("div");
+        div.className="friend";
+        div.innerText = u.data().email;
+        div.onclick = () => openDM(u.id, u.data().email);
+        friendsEl.appendChild(div);
+    });
+}
+
+/* ================= DM SYSTEM ================= */
+function openDM(uid,email){
+    currentDM = uid;
+    messagesEl.innerHTML = "";
+
+    const chatId = getChatId(me.uid, uid);
+
+    const q = query(collection(db,"chats",chatId,"messages"),orderBy("time"));
+
+    onSnapshot(q,snap=>{
+        messagesEl.innerHTML="";
+        snap.forEach(m=>{
+            const d=m.data();
+            messagesEl.innerHTML += `<div class='msg'><b>${d.from===me.uid?"You":email}:</b> ${d.text}</div>`;
+        });
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+    });
+}
+
+function getChatId(a,b){
+    return a<b ? a+"_"+b : b+"_"+a;
+}
+
+/* ================= SEND MESSAGE ================= */
+window.sendMsg = async () => {
+    if(!currentDM) return;
+
+    const chatId = getChatId(me.uid,currentDM);
+
+    await addDoc(collection(db,"chats",chatId,"messages"),{
+        text:msg.value,
+        from:me.uid,
+        to:currentDM,
+        time:Date.now()
+    });
+
+    msg.value="";
+};
+
+</script>
+</body>
+</html>
