@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Note Stack</title>
+<style>
+:root { color-scheme: dark; font-family: "Segoe UI", system-ui, sans-serif; }
+body { margin: 0; min-height: 100vh; background: linear-gradient(135deg, #111827, #312e81); color: #f8fafc; }
+main { max-width: 900px; margin: 0 auto; padding: 28px; }
+header { display: flex; justify-content: space-between; gap: 16px; align-items: center; flex-wrap: wrap; }
+h1 { margin: 0; font-size: clamp(2rem, 6vw, 4rem); }
+.panel, .note { background: rgba(15, 23, 42, .76); border: 1px solid rgba(255,255,255,.12); border-radius: 18px; box-shadow: 0 18px 60px rgba(0,0,0,.25); }
+.panel { display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 14px; margin: 22px 0; }
+textarea { grid-column: 1 / -1; min-height: 120px; resize: vertical; }
+input, textarea, button { border: 0; border-radius: 12px; padding: 12px 14px; font: inherit; }
+input, textarea { background: rgba(255,255,255,.08); color: inherit; outline: 1px solid rgba(255,255,255,.1); }
+button { background: #38bdf8; color: #082f49; font-weight: 800; cursor: pointer; }
+button.secondary { background: rgba(255,255,255,.12); color: #e2e8f0; }
+#notes { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.note { padding: 16px; }
+.note h2 { margin: 0 0 8px; font-size: 1.05rem; }
+.note p { color: #cbd5e1; white-space: pre-wrap; }
+.actions { display: flex; gap: 8px; justify-content: flex-end; }
+.empty { color: #cbd5e1; text-align: center; padding: 32px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Note Stack</h1>
+      <p>Fast sticky notes saved locally in ReplicaOS.</p>
+    </div>
+    <button class="secondary" id="clearAll">Clear All</button>
+  </header>
+
+  <section class="panel" aria-label="Create note">
+    <input id="title" placeholder="Note title" maxlength="60">
+    <button id="save">Save Note</button>
+    <textarea id="body" placeholder="Write a thought, checklist, link, or reminder..."></textarea>
+  </section>
+
+  <section id="notes" aria-live="polite"></section>
+</main>
+<script>
+const key = "replicaos_note_stack";
+const title = document.getElementById("title");
+const body = document.getElementById("body");
+const notes = document.getElementById("notes");
+let data = JSON.parse(localStorage.getItem(key) || "[]");
+function persist() { localStorage.setItem(key, JSON.stringify(data)); }
+function render() {
+  notes.innerHTML = data.length ? "" : '<div class="empty">No notes yet. Save your first note above.</div>';
+  data.forEach((note, index) => {
+    const card = document.createElement("article");
+    card.className = "note";
+    card.innerHTML = `<h2>${escapeHtml(note.title || "Untitled")}</h2><p>${escapeHtml(note.body)}</p><div class="actions"><button class="secondary" data-index="${index}">Delete</button></div>`;
+    notes.appendChild(card);
+  });
+}
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"]/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[char]));
+}
+document.getElementById("save").onclick = () => {
+  if (!title.value.trim() && !body.value.trim()) return;
+  data.unshift({ title: title.value.trim(), body: body.value.trim(), created: Date.now() });
+  title.value = "";
+  body.value = "";
+  persist();
+  render();
+};
+notes.onclick = event => {
+  if (!event.target.dataset.index) return;
+  data.splice(Number(event.target.dataset.index), 1);
+  persist();
+  render();
+};
+document.getElementById("clearAll").onclick = () => {
+  if (!data.length || confirm("Delete every note?")) {
+    data = [];
+    persist();
+    render();
+  }
+};
+render();
+</script>
+</body>
+</html>

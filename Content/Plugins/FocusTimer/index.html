@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Focus Timer</title>
+<style>
+:root { font-family: "Segoe UI", system-ui, sans-serif; color-scheme: dark; }
+body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: radial-gradient(circle at top, #fb7185, #312e81 55%, #020617); color: white; }
+main { width: min(92vw, 520px); padding: 30px; text-align: center; background: rgba(2, 6, 23, .72); border: 1px solid rgba(255,255,255,.16); border-radius: 30px; box-shadow: 0 30px 90px rgba(0,0,0,.35); }
+h1 { margin: 0 0 12px; }
+#clock { font-size: clamp(4rem, 20vw, 8rem); font-weight: 900; letter-spacing: -0.08em; margin: 14px 0; }
+.controls, .presets { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 18px; }
+button { border: 0; border-radius: 999px; padding: 12px 18px; font: inherit; font-weight: 800; cursor: pointer; background: rgba(255,255,255,.14); color: white; }
+button.primary { background: #facc15; color: #422006; }
+button.active { outline: 3px solid rgba(250, 204, 21, .55); }
+progress { width: 100%; height: 14px; accent-color: #facc15; }
+small { color: #cbd5e1; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Focus Timer</h1>
+  <small id="mode">25 minute focus session</small>
+  <div id="clock">25:00</div>
+  <progress id="bar" max="1500" value="1500"></progress>
+  <div class="controls">
+    <button class="primary" id="toggle">Start</button>
+    <button id="reset">Reset</button>
+  </div>
+  <div class="presets">
+    <button data-min="25" class="active">Focus 25</button>
+    <button data-min="5">Break 5</button>
+    <button data-min="15">Break 15</button>
+  </div>
+</main>
+<script>
+const clock = document.getElementById("clock");
+const bar = document.getElementById("bar");
+const toggle = document.getElementById("toggle");
+const mode = document.getElementById("mode");
+let total = 25 * 60;
+let remaining = total;
+let timer = null;
+function paint() {
+  const minutes = Math.floor(remaining / 60).toString().padStart(2, "0");
+  const seconds = (remaining % 60).toString().padStart(2, "0");
+  clock.textContent = `${minutes}:${seconds}`;
+  bar.max = total;
+  bar.value = remaining;
+}
+function stop() {
+  clearInterval(timer);
+  timer = null;
+  toggle.textContent = "Start";
+}
+function start() {
+  timer = setInterval(() => {
+    remaining = Math.max(0, remaining - 1);
+    paint();
+    if (remaining === 0) {
+      stop();
+      document.body.animate([{ filter: "brightness(1.8)" }, { filter: "brightness(1)" }], 800);
+    }
+  }, 1000);
+  toggle.textContent = "Pause";
+}
+toggle.onclick = () => timer ? stop() : start();
+document.getElementById("reset").onclick = () => { stop(); remaining = total; paint(); };
+document.querySelector(".presets").onclick = event => {
+  if (!event.target.dataset.min) return;
+  document.querySelectorAll(".presets button").forEach(button => button.classList.toggle("active", button === event.target));
+  total = Number(event.target.dataset.min) * 60;
+  remaining = total;
+  mode.textContent = `${event.target.textContent} session`;
+  stop();
+  paint();
+};
+paint();
+</script>
+</body>
+</html>
