@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat Rooms</title>
+<style>
+:root { font-family: "Segoe UI", system-ui, sans-serif; color-scheme: dark; }
+body { margin: 0; min-height: 100vh; background: linear-gradient(135deg, #111827, #581c87); color: #fff; }
+.app { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+aside { padding: 20px; background: rgba(2,6,23,.68); border-right: 1px solid rgba(255,255,255,.1); }
+h1 { margin: 0 0 16px; font-size: 2.3rem; letter-spacing: -.06em; }
+.room { width: 100%; margin: 6px 0; text-align: left; }
+button, input { border: 0; border-radius: 14px; padding: 11px 13px; font: inherit; }
+button { cursor: pointer; font-weight: 800; background: rgba(255,255,255,.1); color: white; }
+button.active, button.primary { background: #a78bfa; color: #1e1b4b; }
+main { display: grid; grid-template-rows: auto 1fr auto; min-width: 0; }
+header, form { padding: 16px; background: rgba(15,23,42,.58); border-bottom: 1px solid rgba(255,255,255,.1); }
+header { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
+.messages { padding: 18px; overflow: auto; display: flex; flex-direction: column; gap: 12px; }
+.msg { max-width: 76%; padding: 12px 14px; border-radius: 18px; background: rgba(255,255,255,.1); }
+.msg.me { align-self: flex-end; background: #7c3aed; }
+.msg small { display: block; color: #ddd6fe; margin-top: 6px; }
+form { border-top: 1px solid rgba(255,255,255,.1); border-bottom: 0; display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+input { background: rgba(255,255,255,.1); color: white; outline: 1px solid rgba(255,255,255,.08); }
+.tools { display: flex; gap: 8px; flex-wrap: wrap; }
+@media (max-width: 720px) { .app { grid-template-columns: 1fr; } aside { border-right: 0; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <h1>Chat Rooms</h1>
+    <button class="room active" data-room="general"># general</button>
+    <button class="room" data-room="support"># support</button>
+    <button class="room" data-room="dev"># dev</button>
+    <button class="room" data-room="friends"># friends</button>
+    <hr>
+    <input id="name" placeholder="Your name" value="ReplicaUser">
+  </aside>
+  <main>
+    <header>
+      <div><strong id="roomTitle"># general</strong><br><small>Local-first chat log for ReplicaOS</small></div>
+      <div class="tools"><button id="invite" type="button">Copy invite</button><button id="clear" type="button">Clear room</button></div>
+    </header>
+    <section class="messages" id="messages" aria-live="polite"></section>
+    <form id="composer">
+      <input id="message" placeholder="Message this room..." autocomplete="off">
+      <button class="primary">Send</button>
+    </form>
+  </main>
+</div>
+<script>
+const STORAGE_KEY = "replicaos_chat_rooms";
+const messages = document.getElementById("messages");
+const roomTitle = document.getElementById("roomTitle");
+const message = document.getElementById("message");
+const nameInput = document.getElementById("name");
+let currentRoom = "general";
+let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function escapeHtml(value) { return String(value).replace(/[&<>\"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[char])); }
+function render() {
+  roomTitle.textContent = `# ${currentRoom}`;
+  const roomMessages = state[currentRoom] || [];
+  messages.innerHTML = roomMessages.length ? "" : "<p>No messages yet. Start the conversation.</p>";
+  roomMessages.forEach(item => {
+    const article = document.createElement("article");
+    article.className = `msg ${item.author === nameInput.value ? "me" : ""}`;
+    article.innerHTML = `<strong>${escapeHtml(item.author)}</strong><div>${escapeHtml(item.text)}</div><small>${new Date(item.time).toLocaleString()}</small>`;
+    messages.appendChild(article);
+  });
+  messages.scrollTop = messages.scrollHeight;
+}
+document.querySelectorAll(".room").forEach(button => button.onclick = () => {
+  currentRoom = button.dataset.room;
+  document.querySelectorAll(".room").forEach(room => room.classList.toggle("active", room === button));
+  render();
+});
+document.getElementById("composer").onsubmit = event => {
+  event.preventDefault();
+  if (!message.value.trim()) return;
+  state[currentRoom] = state[currentRoom] || [];
+  state[currentRoom].push({ author: nameInput.value || "ReplicaUser", text: message.value.trim(), time: Date.now() });
+  message.value = "";
+  save();
+  render();
+};
+document.getElementById("invite").onclick = () => navigator.clipboard?.writeText(`ReplicaOS chat invite: #${currentRoom}`);
+document.getElementById("clear").onclick = () => { state[currentRoom] = []; save(); render(); };
+render();
+</script>
+</body>
+</html>

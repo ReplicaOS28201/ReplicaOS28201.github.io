@@ -10,3 +10,46 @@
 @import "components/Notes.css";
 @import "system/contextmenu.css";
 @import "system/animations.css";
+
+/* ReplicaOS plugin-applied preferences */
+:root {
+  --replica-accent: #38bdf8;
+  --replica-window-scale: 1;
+}
+
+.appwindow {
+  transform: translate3d(0, 0, 0) scale(var(--replica-window-scale));
+  transform-origin: top left;
+}
+
+.window-titlebar,
+.dock-icon.active::after {
+  color: var(--replica-accent);
+}
+
+body[data-replica-compact-dock="true"] .dock {
+  gap: 6px;
+  padding: 4px 12px;
+}
+
+body[data-replica-compact-dock="true"] .dock-icon {
+  width: 38px;
+  height: 38px;
+}
+
+body[data-replica-high-contrast="true"] .appwindow,
+body[data-replica-high-contrast="true"] .dock {
+  border-color: rgba(255, 255, 255, 0.42);
+  background: rgba(0, 0, 0, 0.72);
+}
+
+body[data-replica-reduce-motion="true"] *,
+body[data-replica-reduce-motion="true"] *::before,
+body[data-replica-reduce-motion="true"] *::after {
+  animation-duration: 0.001ms !important;
+  transition-duration: 0.001ms !important;
+}
+
+.hidden {
+  display: none !important;
+}

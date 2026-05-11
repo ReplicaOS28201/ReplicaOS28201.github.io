@@ -1,21 +1,187 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <title>This is the title of the webpage!</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReplicaOS Plugin Store</title>
     <link rel="stylesheet" href="CSS/Plugin.css">
   </head>
   <body>
-    <header>
-      <h3>PLUGIN STORE</h3>
-      
+    <header class="store-header">
       <div>
-        <button>UI</button>
-        <button>SYSTEM</button>
-        <button>Improver 19OS</button>
+        <p class="eyebrow">ReplicaOS Extensions</p>
+        <h1>Plugin Store</h1>
+        <p class="subtitle">Install mini apps, customization tools, OS settings, chat rooms, and connection utilities into your dock.</p>
       </div>
+      <nav class="filters" aria-label="Plugin filters">
+        <button class="active" data-filter="all">All</button>
+        <button data-filter="productivity">Productivity</button>
+        <button data-filter="creative">Creative</button>
+        <button data-filter="customization">Customization</button>
+        <button data-filter="settings">Settings</button>
+        <button data-filter="chat">Chat</button>
+        <button data-filter="connections">Connections</button>
+        <button data-filter="system">System</button>
+        <button data-filter="support">Support</button>
+      </nav>
     </header>
-    <div class="main">
-      <!-- ALL PLUGINS LISTED HERE -->
-    </div>
+
+    <main class="main">
+      <section class="hero-card">
+        <span>✨ Advanced collection</span>
+        <h2>Customize, connect, and control ReplicaOS</h2>
+        <p>New plugins add themes, deeper OS settings, local chat rooms, connection management, productivity tools, diagnostics, and remote help.</p>
+      </section>
+      <section class="plugin-grid" id="pluginGrid" aria-live="polite"></section>
+    </main>
+
+    <template id="pluginCardTemplate">
+      <article class="plugin-card">
+        <div class="plugin-icon"></div>
+        <div>
+          <p class="plugin-category"></p>
+          <h2></h2>
+          <p class="plugin-description"></p>
+        </div>
+        <div class="plugin-actions">
+          <button class="install-button">Install</button>
+          <a class="open-link" target="_blank" rel="noopener">Open</a>
+        </div>
+      </article>
+    </template>
+
+    <script>
+      const plugins = [
+        {
+          id: "themestudio",
+          name: "Theme Studio",
+          icon: "🪄",
+          category: "customization",
+          description: "Advanced theme controls for wallpaper, accent color, glass, blur, and window radius.",
+          url: "Plugins/ThemeStudio/index.html"
+        },
+        {
+          id: "controlcenter",
+          name: "Control Center",
+          icon: "⚙️",
+          category: "settings",
+          description: "ReplicaOS settings for dock density, motion, contrast, notifications, and startup behavior.",
+          url: "Plugins/ControlCenter/index.html"
+        },
+        {
+          id: "chatrooms",
+          name: "Chat Rooms",
+          icon: "💬",
+          category: "chat",
+          description: "Local-first room chat for general, support, dev, and friends conversations.",
+          url: "Plugins/ChatRooms/index.html"
+        },
+        {
+          id: "connectionhub",
+          name: "Connection Hub",
+          icon: "🔗",
+          category: "connections",
+          description: "Manage contacts, links, online status, and shareable session codes for collaboration.",
+          url: "Plugins/ConnectionHub/index.html"
+        },
+        {
+          id: "notestack",
+          name: "Note Stack",
+          icon: "🗒️",
+          category: "productivity",
+          description: "Sticky notes and quick reminders that save locally in your browser.",
+          url: "Plugins/NoteStack/index.html"
+        },
+        {
+          id: "focustimer",
+          name: "Focus Timer",
+          icon: "⏱️",
+          category: "productivity",
+          description: "A simple Pomodoro-style timer with focus and break presets.",
+          url: "Plugins/FocusTimer/index.html"
+        },
+        {
+          id: "colorlab",
+          name: "Color Lab",
+          icon: "🎨",
+          category: "creative",
+          description: "Generate five-color palettes from a seed color and copy hex values fast.",
+          url: "Plugins/ColorLab/index.html"
+        },
+        {
+          id: "syspulse",
+          name: "Sys Pulse",
+          icon: "📊",
+          category: "system",
+          description: "Browser diagnostics for device, display, network, and memory signals.",
+          url: "Plugins/SysPulse/index.html"
+        },
+        {
+          id: "quickassist",
+          name: "Quick Assist",
+          icon: "🛰️",
+          category: "support",
+          description: "Share or join a screen support session using the existing Quick Assist plugin.",
+          url: "Plugins/QuickAssist/index.html"
+        }
+      ];
+
+      const grid = document.getElementById("pluginGrid");
+      const template = document.getElementById("pluginCardTemplate");
+      let activeFilter = "all";
+
+      function getPluginSystem() {
+        return window.parent?.PluginSystem || window.opener?.PluginSystem || window.PluginSystem;
+      }
+
+      function installPlugin(plugin, button) {
+        const pluginSystem = getPluginSystem();
+        if (pluginSystem?.install) {
+          pluginSystem.install(plugin);
+          button.textContent = "Installed";
+          button.disabled = true;
+          return;
+        }
+
+        const installed = JSON.parse(localStorage.getItem("19os_plugins") || "[]");
+        if (!installed.some(item => item.id === plugin.id)) {
+          installed.push(plugin);
+          localStorage.setItem("19os_plugins", JSON.stringify(installed));
+        }
+        button.textContent = "Saved locally";
+      }
+
+      function renderPlugins() {
+        grid.innerHTML = "";
+        plugins
+          .filter(plugin => activeFilter === "all" || plugin.category === activeFilter)
+          .forEach(plugin => {
+            const card = template.content.cloneNode(true);
+            card.querySelector(".plugin-card").dataset.category = plugin.category;
+            card.querySelector(".plugin-icon").textContent = plugin.icon;
+            card.querySelector(".plugin-category").textContent = plugin.category;
+            card.querySelector("h2").textContent = plugin.name;
+            card.querySelector(".plugin-description").textContent = plugin.description;
+            const install = card.querySelector(".install-button");
+            install.addEventListener("click", () => installPlugin(plugin, install));
+            const open = card.querySelector(".open-link");
+            open.href = plugin.url;
+            open.textContent = "Open";
+            grid.appendChild(card);
+          });
+      }
+
+      document.querySelectorAll(".filters button").forEach(button => {
+        button.addEventListener("click", () => {
+          activeFilter = button.dataset.filter;
+          document.querySelectorAll(".filters button").forEach(filterButton => {
+            filterButton.classList.toggle("active", filterButton === button);
+          });
+          renderPlugins();
+        });
+      });
+
+      renderPlugins();
+    </script>
   </body>
 </html>
