@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3DENGINE Demo</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #07111f;
+      color: #f6fbff;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at top left, rgba(80, 196, 255, 0.35), transparent 32rem),
+        radial-gradient(circle at bottom right, rgba(145, 91, 255, 0.3), transparent 28rem),
+        #07111f;
+    }
+
+    main {
+      width: min(860px, calc(100% - 32px));
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 28px;
+      padding: 28px;
+      background: rgba(7, 17, 31, 0.78);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(18px);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(2rem, 5vw, 4rem);
+      letter-spacing: -0.06em;
+    }
+
+    .subtitle {
+      margin: 0 0 24px;
+      color: #b7c7d7;
+      font-size: 1rem;
+    }
+
+    .stage {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(240px, 0.75fr);
+      gap: 20px;
+    }
+
+    .viewport {
+      min-height: 320px;
+      position: relative;
+      overflow: hidden;
+      border-radius: 22px;
+      background: linear-gradient(145deg, rgba(8, 20, 39, 0.95), rgba(18, 34, 62, 0.95));
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .triangle {
+      position: absolute;
+      inset: 50% auto auto 50%;
+      width: 0;
+      height: 0;
+      border-left: 72px solid transparent;
+      border-right: 72px solid transparent;
+      border-bottom: 126px solid #50c4ff;
+      transform: translate(-50%, -50%) rotate(0deg);
+      filter: drop-shadow(0 0 28px rgba(80, 196, 255, 0.8));
+      animation: spin 8s linear infinite;
+    }
+
+    .grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: linear-gradient(to bottom, transparent, black 18%, black 82%, transparent);
+    }
+
+    .panel {
+      border-radius: 22px;
+      padding: 18px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    dl {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px 16px;
+      margin: 0;
+    }
+
+    dt {
+      color: #91a4b8;
+    }
+
+    dd {
+      margin: 0;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 18px;
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 14px;
+      color: #06101d;
+      background: #50c4ff;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    pre {
+      overflow: auto;
+      margin: 20px 0 0;
+      border-radius: 18px;
+      padding: 16px;
+      color: #d7ecff;
+      background: rgba(0, 0, 0, 0.35);
+    }
+
+    @keyframes spin {
+      to {
+        transform: translate(-50%, -50%) rotate(360deg);
+      }
+    }
+
+    @media (max-width: 760px) {
+      .stage {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>3DENGINE</h1>
+    <p class="subtitle">JavaScript engine scaffold imported from ReplicaOS28201/3DENGINE.</p>
+
+    <section class="stage" aria-label="Engine demo">
+      <div class="viewport" aria-label="Serialized triangle mesh preview">
+        <div class="grid"></div>
+        <div class="triangle"></div>
+      </div>
+
+      <aside class="panel">
+        <dl>
+          <dt>Frame</dt>
+          <dd id="frame">0</dd>
+          <dt>Entities</dt>
+          <dd id="entities">0</dd>
+          <dt>Lights</dt>
+          <dd id="lights">0</dd>
+          <dt>Viewport</dt>
+          <dd id="viewport">0×0</dd>
+        </dl>
+        <button id="tick">Run safeUpdate()</button>
+      </aside>
+    </section>
+
+    <pre id="output" aria-live="polite"></pre>
+  </main>
+
+  <script type="module">
+    import { createEngine, Entity, Mesh, Material, Light } from "./Source/Main.js";
+
+    const engine = createEngine({ width: 1024, height: 576 });
+    const ship = new Entity("Ship")
+      .addComponent("mesh", Mesh.createTriangle())
+      .addComponent("material", new Material({ color: "#50c4ff" }));
+
+    engine.scene.addEntity(ship);
+    engine.scene.addLight(new Light("directional", 1.2));
+
+    const frame = document.getElementById("frame");
+    const entities = document.getElementById("entities");
+    const lights = document.getElementById("lights");
+    const viewport = document.getElementById("viewport");
+    const output = document.getElementById("output");
+
+    function renderState() {
+      const state = engine.safeUpdate();
+      frame.textContent = state.frame.frame;
+      entities.textContent = state.frame.entities;
+      lights.textContent = state.frame.lights;
+      viewport.textContent = `${state.frame.viewport.width}×${state.frame.viewport.height}`;
+      output.textContent = JSON.stringify(state, null, 2);
+    }
+
+    document.getElementById("tick").addEventListener("click", renderState);
+    renderState();
+  </script>
+</body>
+</html>
