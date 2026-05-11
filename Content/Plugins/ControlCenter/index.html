@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control Center</title>
+<style>
+:root { font-family: "Segoe UI", system-ui, sans-serif; color-scheme: dark; }
+body { margin: 0; min-height: 100vh; background: radial-gradient(circle at top, #0ea5e9, #111827 45%, #020617); color: #f8fafc; }
+main { max-width: 1000px; margin: 0 auto; padding: 28px; }
+h1 { margin: 0; font-size: clamp(2.3rem, 8vw, 5rem); letter-spacing: -.08em; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; margin-top: 22px; }
+.card { background: rgba(15,23,42,.78); border: 1px solid rgba(255,255,255,.13); border-radius: 24px; padding: 20px; box-shadow: 0 24px 70px rgba(0,0,0,.24); }
+.card h2 { margin: 0 0 8px; }
+.card p { color: #cbd5e1; min-height: 48px; }
+.switch { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 16px; }
+input[type="checkbox"] { inline-size: 54px; block-size: 30px; accent-color: #38bdf8; }
+input[type="range"], select { width: 100%; accent-color: #38bdf8; }
+select, button { border: 0; border-radius: 14px; padding: 12px 14px; font: inherit; font-weight: 800; }
+select { background: rgba(255,255,255,.1); color: white; }
+button { background: linear-gradient(135deg, #38bdf8, #34d399); color: #022c22; cursor: pointer; }
+.footer { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 20px; }
+#status { color: #bbf7d0; font-weight: 800; }
+</style>
+</head>
+<body>
+<main>
+  <p>Settings</p>
+  <h1>Control Center</h1>
+  <p>Advanced ReplicaOS preferences that plugins can persist and send to the shell.</p>
+  <section class="grid">
+    <article class="card">
+      <h2>Dock density</h2>
+      <p>Make dock buttons tighter for smaller screens.</p>
+      <label class="switch">Compact dock <input id="compactDock" type="checkbox"></label>
+    </article>
+    <article class="card">
+      <h2>Motion</h2>
+      <p>Reduce animated motion for a calmer desktop.</p>
+      <label class="switch">Reduce motion <input id="reduceMotion" type="checkbox"></label>
+    </article>
+    <article class="card">
+      <h2>Contrast</h2>
+      <p>Boost contrast for windows and controls.</p>
+      <label class="switch">High contrast <input id="highContrast" type="checkbox"></label>
+    </article>
+    <article class="card">
+      <h2>Window scale</h2>
+      <p>Adjust plugin and app window sizing.</p>
+      <input id="windowScale" type="range" min="0.85" max="1.2" step="0.05" value="1">
+    </article>
+    <article class="card">
+      <h2>Notification mode</h2>
+      <p>Choose how noisy system messages should be.</p>
+      <select id="notificationMode">
+        <option value="normal">Normal</option>
+        <option value="quiet">Quiet</option>
+        <option value="priority">Priority only</option>
+      </select>
+    </article>
+    <article class="card">
+      <h2>Startup behavior</h2>
+      <p>Remember whether installed plugins should auto-open.</p>
+      <select id="startupMode">
+        <option value="restore">Restore last session</option>
+        <option value="dockOnly">Dock only</option>
+        <option value="manual">Manual launch</option>
+      </select>
+    </article>
+  </section>
+  <div class="footer">
+    <button id="apply">Apply settings</button>
+    <button id="reset">Reset</button>
+    <span id="status" aria-live="polite"></span>
+  </div>
+</main>
+<script>
+const STORAGE_KEY = "replicaos_control_center";
+const defaults = { compactDock: false, reduceMotion: false, highContrast: false, windowScale: "1", notificationMode: "normal", startupMode: "restore" };
+const fields = Object.keys(defaults).reduce((map, id) => ({ ...map, [id]: document.getElementById(id) }), {});
+const status = document.getElementById("status");
+function read() { return { ...defaults, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") }; }
+function write(values) { localStorage.setItem(STORAGE_KEY, JSON.stringify(values)); }
+function collect() {
+  return {
+    compactDock: fields.compactDock.checked,
+    reduceMotion: fields.reduceMotion.checked,
+    highContrast: fields.highContrast.checked,
+    windowScale: fields.windowScale.value,
+    notificationMode: fields.notificationMode.value,
+    startupMode: fields.startupMode.value
+  };
+}
+function hydrate(values = read()) {
+  fields.compactDock.checked = values.compactDock;
+  fields.reduceMotion.checked = values.reduceMotion;
+  fields.highContrast.checked = values.highContrast;
+  fields.windowScale.value = values.windowScale;
+  fields.notificationMode.value = values.notificationMode;
+  fields.startupMode.value = values.startupMode;
+}
+function apply() {
+  const values = collect();
+  write(values);
+  window.parent.postMessage({ type: "replicaos:settings", payload: values }, "*");
+  status.textContent = "Settings applied";
+}
+document.getElementById("apply").onclick = apply;
+document.getElementById("reset").onclick = () => { hydrate(defaults); apply(); };
+hydrate();
+</script>
+</body>
+</html>

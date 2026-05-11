@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connection Hub</title>
+<style>
+:root { font-family: "Segoe UI", system-ui, sans-serif; color-scheme: dark; }
+body { margin: 0; min-height: 100vh; background: radial-gradient(circle at top left, #14b8a6, transparent 30rem), linear-gradient(135deg, #020617, #172554); color: white; }
+main { max-width: 1080px; margin: 0 auto; padding: 28px; }
+h1 { margin: 0; font-size: clamp(2.3rem, 8vw, 5rem); letter-spacing: -.08em; }
+.top { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: end; }
+button, input, select { border: 0; border-radius: 14px; padding: 12px 14px; font: inherit; }
+button { cursor: pointer; font-weight: 900; background: #2dd4bf; color: #042f2e; }
+input, select { background: rgba(255,255,255,.1); color: white; outline: 1px solid rgba(255,255,255,.1); }
+form, .card, .status { background: rgba(15,23,42,.75); border: 1px solid rgba(255,255,255,.13); border-radius: 24px; box-shadow: 0 24px 70px rgba(0,0,0,.25); }
+form { display: grid; grid-template-columns: repeat(4, 1fr) auto; gap: 10px; padding: 14px; margin: 22px 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.card { padding: 18px; }
+.card h2 { margin: 0 0 8px; }
+.badge { display: inline-block; border-radius: 999px; padding: 6px 10px; background: rgba(45,212,191,.16); color: #99f6e4; font-weight: 900; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.actions a, .actions button { background: rgba(255,255,255,.1); color: white; text-decoration: none; border-radius: 999px; padding: 8px 11px; font-weight: 800; }
+.status { padding: 18px; margin-top: 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+.status strong { display: block; color: #99f6e4; }
+@media (max-width: 860px) { .top, form { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <div>
+      <p>Connections</p>
+      <h1>Connection Hub</h1>
+      <p>Manage contacts, links, and shareable session codes for ReplicaOS collaboration.</p>
+    </div>
+    <button id="newCode">Generate session code</button>
+  </div>
+  <form id="contactForm">
+    <input id="contactName" placeholder="Name" required>
+    <input id="contactHandle" placeholder="Handle or email" required>
+    <select id="contactType">
+      <option>Friend</option>
+      <option>Support</option>
+      <option>Developer</option>
+      <option>Community</option>
+    </select>
+    <input id="contactLink" placeholder="Link (optional)">
+    <button>Add</button>
+  </form>
+  <section class="grid" id="contacts" aria-live="polite"></section>
+  <section class="status">
+    <div><strong>Network</strong><span id="network"></span></div>
+    <div><strong>Session code</strong><span id="sessionCode">Not generated</span></div>
+    <div><strong>Contacts</strong><span id="contactCount">0</span></div>
+  </section>
+</main>
+<script>
+const STORAGE_KEY = "replicaos_connection_hub";
+const contacts = document.getElementById("contacts");
+const contactName = document.getElementById("contactName");
+const contactHandle = document.getElementById("contactHandle");
+const contactType = document.getElementById("contactType");
+const contactLink = document.getElementById("contactLink");
+const network = document.getElementById("network");
+const sessionCode = document.getElementById("sessionCode");
+const contactCount = document.getElementById("contactCount");
+let data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+function escapeHtml(value) { return String(value).replace(/[&<>\"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[char])); }
+function render() {
+  network.textContent = navigator.onLine ? "Online" : "Offline";
+  contactCount.textContent = data.length;
+  contacts.innerHTML = data.length ? "" : "<p>No contacts yet. Add one above.</p>";
+  data.forEach((contact, index) => {
+    const card = document.createElement("article");
+    card.className = "card";
+    const href = contact.link || `mailto:${contact.handle}`;
+    card.innerHTML = `<span class="badge">${escapeHtml(contact.type)}</span><h2>${escapeHtml(contact.name)}</h2><p>${escapeHtml(contact.handle)}</p><div class="actions"><a href="${escapeHtml(href)}" target="_blank" rel="noopener">Open</a><button data-copy="${index}" type="button">Copy</button><button data-delete="${index}" type="button">Delete</button></div>`;
+    contacts.appendChild(card);
+  });
+}
+document.getElementById("contactForm").onsubmit = event => {
+  event.preventDefault();
+  data.unshift({ name: contactName.value.trim(), handle: contactHandle.value.trim(), type: contactType.value, link: contactLink.value.trim() });
+  event.target.reset();
+  save();
+  render();
+};
+contacts.onclick = event => {
+  const copyIndex = event.target.dataset.copy;
+  const deleteIndex = event.target.dataset.delete;
+  if (copyIndex) navigator.clipboard?.writeText(`${data[Number(copyIndex)].name}: ${data[Number(copyIndex)].handle}`);
+  if (deleteIndex) { data.splice(Number(deleteIndex), 1); save(); render(); }
+};
+document.getElementById("newCode").onclick = () => {
+  const code = Math.random().toString(36).slice(2, 8).toUpperCase();
+  sessionCode.textContent = code;
+  navigator.clipboard?.writeText(code);
+};
+window.addEventListener("online", render);
+window.addEventListener("offline", render);
+render();
+</script>
+</body>
+</html>

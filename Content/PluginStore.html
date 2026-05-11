@@ -17,6 +17,10 @@
         <button class="active" data-filter="all">All</button>
         <button data-filter="productivity">Productivity</button>
         <button data-filter="creative">Creative</button>
+        <button data-filter="customization">Customization</button>
+        <button data-filter="settings">Settings</button>
+        <button data-filter="chat">Chat</button>
+        <button data-filter="connections">Connections</button>
         <button data-filter="system">System</button>
         <button data-filter="support">Support</button>
       </nav>
@@ -24,6 +28,9 @@
 
     <main class="main">
       <section class="hero-card">
+        <span>✨ Advanced collection</span>
+        <h2>Customize, connect, and control ReplicaOS</h2>
+        <p>New plugins add themes, deeper OS settings, local chat rooms, connection management, productivity tools, diagnostics, and remote help.</p>
         <span>✨ New collection</span>
         <h2>More ways to customize ReplicaOS</h2>
         <p>Fresh offline-friendly plugins for notes, focus sessions, color palettes, system stats, and remote help.</p>
@@ -48,6 +55,38 @@
 
     <script>
       const plugins = [
+        {
+          id: "themestudio",
+          name: "Theme Studio",
+          icon: "🪄",
+          category: "customization",
+          description: "Advanced theme controls for wallpaper, accent color, glass, blur, and window radius.",
+          url: "Plugins/ThemeStudio/index.html"
+        },
+        {
+          id: "controlcenter",
+          name: "Control Center",
+          icon: "⚙️",
+          category: "settings",
+          description: "ReplicaOS settings for dock density, motion, contrast, notifications, and startup behavior.",
+          url: "Plugins/ControlCenter/index.html"
+        },
+        {
+          id: "chatrooms",
+          name: "Chat Rooms",
+          icon: "💬",
+          category: "chat",
+          description: "Local-first room chat for general, support, dev, and friends conversations.",
+          url: "Plugins/ChatRooms/index.html"
+        },
+        {
+          id: "connectionhub",
+          name: "Connection Hub",
+          icon: "🔗",
+          category: "connections",
+          description: "Manage contacts, links, online status, and shareable session codes for collaboration.",
+          url: "Plugins/ConnectionHub/index.html"
+        },
         {
           id: "notestack",
           name: "Note Stack",
