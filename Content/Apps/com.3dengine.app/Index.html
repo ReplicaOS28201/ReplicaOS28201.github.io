@@ -3,13 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3DENGINE Demo</title>
+  <title>3DENGINE - Nebula Run</title>
   <style>
     :root {
       color-scheme: dark;
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #07111f;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #050914;
       color: #f6fbff;
+    }
+
+    * {
+      box-sizing: border-box;
     }
 
     body {
@@ -17,84 +21,200 @@
       min-height: 100vh;
       display: grid;
       place-items: center;
+      padding: 20px;
       background:
-        radial-gradient(circle at top left, rgba(80, 196, 255, 0.35), transparent 32rem),
-        radial-gradient(circle at bottom right, rgba(145, 91, 255, 0.3), transparent 28rem),
-        #07111f;
+        radial-gradient(circle at 12% 12%, rgba(87, 213, 255, 0.28), transparent 30rem),
+        radial-gradient(circle at 85% 85%, rgba(179, 88, 255, 0.28), transparent 32rem),
+        linear-gradient(145deg, #040712 0%, #071326 52%, #080816 100%);
     }
 
     main {
-      width: min(860px, calc(100% - 32px));
+      width: min(1120px, 100%);
       border: 1px solid rgba(255, 255, 255, 0.16);
-      border-radius: 28px;
-      padding: 28px;
-      background: rgba(7, 17, 31, 0.78);
-      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+      border-radius: 30px;
+      padding: clamp(16px, 3vw, 28px);
+      background: rgba(5, 9, 20, 0.82);
+      box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55);
       backdrop-filter: blur(18px);
     }
 
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
     h1 {
-      margin: 0 0 8px;
-      font-size: clamp(2rem, 5vw, 4rem);
-      letter-spacing: -0.06em;
+      margin: 0 0 6px;
+      font-size: clamp(2.15rem, 6vw, 5rem);
+      line-height: 0.9;
+      letter-spacing: -0.075em;
+      text-transform: uppercase;
     }
 
     .subtitle {
-      margin: 0 0 24px;
+      max-width: 62ch;
+      margin: 0;
       color: #b7c7d7;
-      font-size: 1rem;
     }
 
-    .stage {
+    .badge {
+      flex: 0 0 auto;
+      border: 1px solid rgba(80, 196, 255, 0.42);
+      border-radius: 999px;
+      padding: 10px 14px;
+      color: #9ce6ff;
+      background: rgba(80, 196, 255, 0.09);
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .game-shell {
       display: grid;
-      grid-template-columns: minmax(0, 1.25fr) minmax(240px, 0.75fr);
-      gap: 20px;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: 18px;
     }
 
     .viewport {
-      min-height: 320px;
       position: relative;
+      min-height: 560px;
       overflow: hidden;
-      border-radius: 22px;
-      background: linear-gradient(145deg, rgba(8, 20, 39, 0.95), rgba(18, 34, 62, 0.95));
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 24px;
+      background: #020610;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: inset 0 0 70px rgba(80, 196, 255, 0.08);
     }
 
-    .triangle {
-      position: absolute;
-      inset: 50% auto auto 50%;
-      width: 0;
-      height: 0;
-      border-left: 72px solid transparent;
-      border-right: 72px solid transparent;
-      border-bottom: 126px solid #50c4ff;
-      transform: translate(-50%, -50%) rotate(0deg);
-      filter: drop-shadow(0 0 28px rgba(80, 196, 255, 0.8));
-      animation: spin 8s linear infinite;
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 560px;
+      cursor: crosshair;
     }
 
-    .grid {
+    .overlay {
       position: absolute;
       inset: 0;
-      background-image:
-        linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
-      background-size: 42px 42px;
-      mask-image: linear-gradient(to bottom, transparent, black 18%, black 82%, transparent);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      text-align: center;
+      background: linear-gradient(180deg, rgba(2, 6, 16, 0.08), rgba(2, 6, 16, 0.72));
+      pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+
+    .overlay.hidden {
+      opacity: 0;
+    }
+
+    .modal {
+      max-width: 470px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 26px;
+      padding: 26px;
+      background: rgba(6, 13, 28, 0.86);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+    }
+
+    .modal h2 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      letter-spacing: -0.05em;
+    }
+
+    .modal p {
+      margin: 0;
+      color: #c6d6e6;
     }
 
     .panel {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .card {
       border-radius: 22px;
       padding: 18px;
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.12);
     }
 
+    .score {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .stat {
+      border-radius: 16px;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.07);
+    }
+
+    .stat span {
+      display: block;
+      color: #91a4b8;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 5px;
+      font-size: 1.55rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .meter {
+      height: 14px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .meter > i {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #50c4ff, #7cffc4);
+      transition: width 130ms ease;
+    }
+
+    .controls {
+      margin: 0;
+      padding-left: 1.1rem;
+      color: #c4d2e1;
+      line-height: 1.7;
+    }
+
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 16px;
+      padding: 14px 16px;
+      color: #06101d;
+      background: linear-gradient(135deg, #50c4ff, #7cffc4);
+      box-shadow: 0 12px 30px rgba(80, 196, 255, 0.22);
+      font-weight: 900;
+      cursor: pointer;
+    }
+
     dl {
       display: grid;
       grid-template-columns: auto 1fr;
-      gap: 10px 16px;
+      gap: 9px 16px;
       margin: 0;
+      font-size: 0.92rem;
     }
 
     dt {
@@ -107,35 +227,37 @@
       font-variant-numeric: tabular-nums;
     }
 
-    button {
-      width: 100%;
-      margin-top: 18px;
-      border: 0;
-      border-radius: 14px;
-      padding: 12px 14px;
-      color: #06101d;
-      background: #50c4ff;
-      font-weight: 800;
-      cursor: pointer;
-    }
+    @media (max-width: 880px) {
+      body {
+        padding: 10px;
+      }
 
-    pre {
-      overflow: auto;
-      margin: 20px 0 0;
-      border-radius: 18px;
-      padding: 16px;
-      color: #d7ecff;
-      background: rgba(0, 0, 0, 0.35);
-    }
+      header,
+      .game-shell {
+        grid-template-columns: 1fr;
+      }
 
-    @keyframes spin {
-      to {
-        transform: translate(-50%, -50%) rotate(360deg);
+      header {
+        display: grid;
+      }
+
+      .badge {
+        width: max-content;
+      }
+
+      .viewport,
+      canvas {
+        min-height: 470px;
+      }
+
+      .panel {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
     }
 
-    @media (max-width: 760px) {
-      .stage {
+    @media (max-width: 620px) {
+      .panel,
+      .score {
         grid-template-columns: 1fr;
       }
     }
@@ -143,61 +265,461 @@
 </head>
 <body>
   <main>
-    <h1>3DENGINE</h1>
-    <p class="subtitle">JavaScript engine scaffold imported from ReplicaOS28201/3DENGINE.</p>
+    <header>
+      <div>
+        <h1>Nebula Run</h1>
+        <p class="subtitle">A tiny 3DENGINE arcade game: steer through neon gates, collect energy cores, and dodge asteroids before your shields collapse.</p>
+      </div>
+      <div class="badge">3DENGINE powered</div>
+    </header>
 
-    <section class="stage" aria-label="Engine demo">
-      <div class="viewport" aria-label="Serialized triangle mesh preview">
-        <div class="grid"></div>
-        <div class="triangle"></div>
+    <section class="game-shell" aria-label="Nebula Run game">
+      <div class="viewport" id="viewportWrap">
+        <canvas id="game" width="900" height="560" aria-label="Nebula Run canvas game"></canvas>
+        <div class="overlay" id="overlay">
+          <div class="modal">
+            <h2 id="overlayTitle">Ready, pilot?</h2>
+            <p id="overlayText">Press Start, Space, or tap the arena. Move with WASD / Arrow keys, or drag on touch screens.</p>
+          </div>
+        </div>
       </div>
 
-      <aside class="panel">
-        <dl>
-          <dt>Frame</dt>
-          <dd id="frame">0</dd>
-          <dt>Entities</dt>
-          <dd id="entities">0</dd>
-          <dt>Lights</dt>
-          <dd id="lights">0</dd>
-          <dt>Viewport</dt>
-          <dd id="viewport">0×0</dd>
-        </dl>
-        <button id="tick">Run safeUpdate()</button>
+      <aside class="panel" aria-label="Game information">
+        <div class="card score">
+          <div class="stat"><span>Score</span><strong id="score">0</strong></div>
+          <div class="stat"><span>Best</span><strong id="best">0</strong></div>
+          <div class="stat"><span>Speed</span><strong id="speed">1.0×</strong></div>
+          <div class="stat"><span>Distance</span><strong id="distance">0m</strong></div>
+        </div>
+
+        <div class="card">
+          <p class="subtitle" style="margin-bottom: 10px;">Shield integrity</p>
+          <div class="meter" aria-label="Shield meter"><i id="shieldBar"></i></div>
+        </div>
+
+        <div class="card">
+          <button id="start">Start Game</button>
+          <ul class="controls">
+            <li>WASD / Arrow keys to strafe.</li>
+            <li>Space starts or restarts.</li>
+            <li>Fly through cyan gates for points.</li>
+            <li>Green cores repair shields.</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <dl>
+            <dt>Engine frame</dt><dd id="frame">0</dd>
+            <dt>Entities</dt><dd id="entities">0</dd>
+            <dt>Lights</dt><dd id="lights">0</dd>
+            <dt>Viewport</dt><dd id="engineViewport">0×0</dd>
+          </dl>
+        </div>
       </aside>
     </section>
-
-    <pre id="output" aria-live="polite"></pre>
   </main>
 
   <script type="module">
     import { createEngine, Entity, Mesh, Material, Light } from "./Source/Main.js";
 
-    const engine = createEngine({ width: 1024, height: 576 });
-    const ship = new Entity("Ship")
+    const engine = createEngine({ width: 900, height: 560 });
+    const playerEntity = new Entity("Nebula Runner")
       .addComponent("mesh", Mesh.createTriangle())
       .addComponent("material", new Material({ color: "#50c4ff" }));
+    const gateEntity = new Entity("Procedural Gates").addComponent("material", new Material({ color: "#7cffc4" }));
+    const asteroidEntity = new Entity("Asteroid Field").addComponent("material", new Material({ color: "#ff6b8f" }));
 
-    engine.scene.addEntity(ship);
-    engine.scene.addLight(new Light("directional", 1.2));
+    engine.scene.addEntity(playerEntity);
+    engine.scene.addEntity(gateEntity);
+    engine.scene.addEntity(asteroidEntity);
+    engine.scene.addLight(new Light("key", 1.35));
+    engine.scene.addLight(new Light("rim", 0.75));
 
-    const frame = document.getElementById("frame");
-    const entities = document.getElementById("entities");
-    const lights = document.getElementById("lights");
-    const viewport = document.getElementById("viewport");
-    const output = document.getElementById("output");
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const viewportWrap = document.getElementById("viewportWrap");
+    const overlay = document.getElementById("overlay");
+    const overlayTitle = document.getElementById("overlayTitle");
+    const overlayText = document.getElementById("overlayText");
+    const scoreEl = document.getElementById("score");
+    const bestEl = document.getElementById("best");
+    const speedEl = document.getElementById("speed");
+    const distanceEl = document.getElementById("distance");
+    const shieldBar = document.getElementById("shieldBar");
+    const frameEl = document.getElementById("frame");
+    const entitiesEl = document.getElementById("entities");
+    const lightsEl = document.getElementById("lights");
+    const engineViewportEl = document.getElementById("engineViewport");
+    const startButton = document.getElementById("start");
 
-    function renderState() {
-      const state = engine.safeUpdate();
-      frame.textContent = state.frame.frame;
-      entities.textContent = state.frame.entities;
-      lights.textContent = state.frame.lights;
-      viewport.textContent = `${state.frame.viewport.width}×${state.frame.viewport.height}`;
-      output.textContent = JSON.stringify(state, null, 2);
+    const keys = new Set();
+    const stars = Array.from({ length: 160 }, () => ({
+      x: Math.random() * 2 - 1,
+      y: Math.random() * 2 - 1,
+      z: Math.random() * 900 + 80,
+      size: Math.random() * 1.6 + 0.4,
+    }));
+
+    const state = {
+      running: false,
+      over: false,
+      lastTime: 0,
+      spawnTimer: 0,
+      score: 0,
+      best: Number(localStorage.getItem("nebula-run-best") || 0),
+      distance: 0,
+      speed: 1,
+      shield: 100,
+      player: { x: 0, y: 0, radius: 22, vx: 0, vy: 0 },
+      objects: [],
+      pointer: null,
+    };
+
+    bestEl.textContent = state.best;
+
+    function resize() {
+      const rect = viewportWrap.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+      canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      engine.viewport.width = Math.round(rect.width);
+      engine.viewport.height = Math.round(rect.height);
     }
 
-    document.getElementById("tick").addEventListener("click", renderState);
-    renderState();
+    function resetGame() {
+      state.running = true;
+      state.over = false;
+      state.lastTime = performance.now();
+      state.spawnTimer = 0;
+      state.score = 0;
+      state.distance = 0;
+      state.speed = 1;
+      state.shield = 100;
+      state.player.x = 0;
+      state.player.y = 0;
+      state.player.vx = 0;
+      state.player.vy = 0;
+      state.objects = [];
+      overlay.classList.add("hidden");
+      startButton.textContent = "Restart Game";
+    }
+
+    function endGame() {
+      state.running = false;
+      state.over = true;
+      state.best = Math.max(state.best, Math.floor(state.score));
+      localStorage.setItem("nebula-run-best", state.best);
+      overlayTitle.textContent = "Run complete";
+      overlayText.textContent = `Score ${Math.floor(state.score)} · Distance ${Math.floor(state.distance)}m. Press Space or Start to launch again.`;
+      overlay.classList.remove("hidden");
+    }
+
+    function project(point) {
+      const w = viewportWrap.clientWidth;
+      const h = viewportWrap.clientHeight;
+      const fov = Math.min(w, h) * 0.92;
+      const scale = fov / Math.max(1, point.z);
+      return {
+        x: w / 2 + point.x * scale,
+        y: h / 2 + point.y * scale,
+        scale,
+      };
+    }
+
+    function spawnObject() {
+      const roll = Math.random();
+      const laneX = (Math.random() * 2 - 1) * 310;
+      const laneY = (Math.random() * 2 - 1) * 170;
+      if (roll < 0.52) {
+        state.objects.push({ type: "gate", x: laneX, y: laneY, z: 920, radius: 92, hit: false });
+      } else if (roll < 0.82) {
+        state.objects.push({ type: "asteroid", x: laneX, y: laneY, z: 930, radius: 38 + Math.random() * 24, spin: Math.random() * 7 });
+      } else {
+        state.objects.push({ type: "core", x: laneX, y: laneY, z: 900, radius: 30, pulse: Math.random() * 10 });
+      }
+    }
+
+    function drawStars(dt) {
+      const w = viewportWrap.clientWidth;
+      const h = viewportWrap.clientHeight;
+      ctx.save();
+      ctx.fillStyle = "#020610";
+      ctx.fillRect(0, 0, w, h);
+      const gradient = ctx.createRadialGradient(w * 0.5, h * 0.55, 10, w * 0.5, h * 0.55, Math.max(w, h) * 0.75);
+      gradient.addColorStop(0, "rgba(80,196,255,0.16)");
+      gradient.addColorStop(0.42, "rgba(122,74,255,0.08)");
+      gradient.addColorStop(1, "rgba(2,6,16,0)");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, w, h);
+
+      for (const star of stars) {
+        star.z -= dt * (210 + state.speed * 95);
+        if (star.z < 1) {
+          star.x = Math.random() * 2 - 1;
+          star.y = Math.random() * 2 - 1;
+          star.z = Math.random() * 900 + 700;
+        }
+        const p = project({ x: star.x * 520, y: star.y * 320, z: star.z });
+        const alpha = Math.max(0.16, 1 - star.z / 1000);
+        ctx.fillStyle = `rgba(214,242,255,${alpha})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, star.size * (1 + p.scale * 7), 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawTunnel(time) {
+      const w = viewportWrap.clientWidth;
+      const h = viewportWrap.clientHeight;
+      const cx = w / 2;
+      const cy = h / 2;
+      ctx.save();
+      ctx.strokeStyle = "rgba(80, 196, 255, 0.14)";
+      ctx.lineWidth = 1;
+      for (let i = 1; i < 12; i += 1) {
+        const z = ((i * 92 - time * 0.05 * state.speed) % 900) + 60;
+        const s = Math.min(w, h) * 0.86 / z;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, 420 * s, 260 * s, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      for (let i = 0; i < 16; i += 1) {
+        const angle = (Math.PI * 2 * i) / 16 + Math.sin(time * 0.0004) * 0.1;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(angle) * w, cy + Math.sin(angle) * h);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawShip() {
+      const w = viewportWrap.clientWidth;
+      const h = viewportWrap.clientHeight;
+      const x = w / 2 + state.player.x;
+      const y = h / 2 + state.player.y;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(state.player.x * 0.0025);
+      ctx.shadowColor = "#50c4ff";
+      ctx.shadowBlur = 22;
+      ctx.fillStyle = "#50c4ff";
+      ctx.beginPath();
+      ctx.moveTo(0, -28);
+      ctx.lineTo(22, 24);
+      ctx.lineTo(0, 14);
+      ctx.lineTo(-22, 24);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#e8fbff";
+      ctx.beginPath();
+      ctx.moveTo(0, -14);
+      ctx.lineTo(8, 12);
+      ctx.lineTo(-8, 12);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawObject(object, time) {
+      const p = project(object);
+      if (object.type === "gate") {
+        const r = object.radius * p.scale;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(time * 0.001 + object.x * 0.002);
+        ctx.lineWidth = Math.max(3, 9 * p.scale);
+        ctx.strokeStyle = object.hit ? "rgba(124,255,196,0.25)" : "rgba(80,196,255,0.9)";
+        ctx.shadowColor = "#50c4ff";
+        ctx.shadowBlur = 20;
+        ctx.strokeRect(-r, -r * 0.66, r * 2, r * 1.32);
+        ctx.restore();
+      }
+
+      if (object.type === "asteroid") {
+        const r = object.radius * p.scale;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(object.spin + time * 0.0015);
+        ctx.fillStyle = "#ff6b8f";
+        ctx.strokeStyle = "rgba(255,255,255,0.32)";
+        ctx.shadowColor = "#ff3c76";
+        ctx.shadowBlur = 18;
+        ctx.beginPath();
+        for (let i = 0; i < 9; i += 1) {
+          const a = (Math.PI * 2 * i) / 9;
+          const jag = r * (0.72 + ((i * 37) % 5) / 12);
+          ctx.lineTo(Math.cos(a) * jag, Math.sin(a) * jag);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      if (object.type === "core") {
+        const r = object.radius * p.scale * (1 + Math.sin(time * 0.006 + object.pulse) * 0.12);
+        ctx.save();
+        ctx.fillStyle = "#7cffc4";
+        ctx.shadowColor = "#7cffc4";
+        ctx.shadowBlur = 20;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    function updatePlayer(dt) {
+      let dx = 0;
+      let dy = 0;
+      if (keys.has("arrowleft") || keys.has("a")) dx -= 1;
+      if (keys.has("arrowright") || keys.has("d")) dx += 1;
+      if (keys.has("arrowup") || keys.has("w")) dy -= 1;
+      if (keys.has("arrowdown") || keys.has("s")) dy += 1;
+
+      if (state.pointer) {
+        const targetX = state.pointer.x - viewportWrap.clientWidth / 2;
+        const targetY = state.pointer.y - viewportWrap.clientHeight / 2;
+        state.player.vx += (targetX - state.player.x) * dt * 8;
+        state.player.vy += (targetY - state.player.y) * dt * 8;
+      }
+
+      state.player.vx += dx * dt * 1700;
+      state.player.vy += dy * dt * 1700;
+      state.player.vx *= Math.pow(0.0009, dt);
+      state.player.vy *= Math.pow(0.0009, dt);
+      state.player.x += state.player.vx * dt;
+      state.player.y += state.player.vy * dt;
+
+      const maxX = viewportWrap.clientWidth * 0.42;
+      const maxY = viewportWrap.clientHeight * 0.38;
+      state.player.x = Math.max(-maxX, Math.min(maxX, state.player.x));
+      state.player.y = Math.max(-maxY, Math.min(maxY, state.player.y));
+    }
+
+    function updateObjects(dt, time) {
+      state.spawnTimer -= dt;
+      if (state.spawnTimer <= 0) {
+        spawnObject();
+        state.spawnTimer = Math.max(0.34, 0.92 - state.speed * 0.08) + Math.random() * 0.18;
+      }
+
+      const travel = dt * (330 + state.speed * 145);
+      for (const object of state.objects) {
+        object.z -= travel;
+        if (object.z < 92 && !object.resolved) {
+          const p = project(object);
+          const px = viewportWrap.clientWidth / 2 + state.player.x;
+          const py = viewportWrap.clientHeight / 2 + state.player.y;
+          const dist = Math.hypot(px - p.x, py - p.y);
+          if (object.type === "gate") {
+            object.resolved = true;
+            if (dist < object.radius * p.scale * 0.92) {
+              object.hit = true;
+              state.score += 125 * state.speed;
+              state.shield = Math.min(100, state.shield + 3);
+            } else {
+              state.shield -= 10;
+            }
+          }
+          if (object.type === "asteroid" && dist < object.radius * p.scale + state.player.radius) {
+            object.resolved = true;
+            state.shield -= 26;
+            viewportWrap.animate([
+              { transform: "translateX(0)" },
+              { transform: "translateX(-7px)" },
+              { transform: "translateX(7px)" },
+              { transform: "translateX(0)" },
+            ], { duration: 170 });
+          }
+          if (object.type === "core" && dist < object.radius * p.scale + state.player.radius) {
+            object.resolved = true;
+            state.score += 80;
+            state.shield = Math.min(100, state.shield + 20);
+          }
+        }
+      }
+
+      state.objects = state.objects.filter((object) => object.z > 24 && !object.resolved);
+      state.objects.sort((a, b) => b.z - a.z).forEach((object) => drawObject(object, time));
+    }
+
+    function updateHud() {
+      const frame = engine.safeUpdate().frame;
+      scoreEl.textContent = Math.floor(state.score);
+      bestEl.textContent = state.best;
+      speedEl.textContent = `${state.speed.toFixed(1)}×`;
+      distanceEl.textContent = `${Math.floor(state.distance)}m`;
+      shieldBar.style.width = `${Math.max(0, state.shield)}%`;
+      shieldBar.style.background = state.shield < 35
+        ? "linear-gradient(90deg, #ff416c, #ffb347)"
+        : "linear-gradient(90deg, #50c4ff, #7cffc4)";
+      frameEl.textContent = frame.frame;
+      entitiesEl.textContent = frame.entities;
+      lightsEl.textContent = frame.lights;
+      engineViewportEl.textContent = `${frame.viewport.width}×${frame.viewport.height}`;
+    }
+
+    function loop(time) {
+      const dt = Math.min(0.033, (time - state.lastTime) / 1000 || 0.016);
+      state.lastTime = time;
+
+      drawStars(dt);
+      drawTunnel(time);
+
+      if (state.running) {
+        state.distance += dt * (70 + state.speed * 38);
+        state.score += dt * 12 * state.speed;
+        state.speed = 1 + Math.min(3.2, state.distance / 650);
+        state.shield -= dt * (1.2 + state.speed * 0.42);
+        updatePlayer(dt);
+        updateObjects(dt, time);
+        if (state.shield <= 0) endGame();
+      } else {
+        state.objects.sort((a, b) => b.z - a.z).forEach((object) => drawObject(object, time));
+      }
+
+      drawShip();
+      updateHud();
+      requestAnimationFrame(loop);
+    }
+
+    startButton.addEventListener("click", resetGame);
+    viewportWrap.addEventListener("pointerdown", (event) => {
+      if (!state.running) resetGame();
+      viewportWrap.setPointerCapture(event.pointerId);
+      const rect = viewportWrap.getBoundingClientRect();
+      state.pointer = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+    });
+    viewportWrap.addEventListener("pointermove", (event) => {
+      if (!state.pointer) return;
+      const rect = viewportWrap.getBoundingClientRect();
+      state.pointer = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+    });
+    viewportWrap.addEventListener("pointerup", () => {
+      state.pointer = null;
+    });
+    viewportWrap.addEventListener("pointercancel", () => {
+      state.pointer = null;
+    });
+
+    window.addEventListener("keydown", (event) => {
+      const key = event.key.toLowerCase();
+      if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(key)) {
+        event.preventDefault();
+      }
+      if (key === " ") resetGame();
+      keys.add(key);
+    });
+    window.addEventListener("keyup", (event) => keys.delete(event.key.toLowerCase()));
+    window.addEventListener("resize", resize);
+
+    resize();
+    updateHud();
+    requestAnimationFrame(loop);
   </script>
 </body>
 </html>
