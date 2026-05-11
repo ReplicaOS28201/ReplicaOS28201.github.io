@@ -1,323 +1,331 @@
-<!DOCTYPE html>
+<<<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ReplicaOS - Win11 Desktop + Discord</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ReplicaOS - System Edition</title>
 
 <style>
-/* ===================== GLOBAL ===================== */
-body {
-    margin: 0;
-    font-family: "Segoe UI", sans-serif;
-    overflow: hidden;
-    background: #0b0f17;
-    color: white;
+:root {
+    --taskbar-bg: rgba(20,20,20,0.85);
+    --win-bg: #f3f3f3;
+    --accent: #0078d4;
 }
 
-/* ===================== LOCK / AUTH ===================== */
-#auth {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: radial-gradient(circle at top, #1a1f2e, #000);
-    z-index: 9999;
+/* GLOBAL */
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
 }
 
-.box {
-    width: 340px;
-    background: rgba(30,30,40,0.95);
-    padding: 25px;
-    border-radius: 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+body,html {
+    margin:0;
+    height:100%;
+    overflow:hidden;
+    font-family:system-ui;
+    background:url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1920&q=80') center/cover;
 }
 
-input {
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid #333;
-    background: #1b1f2a;
-    color: white;
-    outline: none;
+/* DESKTOP */
+#desktop{
+    height:calc(100vh - 48px);
+    padding:20px;
+    display:grid;
+    grid-template-columns:repeat(auto-fill,90px);
+    gap:15px;
 }
 
-button {
-    padding: 10px;
-    border: none;
-    border-radius: 8px;
-    background: #2563eb;
-    color: white;
-    cursor: pointer;
-    font-weight: 600;
+.icon{color:white;text-align:center;cursor:pointer;}
+.icon img{width:45px;}
+
+/* WINDOW */
+.window{
+    position:absolute;
+    width:420px;
+    height:500px;
+    background:var(--win-bg);
+    border-radius:10px;
+    box-shadow:0 15px 40px rgba(0,0,0,.4);
+    display:none;
+    flex-direction:column;
+    left:0;
+    top:0;
 }
 
-button:hover { background: #1d4ed8; }
-
-/* ===================== DESKTOP ===================== */
-#desktop {
-    display: none;
-    width: 100vw;
-    height: 100vh;
-    background: url('https://w.wallhaven.cc/full/1p/wallhaven-1p2w3v.jpg') center/cover;
-    position: relative;
+/* TASKBAR */
+#taskbar{
+    position:fixed;
+    bottom:0;
+    width:100%;
+    height:48px;
+    background:var(--taskbar-bg);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    color:white;
+    padding:0 15px;
 }
 
-/* ===================== TASKBAR (Win11 style) ===================== */
-#taskbar {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 52px;
-    background: rgba(20,20,20,0.75);
-    backdrop-filter: blur(14px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
+/* START MENU */
+#startMenu{
+    position:fixed;
+    bottom:55px;
+    left:10px;
+    width:220px;
+    background:rgba(30,30,30,0.95);
+    border-radius:10px;
+    display:none;
+    flex-direction:column;
+    padding:10px;
+    color:white;
 }
 
-.taskbtn {
-    padding: 8px 14px;
-    border-radius: 10px;
-    background: rgba(255,255,255,0.08);
-    cursor: pointer;
+/* ================= SYSTEM NOTIFICATIONS (GLOBAL LAYER) ================= */
+#systemNotifications{
+    position:fixed;
+    top:15px;
+    right:15px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    z-index:999999;
 }
 
-.taskbtn:hover {
-    background: rgba(255,255,255,0.18);
+.notification{
+    width:260px;
+    background:rgba(25,25,25,0.95);
+    color:white;
+    padding:12px;
+    border-radius:10px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.4);
+    animation:slideIn 0.25s ease;
 }
 
-/* ===================== WINDOW SYSTEM ===================== */
-.window {
-    position: absolute;
-    width: 900px;
-    height: 560px;
-    background: #2b2f3a;
-    border-radius: 12px;
-    overflow: hidden;
-    display: none;
-    flex-direction: column;
-    box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+@keyframes slideIn{
+    from{transform:translateX(120%);opacity:0;}
+    to{transform:translateX(0);opacity:1;}
 }
 
-.titlebar {
-    height: 36px;
-    background: #1f2430;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 10px;
-    cursor: move;
+.notif-actions{
+    display:flex;
+    gap:8px;
+    margin-top:10px;
 }
 
-.close {
-    width: 22px;
-    height: 22px;
-    background: #ef4444;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
+.notif-actions button{
+    flex:1;
+    border:none;
+    padding:6px;
+    border-radius:6px;
+    cursor:pointer;
 }
 
-.content {
-    flex: 1;
-    display: flex;
-}
-
-/* ===================== DISCORD UI ===================== */
-#sidebar {
-    width: 72px;
-    background: #1a1d24;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding-top: 10px;
-    gap: 10px;
-}
-
-.server {
-    width: 46px;
-    height: 46px;
-    border-radius: 50%;
-    background: #2c313c;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-}
-
-.server:hover {
-    background: #5865f2;
-    border-radius: 35%;
-}
-
-#panel {
-    width: 240px;
-    background: #23272f;
-    padding: 10px;
-}
-
-.channel {
-    padding: 8px;
-    border-radius: 6px;
-    cursor: pointer;
-    color: #aaa;
-}
-
-.channel:hover {
-    background: #2f3440;
-    color: white;
-}
-
-#chat {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-#messages {
-    flex: 1;
-    padding: 12px;
-    overflow-y: auto;
-}
-
-.msg b { color: #fff; }
-.msg p { margin: 2px 0; color: #ccc; }
-
-#input {
-    display: flex;
-    padding: 10px;
-    background: #1f2430;
-}
-
-#msg {
-    flex: 1;
-    padding: 10px;
-    border-radius: 8px;
-    border: none;
-    background: #2b2f3a;
-    color: white;
-}
-
+/* CALL COLORS */
+.accept{background:#4CAF50;color:white;}
+.decline{background:#e53935;color:white;}
 </style>
 </head>
+
 <body>
 
-<!-- AUTH -->
-<div id="auth">
-    <div class="box">
-        <h3>ReplicaOS Login</h3>
-        <input id="email" placeholder="Email" />
-        <input id="pass" type="password" placeholder="Password" />
-        <button id="login">Login</button>
-        <button id="register">Register</button>
-    </div>
-</div>
+<!-- SYSTEM NOTIFICATION LAYER (OUTSIDE OS) -->
+<div id="systemNotifications"></div>
 
 <!-- DESKTOP -->
 <div id="desktop">
 
-    <div id="taskbar">
-        <div class="taskbtn" onclick="openWin('discord')">Discord</div>
-        <div class="taskbtn" onclick="alert('Start Menu coming soon')">Start</div>
+    <div class="icon" onclick="openWindow('friends')">
+        <img src="https://cdn-icons-png.flaticon.com/512/1077/1077012.png">
+        <div>Friends</div>
     </div>
 
-    <!-- DISCORD WINDOW -->
-    <div id="discord" class="window">
-        <div class="titlebar" id="drag">
-            <span>ReplicaOS Discord</span>
-            <div class="close" onclick="closeWin('discord')">×</div>
-        </div>
+    <div class="icon" onclick="openWindow('chat')">
+        <img src="https://cdn-icons-png.flaticon.com/512/733/733585.png">
+        <div>Chat</div>
+    </div>
 
-        <div class="content">
-            <div id="sidebar">
-                <div class="server" onclick="createServer()">+</div>
-            </div>
-
-            <div id="panel">
-                <b>Channels</b>
-            </div>
-
-            <div id="chat">
-                <div id="messages"></div>
-                <div id="input">
-                    <input id="msg" placeholder="Message..." />
-                    <button onclick="send()">Send</button>
-                </div>
-            </div>
-        </div>
+    <div class="icon" onclick="openWindow('call')">
+        <img src="https://cdn-icons-png.flaticon.com/512/3059/3059502.png">
+        <div>Call</div>
     </div>
 
 </div>
 
+<!-- WINDOWS -->
+<div id="friends" class="window"></div>
+<div id="chat" class="window"></div>
+
+<div id="call" class="window">
+    <video id="remoteVideo" autoplay playsinline></video>
+    <video id="localVideo" autoplay muted playsinline></video>
+</div>
+
+<!-- START MENU -->
+<div id="startMenu"></div>
+
+<!-- TASKBAR -->
+<div id="taskbar">
+    <div onclick="toggleStart()">🪟 Start</div>
+    <div id="clock"></div>
+</div>
+
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, addDoc, setDoc, doc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+/* ================= FIREBASE ================= */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+    getDatabase,
+    ref,
+    set,
+    onValue,
+    push,
+    serverTimestamp,
+    onDisconnect
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyCnJPv3cclaIArwUPKEq5of0NyafJ7d4QI",
-    authDomain: "replicanewos3030.firebaseapp.com",
-    projectId: "replicanewos3030"
+    apiKey:"YOUR_KEY",
+    databaseURL:"YOUR_DB",
+    projectId:"YOUR_ID"
 };
 
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+const db = getDatabase(app);
 
-let user = null, server = null, channel = null;
+/* ================= USER ================= */
+const myId = Math.random().toString(36).substring(2,10);
+set(ref(db,"presence/"+myId),true);
+onDisconnect(ref(db,"presence/"+myId)).remove();
 
-onAuthStateChanged(auth, u => {
-    if (u) {
-        user = u;
-        auth.style.display = "none";
-        desktop.style.display = "block";
+/* ================= SYSTEM NOTIFICATIONS ================= */
+function notifySystem(title, text, actions = []) {
+    const box = document.getElementById("systemNotifications");
+
+    const n = document.createElement("div");
+    n.className = "notification";
+
+    n.innerHTML = `
+        <b>${title}</b><br>
+        <small>${text}</small>
+        <div class="notif-actions"></div>
+    `;
+
+    const actionsBox = n.querySelector(".notif-actions");
+
+    actions.forEach(a=>{
+        const btn=document.createElement("button");
+        btn.innerText=a.label;
+        btn.className=a.type;
+        btn.onclick=()=>a.action(n);
+        actionsBox.appendChild(btn);
+    });
+
+    box.appendChild(n);
+
+    setTimeout(()=>n.remove(),8000);
+}
+
+/* ================= FRIEND SYSTEM ================= */
+onValue(ref(db,"friends/"+myId),(snap)=>{
+    const data=snap.val()||{};
+    console.log("Friends:",Object.keys(data));
+});
+
+/* ================= CHAT ================= */
+window.sendMsg=(msg)=>{
+    push(ref(db,"messages"),{
+        from:myId,
+        text:msg,
+        time:serverTimestamp()
+    });
+};
+
+onValue(ref(db,"messages"),(snap)=>{
+    console.log("chat updated");
+});
+
+/* ================= CALL SYSTEM ================= */
+const pc = new RTCPeerConnection({
+    iceServers:[{urls:"stun:stun.l.google.com:19302"}]
+});
+
+let localStream;
+
+async function startMedia(){
+    if(localStream) return;
+    localStream=await navigator.mediaDevices.getUserMedia({video:true,audio:true});
+}
+
+pc.ontrack=(e)=>{
+    document.getElementById("remoteVideo").srcObject=e.streams[0];
+};
+
+/* CALL NOTIFICATION (GLOBAL SYSTEM LEVEL) */
+onValue(ref(db,"calls"),async(snap)=>{
+    const calls=snap.val();
+    if(!calls) return;
+
+    for(const id in calls){
+        const c=calls[id];
+
+        if(c.to===myId && c.offer && !pc.currentRemoteDescription){
+
+            notifySystem(
+                "Incoming Call",
+                "User "+c.from+" is calling you",
+                [
+                    {
+                        label:"Accept",
+                        type:"accept",
+                        action:async()=>{
+                            await startMedia();
+
+                            await pc.setRemoteDescription(c.offer);
+
+                            const ans=await pc.createAnswer();
+                            await pc.setLocalDescription(ans);
+
+                            set(ref(db,"calls/"+id+"/answer"),pc.localDescription);
+
+                            openWindow("call");
+                        }
+                    },
+                    {
+                        label:"Decline",
+                        type:"decline",
+                        action:()=>{}
+                    }
+                ]
+            );
+        }
     }
 });
 
-document.getElementById('login').onclick = async () => {
-    await signInWithEmailAndPassword(auth, email.value, pass.value);
+/* ================= WINDOW CORE ================= */
+let highestZ=1000;
+
+window.openWindow=(id)=>{
+    const el=document.getElementById(id);
+    el.style.display="flex";
+    el.style.zIndex=++highestZ;
+    el.style.left="0px";
+    el.style.top="0px";
 };
 
-document.getElementById('register').onclick = async () => {
-    await createUserWithEmailAndPassword(auth, email.value, pass.value);
+window.toggleStart=()=>{
+    const s=document.getElementById("startMenu");
+    s.style.display=s.style.display==="flex"?"none":"flex";
 };
 
-window.openWin = id => document.getElementById(id).style.display = "flex";
-window.closeWin = id => document.getElementById(id).style.display = "none";
-
-window.createServer = async () => {
-    const name = prompt("Server name");
-    const ref = doc(collection(db,"servers"));
-    await setDoc(ref,{name});
-};
-
-window.send = async () => {
-    if (!channel) return;
-    await addDoc(collection(db,"servers",server,"channels",channel,"messages"),{
-        text: msg.value,
-        user: user.email,
-        time: serverTimestamp()
+/* CLOCK */
+setInterval(()=>{
+    document.getElementById("clock").innerText=
+    new Date().toLocaleTimeString([],{
+        hour:"2-digit",
+        minute:"2-digit"
     });
-    msg.value="";
-};
-
-// drag
-const win = document.getElementById('discord');
-const drag = document.getElementById('drag');
-let d=false,x=0,y=0;
-drag.onmousedown=e=>{d=true;x=e.clientX-win.offsetLeft;y=e.clientY-win.offsetTop};
-document.onmousemove=e=>{if(d){win.style.left=(e.clientX-x)+'px';win.style.top=(e.clientY-y)+'px'}};
-document.onmouseup=()=>d=false;
+},1000);
 
 </script>
+
 </body>
 </html>
