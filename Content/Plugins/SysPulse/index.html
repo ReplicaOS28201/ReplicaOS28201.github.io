@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sys Pulse</title>
+<style>
+:root { font-family: "Segoe UI", system-ui, sans-serif; color-scheme: dark; }
+body { margin: 0; min-height: 100vh; background: linear-gradient(145deg, #020617, #064e3b); color: #ecfeff; }
+main { max-width: 1000px; margin: 0 auto; padding: 28px; }
+h1 { font-size: clamp(2rem, 7vw, 4.5rem); margin: 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-top: 24px; }
+.card { background: rgba(15, 23, 42, .72); border: 1px solid rgba(255,255,255,.14); border-radius: 22px; padding: 20px; box-shadow: 0 22px 70px rgba(0,0,0,.25); }
+.card strong { display: block; color: #a7f3d0; text-transform: uppercase; letter-spacing: .08em; font-size: .78rem; }
+.value { font-size: 2rem; font-weight: 900; margin-top: 8px; }
+canvas { width: 100%; height: 180px; margin-top: 24px; background: rgba(2,6,23,.48); border-radius: 22px; }
+button { border: 0; border-radius: 12px; padding: 12px 14px; font-weight: 800; cursor: pointer; background: #34d399; color: #022c22; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Sys Pulse</h1>
+  <p>Lightweight browser diagnostics for your ReplicaOS session.</p>
+  <button id="refresh">Refresh Now</button>
+  <section class="grid" id="stats"></section>
+  <canvas id="chart" width="900" height="180" aria-label="memory timeline"></canvas>
+</main>
+<script>
+const stats = document.getElementById("stats");
+const chart = document.getElementById("chart");
+const ctx = chart.getContext("2d");
+const points = [];
+function formatBytes(bytes) {
+  if (!bytes) return "Unavailable";
+  const units = ["B", "KB", "MB", "GB"];
+  let size = bytes, unit = 0;
+  while (size > 1024 && unit < units.length - 1) { size /= 1024; unit++; }
+  return `${size.toFixed(unit ? 1 : 0)} ${units[unit]}`;
+}
+function collect() {
+  const memory = performance.memory || {};
+  const rows = [
+    ["User agent", navigator.userAgent.split(") ").pop() || navigator.userAgent],
+    ["CPU threads", navigator.hardwareConcurrency || "Unavailable"],
+    ["Device memory", navigator.deviceMemory ? `${navigator.deviceMemory} GB` : "Unavailable"],
+    ["Language", navigator.language],
+    ["Online", navigator.onLine ? "Yes" : "No"],
+    ["Heap used", formatBytes(memory.usedJSHeapSize)],
+    ["Screen", `${screen.width} × ${screen.height}`],
+    ["Pixel ratio", window.devicePixelRatio]
+  ];
+  stats.innerHTML = rows.map(([label, value]) => `<article class="card"><strong>${label}</strong><div class="value">${value}</div></article>`).join("");
+  points.push(memory.usedJSHeapSize || Math.random() * 100000000);
+  if (points.length > 40) points.shift();
+  draw();
+}
+function draw() {
+  ctx.clearRect(0, 0, chart.width, chart.height);
+  ctx.strokeStyle = "#34d399";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  const max = Math.max(...points, 1);
+  points.forEach((point, index) => {
+    const x = points.length === 1 ? 0 : index * (chart.width / (points.length - 1));
+    const y = chart.height - (point / max) * (chart.height - 20) - 10;
+    index ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+  });
+  ctx.stroke();
+}
+document.getElementById("refresh").onclick = collect;
+collect();
+setInterval(collect, 5000);
+</script>
+</body>
+</html>
